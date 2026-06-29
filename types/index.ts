@@ -1,4 +1,4 @@
-export type Sector = "Banking" | "Multifinance" | "Insurance" | "Lainnya";
+export type Sector = "Banking" | "Multifinance" | "Insurance" | "Health Care" | "Industrial" | "Technology" | "Telekomunikasi" | "Infrastruktur" | "Transportasi" | "Energy" | "Lainnya";
 export type DealStage = "Lead" | "Discovery" | "Proposal" | "Negotiation" | "Won" | "Lost";
 export type VisitStatus = "Planned" | "Done" | "Follow-up" | "No-go";
 export type ProjectStatus = "Initiation" | "In Progress" | "On Hold" | "Delivered" | "Closed";
@@ -7,7 +7,7 @@ export interface Client {
   id: string;
   name: string;
   sector: Sector;
-  pic: string;
+  pic: string[];
   contact: string;
   status: string;
   notes: string;

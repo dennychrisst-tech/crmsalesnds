@@ -55,7 +55,7 @@ export default function Clients({ data, onSaveClient, onDeleteClient, onSaveVisi
             <div className="ccard-head">
               <div>
                 <div className="cname">{c.name}</div>
-                <div className="cmeta">{c.sector} · {c.pic || "—"} {c.contact ? `· ${c.contact}` : ""}</div>
+                <div className="cmeta">{c.sector} · {(Array.isArray(c.pic) ? c.pic : [c.pic]).filter(Boolean).join(", ") || "—"} {c.contact ? `· ${c.contact}` : ""}</div>
                 {c.notes && <div className="cmeta">{c.notes}</div>}
               </div>
               <div className="cright">

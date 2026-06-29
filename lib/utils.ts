@@ -4,7 +4,7 @@ export const STAGE_PROB: Record<string, number> = {
 };
 export const VISIT_STATUS = ["Planned", "Done", "Follow-up", "No-go"] as const;
 export const PROJ_STATUS = ["Initiation", "In Progress", "On Hold", "Delivered", "Closed"] as const;
-export const SECTORS = ["Banking", "Multifinance", "Insurance", "Lainnya"] as const;
+export const SECTORS = ["Banking", "Multifinance", "Insurance", "Health Care", "Industrial", "Technology", "Telekomunikasi", "Infrastruktur", "Transportasi", "Energy", "Lainnya"] as const;
 
 export function fmtIDR(n: number): string {
   return "Rp " + (Number(n) || 0).toLocaleString("id-ID");
