@@ -49,19 +49,22 @@ export default function SummaryView({ data }: Props) {
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [period, setPeriod] = useState<Period>("week");
   const [offset, setOffset] = useState(0);
+  const [salesFilter, setSalesFilter] = useState("all");
 
   const range = period === "week" ? getWeekRange(offset) : getMonthRange(offset);
   const { start, end, label } = range;
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
-  const periodVisits   = visits.filter(v => inRange(v.date, start, end));
-  const periodTasks    = tasks.filter(t => inRange(t.due_date, start, end));
-  const periodActivities = activities.filter(a => inRange(a.created_at, start, end));
-  const periodEvents   = events.filter(e => inRange(e.date, start, end));
-  const periodDeals    = deals.filter(d => inRange(d.created_at, start, end));
-  const wonDeals       = deals.filter(d => d.stage === "Won" && inRange(d.stage_updated_at || d.created_at, start, end));
-  const lostDeals      = deals.filter(d => d.stage === "Lost" && inRange(d.stage_updated_at || d.created_at, start, end));
+  const matchSales = (name: string | null | undefined) => salesFilter === "all" || (name || "").split(",").map(s => s.trim()).includes(salesFilter);
+
+  const periodVisits   = visits.filter(v => inRange(v.date, start, end) && matchSales(v.pic));
+  const periodTasks    = tasks.filter(t => inRange(t.due_date, start, end) && matchSales(t.assigned_to));
+  const periodActivities = activities.filter(a => inRange(a.created_at, start, end) && matchSales(a.created_by));
+  const periodEvents   = events.filter(e => inRange(e.date, start, end) && matchSales(e.created_by));
+  const periodDeals    = deals.filter(d => inRange(d.created_at, start, end) && matchSales(d.owner));
+  const wonDeals       = deals.filter(d => d.stage === "Won" && inRange(d.stage_updated_at || d.created_at, start, end) && matchSales(d.owner));
+  const lostDeals      = deals.filter(d => d.stage === "Lost" && inRange(d.stage_updated_at || d.created_at, start, end) && matchSales(d.owner));
   const doneTasks      = periodTasks.filter(t => t.status === "Done");
   const doneVisits     = periodVisits.filter(v => v.status === "Done");
   const wonValue       = wonDeals.reduce((s, d) => s + d.value, 0);
@@ -120,7 +123,7 @@ export default function SummaryView({ data }: Props) {
   }, [feed]);
 
   // Per-person breakdown
-  const teamStats = team.map(name => ({
+  const teamStats = (salesFilter === "all" ? team : team.filter(t => t === salesFilter)).map(name => ({
     name,
     visits: periodVisits.filter(v => v.pic === name).length,
     visitsDone: periodVisits.filter(v => v.pic === name && v.status === "Done").length,
@@ -153,6 +156,14 @@ export default function SummaryView({ data }: Props) {
           <button className="cal-nav-btn" onClick={() => setOffset(o => o + 1)} disabled={offset >= 0}>›</button>
           {offset !== 0 && <button className="btn btn-ghost btn-sm" onClick={() => setOffset(0)}>Sekarang</button>}
         </div>
+        <select
+          value={salesFilter}
+          onChange={e => setSalesFilter(e.target.value)}
+          style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)", cursor: "pointer" }}
+        >
+          <option value="all">Semua Sales</option>
+          {team.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
       </div>
 
       {/* KPI Cards */}
