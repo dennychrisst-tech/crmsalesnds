@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
-import { Visit, Client, PIC } from "@/types";
+import { Visit, Client } from "@/types";
 import { VISIT_STATUS, todayStr } from "@/lib/utils";
 
 interface Props {
@@ -26,11 +26,6 @@ function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit
   };
 }
 
-function getPics(clients: Client[], clientId: string): PIC[] {
-  const client = clients.find(c => c.id === clientId);
-  if (!client) return [];
-  return (Array.isArray(client.pic) ? client.pic : []).filter((p: PIC) => p.name?.trim());
-}
 
 export default function VisitModal({ open, visit, preClientId, preDate, clients, team, defaultPic = "", onSave, onDelete, onClose }: Props) {
   const isEdit = !!visit;
@@ -47,8 +42,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   const set = (k: keyof Visit, v: string) => setForm(f => ({ ...f, [k]: v }));
 
   function handleClientChange(clientId: string) {
-    const pics = getPics(clients, clientId);
-    setForm(f => ({ ...f, client_id: clientId, pic_client: pics.length > 0 ? pics[0].name : "" }));
+    setForm(f => ({ ...f, client_id: clientId, pic_client: "" }));
   }
 
   async function handleSave() {
@@ -65,8 +59,6 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
     await onDelete(form.id);
     onClose();
   }
-
-  const clientPics = getPics(clients, form.client_id);
 
   return (
     <Modal open={open} onClose={onClose} title={`${isEdit ? "Edit" : "Jadwalkan"} Visit`}>
@@ -87,18 +79,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="PIC Client yang dikunjungi">
-          {clientPics.length > 0 ? (
-            <select className={selectCls} value={form.pic_client} onChange={e => set("pic_client", e.target.value)}>
-              <option value="">— Pilih PIC —</option>
-              {clientPics.map(p => (
-                <option key={p.name} value={p.name}>
-                  {p.name}{p.phone ? ` (${p.phone})` : ""}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input className={inputCls} value={form.pic_client} onChange={e => set("pic_client", e.target.value)} placeholder="Nama kontak di client" />
-          )}
+          <input className={inputCls} value={form.pic_client} onChange={e => set("pic_client", e.target.value)} placeholder="Nama kontak di client" />
         </Field>
         <Field label="PIC NDS (sales)">
           <select className={selectCls} value={form.pic} onChange={e => set("pic", e.target.value)}>

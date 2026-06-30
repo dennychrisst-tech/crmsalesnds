@@ -13,18 +13,6 @@ interface Props {
   onClose: () => void;
 }
 
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, "");
-  if (!digits) return "";
-  if (digits.startsWith("0")) {
-    const rest = digits.slice(1);
-    const parts = [rest.slice(0, 3), rest.slice(3, 7), rest.slice(7, 11)].filter(Boolean);
-    return "0" + parts.join("-");
-  }
-  const parts = [digits.slice(0, 2), digits.slice(2, 6), digits.slice(6, 10)].filter(Boolean);
-  return parts.join("-");
-}
-
 const emptyPIC = (): PIC => ({ name: "", phone: "" });
 
 const emptyClient = (): Client => ({
@@ -104,11 +92,7 @@ export default function ClientModal({ open, client, onSave, onDelete, onClose }:
             </Field>
           </div>
 
-          <Field label="PIC & Kontak">
-            <div className="pic-header-row">
-              <span className="pic-col-label">Nama PIC</span>
-              <span className="pic-col-label">No. Telepon</span>
-            </div>
+          <Field label="Sales yang Handle">
             <div className="flex flex-col gap-2">
               {form.pic.map((p, i) => (
                 <div key={i} className="flex gap-2 items-center">
@@ -116,24 +100,17 @@ export default function ClientModal({ open, client, onSave, onDelete, onClose }:
                     className={inputCls}
                     value={p.name}
                     onChange={e => setPicField(i, "name", e.target.value)}
-                    placeholder={`Nama PIC ${i + 1}`}
-                  />
-                  <input
-                    className={inputCls}
-                    value={formatPhone(p.phone)}
-                    onChange={e => setPicField(i, "phone", e.target.value.replace(/\D/g, ""))}
-                    placeholder="08xx-xxxx-xxxx"
-                    inputMode="tel"
+                    placeholder={`Nama Sales ${i + 1}`}
                   />
                   {form.pic.length > 1 && (
                     <button type="button" onClick={() => removePic(i)}
                       className="text-red-500 hover:text-red-700 text-lg leading-none px-1 flex-shrink-0"
-                      title="Hapus PIC">×</button>
+                      title="Hapus">×</button>
                   )}
                 </div>
               ))}
               <button type="button" onClick={addPic} className="text-sm text-[#1a5c4f] hover:underline self-start">
-                + Tambah PIC
+                + Tambah Sales
               </button>
             </div>
           </Field>
