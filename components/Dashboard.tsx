@@ -13,22 +13,17 @@ interface Props {
 
 type Period = "daily" | "weekly" | "monthly";
 
-function SectionHeader({ title, icon, accent, action, onClick }: { title: string; icon?: string; accent?: string; action?: string; onClick?: () => void }) {
+function SectionHeader({ title, accent, action, onClick }: { title: string; icon?: string; accent?: string; action?: string; onClick?: () => void }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-      <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--ink)", display: "flex", alignItems: "center", gap: 8 }}>
-        {icon && (
-          <span style={{
-            width: 26, height: 26, borderRadius: 8, background: accent ? `${accent}22` : "var(--brand-soft)",
-            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0,
-          }}>{icon}</span>
-        )}
+      <h2 style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: "var(--ink)", display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ width: 3, height: 14, background: accent || "var(--brand)", borderRadius: 999, display: "inline-block", flexShrink: 0 }} />
         {title}
       </h2>
       {action && (
         <button onClick={onClick} style={{
           background: "none", border: "none", cursor: "pointer", fontSize: 12,
-          color: accent || "var(--brand)", fontWeight: 700, padding: "2px 6px",
+          color: "var(--ink-soft)", fontWeight: 600, padding: "2px 6px",
         }}>{action} →</button>
       )}
     </div>
@@ -204,46 +199,46 @@ export default function Dashboard({ data, onNavigate }: Props) {
   const kpis = [
     {
       label: "Pipeline Aktif", num: openDeals.length, sub: fmtIDR(pipelineValue),
-      icon: "💰", bg: "#DBEAFE", fg: "#1D4ED8", view: "pipeline" as ActiveView,
+      abbr: "PL", accent: "var(--brand)", view: "pipeline" as ActiveView,
     },
     {
       label: "Weighted Value", num: fmtIDR(Math.round(weighted)), sub: "prob. tertimbang",
-      icon: "⚖️", bg: "#EDE9FE", fg: "#6D28D9", view: "pipeline" as ActiveView,
+      abbr: "WV", accent: "var(--brand)", view: "pipeline" as ActiveView,
     },
     {
       label: "Closed Won", num: fmtIDR(wonValue), sub: `${wonDeals.length} deal`,
-      icon: "🏆", bg: "#DCFCE7", fg: "#15803D", view: "pipeline" as ActiveView,
+      abbr: "WON", accent: "var(--brand)", view: "pipeline" as ActiveView,
     },
     {
       label: "Win Rate", num: winRate !== null ? `${winRate}%` : "—",
       sub: closedTotal > 0 ? `dari ${closedTotal} closed` : "belum ada closed",
-      icon: "🎯", bg: "#CCFBF1", fg: "#0F766E", view: "pipeline" as ActiveView,
+      abbr: "WR", accent: "var(--brand)", view: "pipeline" as ActiveView,
     },
     {
       label: `Closing ${periodLabel}`, num: closingInPeriod.length,
       sub: fmtIDR(closingInPeriod.reduce((s, d) => s + d.value, 0)),
-      icon: "⏳", bg: "#FEF3C7", fg: "#B45309", view: "pipeline" as ActiveView,
+      abbr: "CL", accent: "#8B6914", view: "pipeline" as ActiveView,
     },
     {
       label: `Visit ${periodLabel}`, num: periodVisits.length,
       sub: `${periodVisits.filter(v => v.status === "Done").length} selesai`,
-      icon: "🚗", bg: "#CFFAFE", fg: "#0E7490", view: "calendar" as ActiveView,
+      abbr: "VS", accent: "var(--brand)", view: "calendar" as ActiveView,
     },
     {
       label: "Reschedule Pending", num: followups.length,
       sub: "butuh tindak lanjut",
-      icon: "🔄", bg: followups.length > 0 ? "#FFE4E6" : "#DCFCE7", fg: followups.length > 0 ? "#BE123C" : "#15803D",
+      abbr: "RS", accent: followups.length > 0 ? "var(--danger)" : "var(--brand)",
       view: "calendar" as ActiveView,
     },
     {
       label: `Aktivitas ${periodLabel}`, num: periodActivities.length,
       sub: "log aktivitas",
-      icon: "💬", bg: "#FCE7F3", fg: "#BE185D", view: "clients" as ActiveView,
+      abbr: "AK", accent: "var(--ink-soft)", view: "clients" as ActiveView,
     },
     {
       label: "Task Open", num: openTasks.length,
-      sub: overdueTasks.length > 0 ? `⚠ ${overdueTasks.length} overdue` : "semua on track",
-      icon: "✅", bg: overdueTasks.length > 0 ? "#FFEDD5" : "#DCFCE7", fg: overdueTasks.length > 0 ? "#C2410C" : "#15803D",
+      sub: overdueTasks.length > 0 ? `${overdueTasks.length} overdue` : "semua on track",
+      abbr: "TK", accent: overdueTasks.length > 0 ? "var(--danger)" : "var(--brand)",
       view: "tasks" as ActiveView,
     },
   ];
@@ -262,20 +257,20 @@ export default function Dashboard({ data, onNavigate }: Props) {
           <div key={i} className="kpi-v2"
             style={{
               cursor: "pointer", background: "var(--card)", border: "1px solid var(--line)",
-              borderRadius: 14, padding: "16px 18px", boxShadow: "var(--shadow)",
+              borderRadius: 12, padding: "16px 18px", boxShadow: "var(--shadow)",
+              borderTop: `2px solid ${k.accent}`,
             }}
             onClick={() => onNavigate(k.view)}
-            title={`Buka ${k.view}`}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <div style={{
-                width: 34, height: 34, borderRadius: 10, background: k.bg,
-                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0,
-              }}>{k.icon}</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <div className="kpi-label" style={{ margin: 0 }}>{k.label}</div>
+              <div style={{
+                fontSize: 9, fontWeight: 800, letterSpacing: ".1em",
+                color: k.accent, opacity: .55, flexShrink: 0,
+              }}>{k.abbr}</div>
             </div>
-            <div className="kpi-num" style={{ color: k.fg }}>{k.num}</div>
-            <div className="kpi-sub">{k.sub}</div>
+            <div className="kpi-num" style={{ color: k.accent }}>{k.num}</div>
+            <div className="kpi-sub" style={{ marginTop: 4 }}>{k.sub}</div>
           </div>
         ))}
       </div>
