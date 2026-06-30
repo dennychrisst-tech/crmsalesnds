@@ -46,7 +46,7 @@ interface FeedItem {
 
 export default function SummaryView({ data }: Props) {
   const { clients, deals, visits, tasks, activities, events, profiles } = data;
-  const team = profiles.filter(p => !["super_admin","admin"].includes(p.role)).map(p => p.name).filter(Boolean);
+  const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [period, setPeriod] = useState<Period>("week");
   const [offset, setOffset] = useState(0);
 

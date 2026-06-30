@@ -29,7 +29,7 @@ function urgencyClass(dueDate: string, status: string): string {
 
 export default function TasksView({ data, currentUserName, isViewer, onSaveTask, onDeleteTask }: Props) {
   const { tasks, clients, deals, profiles } = data;
-  const team = profiles.filter(p => !["super_admin","admin"].includes(p.role)).map(p => p.name).filter(Boolean);
+  const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [filterStatus, setFilterStatus] = useState<"All" | "Open" | "Done">("Open");

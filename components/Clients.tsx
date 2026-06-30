@@ -47,7 +47,7 @@ function lastContactDate(clientId: string, visits: Visit[], activities: Activity
 
 export default function Clients({ data, currentUserName, isViewer, onSaveClient, onDeleteClient, onSaveContact, onDeleteContact, onSaveVisit, onDeleteVisit }: Props) {
   const { clients, contacts, visits, deals, activities, profiles } = data;
-  const team = profiles.filter(p => !["super_admin","admin"].includes(p.role)).map(p => p.name).filter(Boolean);
+  const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
 
   const [clientModalOpen, setClientModalOpen] = useState(false);

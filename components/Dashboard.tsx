@@ -87,7 +87,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
 
   // ── Team activity this month ──────────────────────────────────────────────
   const teamActivity: Record<string, { visits: number; tasks: number }> = {};
-  profiles.filter(p => !["super_admin", "admin"].includes(p.role)).forEach(p => {
+  profiles.filter(p => !["super_admin", "admin", "viewer"].includes(p.role)).forEach(p => {
     if (!p.name) return;
     teamActivity[p.name] = {
       visits: visitsThisMonth.filter(v => v.pic === p.name).length,
