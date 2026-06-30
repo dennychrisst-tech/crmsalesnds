@@ -29,9 +29,15 @@ function serializeDates(obj: unknown): unknown {
   return obj;
 }
 
+function denyViewer(session: { role: string }) {
+  if (session.role === "viewer") return NextResponse.json({ error: "Forbidden: akses view only" }, { status: 403 });
+  return null;
+}
+
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ table: string; id: string }> }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = denyViewer(session); if (denied) return denied;
 
   const { table, id } = await params;
   if (!ALLOWED.includes(table as TableName)) {
@@ -50,6 +56,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ table: string; id: string }> }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = denyViewer(session); if (denied) return denied;
 
   const { table, id } = await params;
   if (!ALLOWED.includes(table as TableName)) {

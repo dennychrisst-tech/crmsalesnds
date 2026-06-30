@@ -10,8 +10,9 @@ interface UserRow {
   created_at: string;
 }
 
-const ROLES: UserRole[] = ["employee", "admin", "super_admin"];
+const ROLES: UserRole[] = ["viewer", "employee", "admin", "super_admin"];
 const ROLE_LABEL: Record<UserRole, string> = {
+  viewer: "Viewer",
   employee: "Employee",
   admin: "Admin",
   super_admin: "Super Admin",

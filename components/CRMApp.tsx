@@ -48,6 +48,13 @@ export default function CRMApp() {
     upsertEvent, deleteEvent,
   } = useData();
 
+  const isViewer = currentProfile?.role === "viewer";
+  const readOnly = async () => { alert("Anda hanya memiliki akses lihat (view only)."); };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ro = <T,>(_fn: (v: T) => Promise<void>) => isViewer ? (readOnly as any) : _fn;
+  const roDel = (fn: (id: string) => Promise<void>) => isViewer ? (readOnly as (id: string) => Promise<void>) : fn;
+  const roUpload = (fn: (f: File, d?: string, c?: string) => Promise<void>) => isViewer ? (readOnly as typeof fn) : fn;
+
   return (
     <div className="app">
       <header className="top">
@@ -91,31 +98,31 @@ export default function CRMApp() {
                 {view === "dashboard" && <Dashboard data={data} />}
                 {view === "calendar" && (
                   <CalendarView data={data} currentUserName={currentUserName}
-                    onSaveVisit={upsertVisit} onDeleteVisit={deleteVisit}
-                    onSaveEvent={upsertEvent} onDeleteEvent={deleteEvent}
-                    onCreateTask={upsertTask} />
+                    onSaveVisit={ro(upsertVisit)} onDeleteVisit={roDel(deleteVisit)}
+                    onSaveEvent={ro(upsertEvent)} onDeleteEvent={roDel(deleteEvent)}
+                    onCreateTask={ro(upsertTask)} />
                 )}
                 {view === "clients" && (
                   <Clients data={data} currentUserName={currentUserName}
-                    onSaveClient={upsertClient} onDeleteClient={deleteClient}
-                    onSaveContact={upsertContact} onDeleteContact={deleteContact}
-                    onSaveVisit={upsertVisit} onDeleteVisit={deleteVisit} />
+                    onSaveClient={ro(upsertClient)} onDeleteClient={roDel(deleteClient)}
+                    onSaveContact={ro(upsertContact)} onDeleteContact={roDel(deleteContact)}
+                    onSaveVisit={ro(upsertVisit)} onDeleteVisit={roDel(deleteVisit)} />
                 )}
                 {view === "pipeline" && (
                   <Pipeline data={data} currentUserName={currentUserName}
-                    onSaveDeal={upsertDeal} onDeleteDeal={deleteDeal} onUpdateStage={updateDealStage}
-                    onAddDocument={upsertDocument} onDeleteDocument={deleteDocument}
-                    onUploadAttachment={uploadAttachment} onDeleteAttachment={deleteAttachment}
-                    onAddActivity={upsertActivity} onDeleteActivity={deleteActivity} />
+                    onSaveDeal={ro(upsertDeal)} onDeleteDeal={roDel(deleteDeal)} onUpdateStage={roDel(updateDealStage)}
+                    onAddDocument={ro(upsertDocument)} onDeleteDocument={roDel(deleteDocument)}
+                    onUploadAttachment={roUpload(uploadAttachment)} onDeleteAttachment={roDel(deleteAttachment)}
+                    onAddActivity={ro(upsertActivity)} onDeleteActivity={roDel(deleteActivity)} />
                 )}
                 {view === "projects" && (
-                  <Projects data={data} onSaveProject={upsertProject} onDeleteProject={deleteProject} />
+                  <Projects data={data} onSaveProject={ro(upsertProject)} onDeleteProject={roDel(deleteProject)} />
                 )}
                 {view === "tasks" && (
-                  <TasksView data={data} currentUserName={currentUserName} onSaveTask={upsertTask} onDeleteTask={deleteTask} />
+                  <TasksView data={data} currentUserName={currentUserName} onSaveTask={ro(upsertTask)} onDeleteTask={roDel(deleteTask)} />
                 )}
                 {view === "catalog" && (
-                  <ProductsView data={data} onSaveProduct={upsertProduct} onDeleteProduct={deleteProduct} />
+                  <ProductsView data={data} onSaveProduct={ro(upsertProduct)} onDeleteProduct={roDel(deleteProduct)} />
                 )}
                 {view === "summary" && <SummaryView data={data} />}
               </>
