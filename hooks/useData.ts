@@ -51,7 +51,7 @@ export function useData() {
         clients: json.clients ?? [],
         contacts: json.contacts ?? [],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        visits: (json.visits ?? []).map((v: any) => ({ ...v, date: d10(v.date) }) as Visit),
+        visits: (json.visits ?? []).map((v: any) => ({ ...v, date: d10(v.date), followup_date: d10(v.followup_date) }) as Visit),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         deals: (json.deals ?? []).map((v: any) => ({ ...v, close_date: d10(v.close_date) }) as Deal),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

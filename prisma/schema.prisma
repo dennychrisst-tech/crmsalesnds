@@ -69,6 +69,7 @@ model Visit {
   pic           String   @default("")
   pic_client    String   @default("")
   jabatan       String   @default("")
+  followup_date DateTime? @db.Date
   summary       String   @default("")
   created_by_id String?  @db.Uuid
   created_at    DateTime @default(now())

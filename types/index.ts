@@ -47,6 +47,7 @@ export interface Visit {
   pic: string;
   pic_client: string;
   jabatan: string;
+  followup_date?: string | null;
   summary: string;
   created_by_id?: string;
   created_at?: string;

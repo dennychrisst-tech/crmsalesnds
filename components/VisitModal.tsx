@@ -19,11 +19,18 @@ interface Props {
   onClose: () => void;
 }
 
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit {
   return {
     id: uuid(), client_id: clientId, project: null, date,
     purpose: "", approach: "", status: "Planned",
-    pic: defaultPic, pic_client: "", jabatan: "", summary: "",
+    pic: defaultPic, pic_client: "", jabatan: "",
+    followup_date: addDays(date, 7), summary: "",
   };
 }
 
@@ -33,7 +40,13 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
 
   useEffect(() => {
     if (visit) {
-      setForm({ ...visit, jabatan: visit.jabatan ?? "", project: visit.project ?? null });
+      const date = visit.date || todayStr();
+      setForm({
+        ...visit,
+        jabatan: visit.jabatan ?? "",
+        project: visit.project ?? null,
+        followup_date: visit.followup_date ?? addDays(date, 7),
+      });
     } else {
       setForm(emptyVisit(preClientId || clients[0]?.id || "", defaultPic, preDate || todayStr()));
     }
@@ -78,7 +91,13 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Tanggal approach">
-          <input type="date" className={inputCls} value={form.date} onChange={e => set("date", e.target.value)} />
+          <input type="date" className={inputCls} value={form.date} onChange={e => {
+            const newDate = e.target.value;
+            setForm(f => ({
+              ...f, date: newDate,
+              followup_date: f.followup_date ? f.followup_date : addDays(newDate, 7),
+            }));
+          }} />
         </Field>
         <Field label="Status">
           <select className={selectCls} value={form.status} onChange={e => set("status", e.target.value as Visit["status"])}>
@@ -86,6 +105,10 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
           </select>
         </Field>
       </div>
+
+      <Field label="Tanggal follow-up (default 1 minggu)">
+        <input type="date" className={inputCls} value={form.followup_date || ""} onChange={e => set("followup_date", e.target.value || null)} />
+      </Field>
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="PIC Client yang dikunjungi">

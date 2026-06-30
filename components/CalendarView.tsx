@@ -27,12 +27,15 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
   async function handleSaveVisit(v: Visit) {
     await onSaveVisit(v);
     if (v.status === "Done") {
-      const due = new Date(v.date + "T00:00:00");
-      due.setDate(due.getDate() + 3);
+      const dueStr = v.followup_date || (() => {
+        const d = new Date(v.date + "T00:00:00");
+        d.setDate(d.getDate() + 7);
+        return d.toISOString().slice(0, 10);
+      })();
       await onCreateTask({
         id: uuid(),
         title: `Follow-up: ${clients.find(c => c.id === v.client_id)?.name || "Client"}`,
-        due_date: due.toISOString().slice(0, 10),
+        due_date: dueStr,
         client_id: v.client_id,
         deal_id: null,
         assigned_to: v.pic || "",

@@ -56,7 +56,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
 
   // Convert date strings to Date objects for Prisma DateTime @db.Date fields
   const DATE_FIELDS: Record<string, string[]> = {
-    visits: ["date"],
+    visits: ["date", "followup_date"],
     deals: ["close_date"],
     tasks: ["due_date"],
     activities: ["date"],
