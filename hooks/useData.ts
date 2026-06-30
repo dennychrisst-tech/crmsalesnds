@@ -50,15 +50,21 @@ export function useData() {
       setData({
         clients: json.clients ?? [],
         contacts: json.contacts ?? [],
-        visits: (json.visits ?? []).map((v: Record<string, unknown>) => ({ ...v, date: d10(v.date) } as Visit)),
-        deals: (json.deals ?? []).map((v: Record<string, unknown>) => ({ ...v, close_date: d10(v.close_date) } as Deal)),
-        projects: (json.projects ?? []).map((v: Record<string, unknown>) => ({ ...v, golive: d10(v.golive) } as Project)),
-        tasks: (json.tasks ?? []).map((v: Record<string, unknown>) => ({ ...v, due_date: d10(v.due_date) } as Task)),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        visits: (json.visits ?? []).map((v: any) => ({ ...v, date: d10(v.date) }) as Visit),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        deals: (json.deals ?? []).map((v: any) => ({ ...v, close_date: d10(v.close_date) }) as Deal),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        projects: (json.projects ?? []).map((v: any) => ({ ...v, golive: d10(v.golive) }) as Project),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        tasks: (json.tasks ?? []).map((v: any) => ({ ...v, due_date: d10(v.due_date) }) as Task),
         products: (json.products ?? []) as Product[],
         documents: (json.documents ?? []) as CRMDocument[],
         attachments: (json.attachments ?? []) as Attachment[],
-        activities: (json.activities ?? []).map((v: Record<string, unknown>) => ({ ...v, date: d10(v.date) } as Activity)),
-        events: (json.events ?? []).map((v: Record<string, unknown>) => ({ ...v, date: d10(v.date) } as CalendarEvent)),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        activities: (json.activities ?? []).map((v: any) => ({ ...v, date: d10(v.date) }) as Activity),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        events: (json.events ?? []).map((v: any) => ({ ...v, date: d10(v.date) }) as CalendarEvent),
         profiles: json.profiles ?? [],
       });
       if (json.currentUser) {
