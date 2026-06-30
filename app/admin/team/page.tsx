@@ -1,0 +1,91 @@
+"use client";
+import { useEffect, useState } from "react";
+
+interface TeamMember {
+  id: string; name: string; email: string; role: string; created_at: string;
+  clients: number; deals: number; dealValue: number; visits: number; activities: number;
+}
+
+const ROLE_LABEL: Record<string, string> = {
+  employee: "Employee", admin: "Admin", super_admin: "Super Admin",
+};
+const ROLE_COLOR: Record<string, string> = {
+  employee: "#64748b", admin: "#3b82f6", super_admin: "#8b5cf6",
+};
+
+function formatIDR(n: number) {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}M`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(0)}jt`;
+  return n.toLocaleString("id-ID");
+}
+
+export default function AdminTeam() {
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/team").then(r => r.json()).then(setTeam).finally(() => setLoading(false));
+  }, []);
+
+  const th: React.CSSProperties = {
+    padding: "11px 16px", textAlign: "left", fontSize: "11px",
+    fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: ".08em", color: "var(--ink-soft)",
+  };
+  const td: React.CSSProperties = { padding: "13px 16px", fontSize: "13px" };
+
+  return (
+    <div>
+      <div style={{ marginBottom: "24px" }}>
+        <h1 style={{ fontSize: "20px", fontWeight: 800, color: "var(--ink)", margin: 0 }}>Manajemen Tim</h1>
+        <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginTop: "4px" }}>Performa setiap anggota tim berdasarkan data CRM</p>
+      </div>
+
+      <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "12px", overflow: "hidden" }}>
+        {loading ? (
+          <div style={{ padding: "32px", textAlign: "center", color: "var(--ink-soft)", fontSize: "13px" }}>Memuat data…</div>
+        ) : team.length === 0 ? (
+          <div style={{ padding: "32px", textAlign: "center", color: "var(--ink-soft)", fontSize: "13px" }}>Belum ada anggota tim.</div>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid var(--line)" }}>
+                {["Nama", "Role", "Client", "Deal", "Nilai Deal", "Kunjungan", "Aktivitas", "Bergabung"].map(h => (
+                  <th key={h} style={th}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {team.map((m, i) => (
+                <tr key={m.id} style={{ borderBottom: i < team.length - 1 ? "1px solid var(--line)" : "none" }}>
+                  <td style={td}>
+                    <div style={{ fontWeight: 600 }}>{m.name || "—"}</div>
+                    <div style={{ fontSize: "11px", color: "var(--ink-soft)", marginTop: "2px" }}>{m.email}</div>
+                  </td>
+                  <td style={td}>
+                    <span style={{
+                      display: "inline-block", padding: "3px 8px", borderRadius: "20px",
+                      fontSize: "11px", fontWeight: 700,
+                      background: `${ROLE_COLOR[m.role]}20`, color: ROLE_COLOR[m.role],
+                    }}>
+                      {ROLE_LABEL[m.role] ?? m.role}
+                    </span>
+                  </td>
+                  <td style={{ ...td, fontWeight: 600, color: "#0ea5e9" }}>{m.clients}</td>
+                  <td style={{ ...td, fontWeight: 600, color: "#8b5cf6" }}>{m.deals}</td>
+                  <td style={{ ...td, fontWeight: 600, color: "#10b981", fontSize: "12px" }}>
+                    {m.dealValue > 0 ? `Rp ${formatIDR(m.dealValue)}` : "—"}
+                  </td>
+                  <td style={{ ...td, fontWeight: 600, color: "#f59e0b" }}>{m.visits}</td>
+                  <td style={{ ...td, fontWeight: 600, color: "#ec4899" }}>{m.activities}</td>
+                  <td style={{ ...td, color: "var(--ink-soft)", fontSize: "12px" }}>
+                    {new Date(m.created_at).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -208,3 +208,11 @@ model Event {
 
   @@map("events")
 }
+
+model AppSetting {
+  key        String   @id
+  value      String   @default("")
+  updated_at DateTime @default(now()) @updatedAt
+
+  @@map("app_settings")
+}
