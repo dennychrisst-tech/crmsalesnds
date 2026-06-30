@@ -40,11 +40,11 @@ export default function EventModal({ open, event, preDate, onSave, onDelete, onC
   const set = (k: keyof CalendarEvent, v: string) => setForm(f => ({ ...f, [k]: v }));
 
   function toggleMember(name: string) {
-    setSelected(prev => {
-      const next = prev.includes(name) ? prev.filter(x => x !== name) : [...prev, name];
-      setForm(f => ({ ...f, created_by: joinMembers(next) }));
-      return next;
-    });
+    const next = selected.includes(name)
+      ? selected.filter(x => x !== name)
+      : [...selected, name];
+    setSelected(next);
+    setForm(f => ({ ...f, created_by: joinMembers(next) }));
   }
 
   async function handleSave() {
