@@ -44,12 +44,12 @@ export default function Dashboard({ data, onNavigate }: Props) {
   const in30Str = in30.toISOString().slice(0, 10);
   const closingSoon = openDeals
     .filter(d => d.close_date && d.close_date >= today && d.close_date <= in30Str)
-    .sort((a, b) => a.close_date.localeCompare(b.close_date));
+    .sort((a, b) => (a.close_date || "").localeCompare(b.close_date || ""));
 
   const closingThisMonth = openDeals.filter(d => d.close_date?.startsWith(monthPrefix));
 
   // Pipeline per stage
-  const stageData = STAGES.filter(s => s !== "Won" && s !== "Lost").map(stage => {
+  const stageData = STAGES.filter(s => s !== "Won").map(stage => {
     const stageDeals = openDeals.filter(d => d.stage === stage);
     return { stage, count: stageDeals.length, value: stageDeals.reduce((s, d) => s + d.value, 0) };
   });
