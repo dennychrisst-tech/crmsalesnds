@@ -4,9 +4,11 @@ alter table clients add column if not exists website text not null default '';
 alter table clients add column if not exists company_size text not null default '';
 
 -- Migrate pic from text to text[] (preserves existing data)
+alter table clients alter column pic drop default;
 alter table clients
   alter column pic type text[]
   using case when pic = '' then array[]::text[] else array[pic] end;
+alter table clients alter column pic set default array[]::text[];
 
 -- Owner and win/loss reason on deals
 alter table deals add column if not exists owner text not null default '';
