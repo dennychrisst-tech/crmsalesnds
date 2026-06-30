@@ -4,6 +4,7 @@ import { AppData } from "@/hooks/useData";
 import { ActiveView } from "@/types";
 import { STAGES, STAGE_PROB, STAGE_COLOR, fmtIDR, fmtDate, todayStr } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
+import EmptyState from "./ui/EmptyState";
 
 interface Props {
   data: AppData;
@@ -316,7 +317,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
               <div className="ti-body">{v.purpose} <VisitBadge status={v.status} /></div>
               {v.pic && <div className="muted" style={{ fontSize: 11 }}>PIC: {v.pic}</div>}
             </div>
-          )) : <div className="empty-state">Belum ada visit terjadwal.</div>}
+          )) : <EmptyState icon="🗓️" label="Belum ada visit terjadwal" sub="Tambah visit dari tab Calendar" />}
         </div>
 
         <div className="panel" style={panelStyle(followups.length > 0 ? PANEL_ACCENTS.reschedule : PANEL_ACCENTS.reschedule_ok)}>
@@ -327,7 +328,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
               <div className="ti-body">{v.summary || v.purpose}</div>
               {v.pic && <div className="muted" style={{ fontSize: 11 }}>PIC: {v.pic}</div>}
             </div>
-          )) : <div className="empty-state" style={{ color: "#16a34a" }}>Tidak ada follow-up tertunda.</div>}
+          )) : <EmptyState icon="✅" label="Tidak ada follow-up tertunda" />}
         </div>
       </div>
 
@@ -355,7 +356,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
                 <div className="muted" style={{ fontSize: 11 }}>Stage: {d.stage} · PIC: {d.owner || "—"}</div>
               </div>
             );
-          }) : <div className="empty-state">Tidak ada deal jatuh tempo 30 hari ke depan.</div>}
+          }) : <EmptyState icon="📭" label="Tidak ada deal closing 30 hari ke depan" />}
         </div>
 
         <div className="panel" style={panelStyle(overdueTasks.length > 0 ? PANEL_ACCENTS.task : PANEL_ACCENTS.task_ok)}>
@@ -365,7 +366,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
             action="Buka Tasks" onClick={() => onNavigate("tasks")}
           />
           {!upcomingTasks.length ? (
-            <div className="empty-state">Tidak ada task terjadwal.</div>
+            <EmptyState icon="🎉" label="Semua task beres!" />
           ) : upcomingTasks.map(t => {
             const isOverdue = t.due_date < today;
             return (
@@ -403,7 +404,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
                 <div style={{ fontSize: 13, fontWeight: 700, color: PANEL_ACCENTS.client }}>{fmtIDR(c.value)}</div>
               </div>
             );
-          }) : <div className="empty-state">Belum ada deal pipeline.</div>}
+          }) : <EmptyState icon="💰" label="Belum ada deal pipeline" sub="Tambah deal dari tab Pipeline" />}
         </div>
 
         <div className="panel" style={panelStyle(PANEL_ACCENTS.project)}>
@@ -426,7 +427,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
                 flexShrink: 0,
               }}>{p.status}</span>
             </div>
-          )) : <div className="empty-state">Tidak ada project aktif.</div>}
+          )) : <EmptyState icon="🏗️" label="Tidak ada project aktif" />}
         </div>
       </div>
 

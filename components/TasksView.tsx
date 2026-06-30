@@ -4,6 +4,7 @@ import { AppData } from "@/hooks/useData";
 import { Task, Client, Deal } from "@/types";
 import { fmtDate, todayStr, TASK_STATUS_COLOR } from "@/lib/utils";
 import TaskModal from "./TaskModal";
+import EmptyState from "./ui/EmptyState";
 
 interface Props {
   data: AppData;
@@ -81,7 +82,7 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
       )}
 
       {!filtered.length ? (
-        <div className="panel"><div className="empty-state">Tidak ada task yang cocok.</div></div>
+        <div className="panel"><EmptyState icon="✅" label="Tidak ada task yang cocok" sub="Coba ubah filter atau tambah task baru" /></div>
       ) : (
         <div className="panel" style={{ padding: 0 }}>
           <table>

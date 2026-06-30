@@ -15,15 +15,15 @@ import GlobalSearch from "./GlobalSearch";
 import SummaryView from "./SummaryView";
 import VisitReport from "./VisitReport";
 
-const TABS: { id: ActiveView; label: string }[] = [
-  { id: "dashboard", label: "Dashboard" },
-  { id: "calendar", label: "Calendar Visit" },
-  { id: "clients", label: "Client" },
-  { id: "pipeline", label: "Pipeline" },
-  { id: "projects", label: "Project" },
-  { id: "tasks", label: "Tasks" },
-  { id: "summary", label: "Summary Activity" },
-  { id: "visit-report", label: "Laporan Visit" },
+const TABS: { id: ActiveView; label: string; icon: string }[] = [
+  { id: "dashboard",    label: "Dashboard",         icon: "📊" },
+  { id: "calendar",    label: "Calendar Visit",     icon: "📅" },
+  { id: "clients",     label: "Client",             icon: "🏢" },
+  { id: "pipeline",    label: "Pipeline",           icon: "💼" },
+  { id: "projects",    label: "Project",            icon: "🏗️" },
+  { id: "tasks",       label: "Tasks",              icon: "✅" },
+  { id: "summary",     label: "Summary Activity",   icon: "📈" },
+  { id: "visit-report",label: "Laporan Visit",      icon: "📋" },
 ];
 
 export default function CRMApp() {
@@ -81,7 +81,7 @@ export default function CRMApp() {
       <nav className="tabs">
         {TABS.map(t => (
           <button key={t.id} className={view === t.id ? "active" : ""} onClick={() => setView(t.id)}>
-            {t.label}
+            <span className="tab-icon">{t.icon}</span>{t.label}
           </button>
         ))}
       </nav>

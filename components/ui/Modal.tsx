@@ -22,11 +22,11 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
 
   return (
     <div
-      className="fixed inset-0 bg-[rgba(11,27,43,.45)] flex items-start justify-center p-10 z-50 overflow-y-auto"
+      className="fixed inset-0 bg-[rgba(11,27,43,.45)] flex items-start justify-center p-3 sm:p-10 z-50 overflow-y-auto"
       onMouseDown={(e) => { mouseDownOnBackdrop.current = e.target === e.currentTarget; }}
       onClick={(e) => { if (e.target === e.currentTarget && mouseDownOnBackdrop.current) onClose(); }}
     >
-      <div ref={ref} className="bg-[var(--card)] rounded-2xl w-full max-w-xl p-6 shadow-2xl">
+      <div ref={ref} className="bg-[var(--card)] rounded-2xl w-full max-w-xl p-4 sm:p-6 shadow-2xl">
         <h3 className="text-lg font-bold mb-4">{title}</h3>
         {children}
       </div>

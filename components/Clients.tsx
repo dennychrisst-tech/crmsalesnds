@@ -3,6 +3,7 @@ import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { Client, Contact, Visit, PIC, Activity, ActiveView } from "@/types";
 import { fmtDate, isoWeekLabel, CLIENT_STATUS_COLOR } from "@/lib/utils";
+import EmptyState from "./ui/EmptyState";
 import { VisitBadge } from "./ui/Badge";
 import ClientModal from "./ClientModal";
 import ContactModal from "./ContactModal";
@@ -184,7 +185,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
                 {!isViewer && <button className="btn btn-ghost btn-sm vt-add" style={{ marginLeft: "auto" }} onClick={() => openContactNew(c.id)}>+ Kontak</button>}
               </div>
               {!clientContacts.length ? (
-                <div className="vt-empty">Belum ada kontak person.</div>
+                <div className="vt-empty">👤 Belum ada kontak person.</div>
               ) : (
                 <div className="contact-grid">
                   {clientContacts.map(ct => (
@@ -246,7 +247,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
                 {!isViewer && <button className="btn btn-ghost btn-sm vt-add" style={{ marginLeft: "auto" }} onClick={() => { setEditVisit(null); setPreClientId(c.id); setVisitModalOpen(true); }}>+ Visit</button>}
               </div>
               {!clientVisits.length ? (
-                <div className="vt-empty">Belum ada visit tercatat.</div>
+                <div className="vt-empty">🚗 Belum ada visit tercatat.</div>
               ) : groupKeys.map(k => (
                 <div key={k} className="week-group">
                   <div className="week-label">{groups[k].label}</div>
@@ -262,7 +263,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
             </div>
           </div>
         );
-      }) : <div className="panel"><div className="empty-state">Belum ada client.</div></div>}
+      }) : <div className="panel"><EmptyState icon="🏢" label="Belum ada client" sub="Tambah client pertama Anda" /></div>}
 
       <ClientModal open={clientModalOpen} client={editClient} team={team}
         onSave={onSaveClient} onDelete={onDeleteClient} onClose={() => setClientModalOpen(false)} />
