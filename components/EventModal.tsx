@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
-import { CalendarEvent } from "@/types";
+import { CalendarEvent, Client } from "@/types";
 import { EVENT_TYPES, todayStr } from "@/lib/utils";
 
 interface Props {
@@ -10,6 +10,7 @@ interface Props {
   event: CalendarEvent | null;
   preDate?: string;
   team: string[];
+  clients: Client[];
   defaultMember?: string;
   onSave: (e: CalendarEvent) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
@@ -17,7 +18,7 @@ interface Props {
 }
 
 function emptyEvent(date?: string): CalendarEvent {
-  return { id: uuid(), title: "", date: date || todayStr(), type: "Meeting Online", description: "", created_by: "" };
+  return { id: uuid(), title: "", date: date || todayStr(), type: "Meeting Online", description: "", created_by: "", client_id: null };
 }
 
 function parseMembers(s: string): string[] {
@@ -28,20 +29,20 @@ function joinMembers(arr: string[]): string {
   return arr.join(", ");
 }
 
-export default function EventModal({ open, event, preDate, team, defaultMember = "", onSave, onDelete, onClose }: Props) {
+export default function EventModal({ open, event, preDate, team, clients, defaultMember = "", onSave, onDelete, onClose }: Props) {
   const isEdit = !!event;
   const [form, setForm] = useState<CalendarEvent>(emptyEvent(preDate));
   const [selected, setSelected] = useState<string[]>([]);
 
   useEffect(() => {
     const base = event || emptyEvent(preDate);
-    setForm(base);
+    setForm({ ...base, client_id: base.client_id ?? null });
     const members = parseMembers(base.created_by);
     // Auto-select current user when creating a new event
     setSelected(event ? members : (defaultMember && !members.includes(defaultMember) ? [defaultMember] : members));
   }, [event, preDate, open, defaultMember]);
 
-  const set = (k: keyof CalendarEvent, v: string) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k: keyof CalendarEvent, v: string | null) => setForm(f => ({ ...f, [k]: v }));
 
   function toggleMember(name: string) {
     const next = selected.includes(name)
@@ -78,6 +79,13 @@ export default function EventModal({ open, event, preDate, team, defaultMember =
           <input type="date" className={inputCls} value={form.date} onChange={e => set("date", e.target.value)} />
         </Field>
       </div>
+
+      <Field label="Client (opsional)">
+        <select className={selectCls} value={form.client_id || ""} onChange={e => set("client_id", e.target.value || null)}>
+          <option value="">— Tidak terkait client —</option>
+          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </Field>
 
       <Field label="Peserta (Tim Sales)">
         <div className="member-grid">

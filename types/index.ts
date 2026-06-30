@@ -148,6 +148,7 @@ export interface CalendarEvent {
   type: string;
   description: string;
   created_by: string;
+  client_id?: string | null;
   created_by_id?: string;
   created_at?: string;
 }

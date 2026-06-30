@@ -207,6 +207,7 @@ model Event {
   type          String   @default("Meeting Online")
   description   String   @default("")
   created_by    String   @default("")
+  client_id     String?  @db.Uuid
   created_by_id String?  @db.Uuid
   created_at    DateTime @default(now())
 
