@@ -332,3 +332,76 @@ tr.task-soon td { background: #fffbeb; }
 .catalog-cat { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--brand); font-weight: 700; margin-bottom: 4px; }
 .catalog-name { font-size: 15px; font-weight: 800; }
 .catalog-desc { font-size: 12px; color: var(--ink-soft); margin-top: 6px; line-height: 1.4; }
+
+/* ───────────────────── Mobile ───────────────────── */
+@media (max-width: 640px) {
+  .app { padding: 0 10px 60px; }
+
+  /* Header — wraps into rows: brand+tag / search (full width) / sync+admin+logout */
+  header.top {
+    flex-wrap: wrap; row-gap: 10px; padding: 14px 0 14px; margin-bottom: 14px;
+  }
+  .header-brand svg { height: 32px; }
+  .header-crm-tag { font-size: 9px; padding: 2px 6px; }
+  .gs-wrap { order: 3; flex: 1 1 100%; max-width: 100%; }
+  .sync-status { order: 4; font-size: 11px; }
+  .btn-admin, .btn-logout { order: 5; padding: 5px 10px; font-size: 11px; }
+
+  /* Nav — horizontal scroll instead of wrapping pills */
+  nav.tabs {
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    margin: 0 -10px 18px; padding: 0 10px 6px;
+    scrollbar-width: none;
+  }
+  nav.tabs::-webkit-scrollbar { display: none; }
+  nav.tabs button { flex-shrink: 0; padding: 8px 13px; font-size: 12.5px; }
+
+  /* KPI cards — 2 per row, tighter padding */
+  .kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+  .kpi, .kpi-v2 { padding: 12px; border-radius: 12px; }
+  .kpi-num { font-size: 20px; margin-top: 4px; }
+  .kpi-label { font-size: 10px; }
+  .kpi-sub { font-size: 11px; }
+
+  /* Panels & cards — tighter padding */
+  .panel, .ccard { padding: 12px; border-radius: 12px; margin-bottom: 14px; }
+  .panel h2 { font-size: 13.5px; }
+
+  /* Toolbar — stack search/filters full width */
+  .toolbar { gap: 8px; }
+  .search { flex: 1 1 100%; min-width: 0; }
+  .toolbar select { flex: 1 1 auto; }
+
+  /* Calendar — compact cells */
+  .cal-head { gap: 8px; margin-bottom: 10px; }
+  .mtitle { font-size: 15px; }
+  .cal-nav-btn { width: 28px; height: 28px; font-size: 14px; }
+  .cal-legend { gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .cal-legend-item { font-size: 11px; }
+  .calendar { gap: 3px; }
+  .dow { font-size: 9px; padding-bottom: 2px; }
+  .cell { min-height: 56px; padding: 3px; font-size: 10px; border-radius: 6px; }
+  .dnum { font-size: 10px; }
+  .vpill { font-size: 9px; padding: 2px 3px; border-radius: 4px; margin-top: 2px; }
+
+  /* Tables — keep natural width, scroll the panel horizontally instead of squashing columns */
+  .panel { overflow-x: auto; }
+  .panel > table, .panel table { min-width: 540px; }
+  th, td { padding: 7px 8px; font-size: 12px; }
+
+  /* Pipeline board — single column on small phones */
+  .board { grid-template-columns: 1fr; }
+
+  /* Modal tabs / member grid — allow scroll/wrap without overflow */
+  .modal-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+  .modal-tab { flex-shrink: 0; }
+
+  /* Summary view header */
+  .sum-header { gap: 10px; }
+  .sum-period-label { min-width: 0; font-size: 13px; }
+  .sum-nav { flex: 1 1 100%; justify-content: center; }
+
+  /* Client card header */
+  .ccard-head { flex-wrap: wrap; }
+  .cright { margin-left: 0; }
+}
