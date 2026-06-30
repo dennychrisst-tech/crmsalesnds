@@ -1,7 +1,6 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { v4 as uuid } from "uuid";
-import { getSupabase } from "@/lib/supabase";
 import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity, CalendarEvent, Profile } from "@/types";
 
 export interface AppData {
@@ -19,6 +18,19 @@ export interface AppData {
   profiles: Profile[];
 }
 
+async function api(path: string, method = "GET", body?: unknown) {
+  const res = await fetch(path, {
+    method,
+    headers: body ? { "Content-Type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
+    throw new Error(json.error || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 export function useData() {
   const [data, setData] = useState<AppData>({
     clients: [], contacts: [], visits: [], deals: [], projects: [],
@@ -26,49 +38,32 @@ export function useData() {
     profiles: [],
   });
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
-  const userIdRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState("Memuat…");
 
   const load = useCallback(async () => {
     try {
-      const sb = getSupabase();
-      const [c, ct, v, d, p, t, pr, doc, att, act, ev, prof, { data: { user } }] = await Promise.all([
-        sb.from("clients").select("*").order("created_at"),
-        sb.from("contacts").select("*").order("created_at"),
-        sb.from("visits").select("*").order("date"),
-        sb.from("deals").select("*").order("created_at"),
-        sb.from("projects").select("*").order("created_at"),
-        sb.from("tasks").select("*").order("due_date"),
-        sb.from("products").select("*").order("name"),
-        sb.from("documents").select("*").order("created_at"),
-        sb.from("attachments").select("*").order("uploaded_at"),
-        sb.from("activities").select("*").order("created_at", { ascending: false }),
-        sb.from("events").select("*").order("date"),
-        sb.from("profiles").select("id, name, email, role").order("name"),
-        sb.auth.getUser(),
-      ]);
-      const profiles = (prof.data || []) as Profile[];
-      userIdRef.current = user?.id ?? null;
+      const json = await api("/api/data");
       setData({
-        clients: (c.data || []) as Client[],
-        contacts: (ct.data || []) as Contact[],
-        visits: (v.data || []) as Visit[],
-        deals: (d.data || []) as Deal[],
-        projects: (p.data || []) as Project[],
-        tasks: (t.data || []) as Task[],
-        products: (pr.data || []) as Product[],
-        documents: (doc.data || []) as CRMDocument[],
-        attachments: (att.data || []) as Attachment[],
-        activities: (act.data || []) as Activity[],
-        events: (ev.data || []) as CalendarEvent[],
-        profiles,
+        clients: json.clients ?? [],
+        contacts: json.contacts ?? [],
+        visits: json.visits ?? [],
+        deals: json.deals ?? [],
+        projects: json.projects ?? [],
+        tasks: json.tasks ?? [],
+        products: json.products ?? [],
+        documents: json.documents ?? [],
+        attachments: json.attachments ?? [],
+        activities: json.activities ?? [],
+        events: json.events ?? [],
+        profiles: json.profiles ?? [],
       });
-      setCurrentProfile(profiles.find(p => p.id === user?.id) ?? null);
+      if (json.currentUser) {
+        setCurrentProfile({ id: json.currentUser.id, name: json.currentUser.name, email: json.currentUser.email, role: json.currentUser.role });
+      }
       setSyncStatus("Tersimpan otomatis");
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Gagal memuat data";
-      setSyncStatus(msg.includes("env") ? "⚠ Set NEXT_PUBLIC_SUPABASE_URL & ANON_KEY" : "Gagal memuat data");
+      setSyncStatus(e instanceof Error ? e.message : "Gagal memuat data");
     } finally {
       setLoading(false);
     }
@@ -76,168 +71,72 @@ export function useData() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Tags a new record with the current user's ID if not already set
-  function withCreator<T extends { created_by_id?: string }>(record: T): T {
-    if (!record.created_by_id && userIdRef.current) {
-      return { ...record, created_by_id: userIdRef.current };
-    }
-    return record;
-  }
-
-  async function upsertClient(client: Client) {
-    const { error } = await getSupabase().from("clients").upsert(withCreator(client));
-    if (error) throw error;
-    await load();
-  }
-  async function deleteClient(id: string) {
-    const { error } = await getSupabase().from("clients").delete().eq("id", id);
-    if (error) throw error;
+  async function upsert(table: string, record: Record<string, unknown>) {
+    if (!record.id) record.id = uuid();
+    await api(`/api/data/${table}`, "POST", record);
     await load();
   }
 
-  async function upsertContact(contact: Contact) {
-    const { error } = await getSupabase().from("contacts").upsert(withCreator(contact));
-    if (error) throw error;
-    await load();
-  }
-  async function deleteContact(id: string) {
-    const { error } = await getSupabase().from("contacts").delete().eq("id", id);
-    if (error) throw error;
+  async function remove(table: string, id: string) {
+    await api(`/api/data/${table}/${id}`, "DELETE");
     await load();
   }
 
-  async function upsertVisit(visit: Visit) {
-    const payload = withCreator({
-      ...visit,
-      date: visit.date ? new Date(visit.date + "T00:00:00").toISOString() : visit.date,
-    });
-    const { error } = await getSupabase().from("visits").upsert(payload);
-    if (error) throw error;
-    await load();
-  }
-  async function deleteVisit(id: string) {
-    const { error } = await getSupabase().from("visits").delete().eq("id", id);
-    if (error) throw error;
+  async function patch(table: string, id: string, data: Record<string, unknown>) {
+    await api(`/api/data/${table}/${id}`, "PATCH", data);
     await load();
   }
 
-  async function upsertDeal(deal: Deal) {
-    const { error } = await getSupabase().from("deals").upsert(withCreator(deal));
-    if (error) throw error;
-    await load();
-  }
-  async function deleteDeal(id: string) {
-    const { error } = await getSupabase().from("deals").delete().eq("id", id);
-    if (error) throw error;
-    await load();
-  }
-  async function updateDealStage(id: string, stage: string) {
-    const { error } = await getSupabase().from("deals").update({ stage, stage_updated_at: new Date().toISOString() }).eq("id", id);
-    if (error) throw error;
-    await load();
-  }
+  const upsertClient = (c: Client) => upsert("clients", c as unknown as Record<string, unknown>);
+  const deleteClient = (id: string) => remove("clients", id);
 
-  async function upsertProject(project: Project) {
-    const { error } = await getSupabase().from("projects").upsert(withCreator(project));
-    if (error) throw error;
-    await load();
-  }
-  async function deleteProject(id: string) {
-    const { error } = await getSupabase().from("projects").delete().eq("id", id);
-    if (error) throw error;
-    await load();
-  }
+  const upsertContact = (c: Contact) => upsert("contacts", c as unknown as Record<string, unknown>);
+  const deleteContact = (id: string) => remove("contacts", id);
 
-  async function upsertTask(task: Task) {
-    const { error } = await getSupabase().from("tasks").upsert(withCreator(task));
-    if (error) throw error;
-    await load();
-  }
-  async function deleteTask(id: string) {
-    const { error } = await getSupabase().from("tasks").delete().eq("id", id);
-    if (error) throw error;
-    await load();
-  }
+  const upsertVisit = (v: Visit) => upsert("visits", {
+    ...(v as unknown as Record<string, unknown>),
+    date: v.date ? new Date(v.date + "T00:00:00").toISOString() : v.date,
+  });
+  const deleteVisit = (id: string) => remove("visits", id);
 
-  async function upsertProduct(product: Product) {
-    const { error } = await getSupabase().from("products").upsert(withCreator(product));
-    if (error) throw error;
-    await load();
-  }
-  async function deleteProduct(id: string) {
-    const { error } = await getSupabase().from("products").delete().eq("id", id);
-    if (error) throw error;
-    await load();
-  }
+  const upsertDeal = (d: Deal) => upsert("deals", d as unknown as Record<string, unknown>);
+  const deleteDeal = (id: string) => remove("deals", id);
+  const updateDealStage = (id: string, stage: string) =>
+    patch("deals", id, { stage, stage_updated_at: new Date().toISOString() });
 
-  async function upsertDocument(doc: CRMDocument) {
-    const { error } = await getSupabase().from("documents").upsert(withCreator(doc));
-    if (error) throw error;
-    await load();
-  }
-  async function deleteDocument(id: string) {
-    const { error } = await getSupabase().from("documents").delete().eq("id", id);
-    if (error) throw error;
-    await load();
-  }
+  const upsertProject = (p: Project) => upsert("projects", p as unknown as Record<string, unknown>);
+  const deleteProject = (id: string) => remove("projects", id);
 
-  async function upsertEvent(event: CalendarEvent) {
-    const { error } = await getSupabase().from("events").upsert(withCreator(event));
-    if (error) throw error;
-    await load();
-  }
-  async function deleteEvent(id: string) {
-    const { error } = await getSupabase().from("events").delete().eq("id", id);
-    if (error) throw error;
-    await load();
-  }
+  const upsertTask = (t: Task) => upsert("tasks", t as unknown as Record<string, unknown>);
+  const deleteTask = (id: string) => remove("tasks", id);
 
-  async function upsertActivity(activity: Activity) {
-    const { error } = await getSupabase().from("activities").upsert(withCreator(activity));
-    if (error) throw error;
-    await load();
-  }
-  async function deleteActivity(id: string) {
-    const { error } = await getSupabase().from("activities").delete().eq("id", id);
-    if (error) throw error;
-    await load();
-  }
+  const upsertProduct = (p: Product) => upsert("products", p as unknown as Record<string, unknown>);
+  const deleteProduct = (id: string) => remove("products", id);
+
+  const upsertDocument = (d: CRMDocument) => upsert("documents", d as unknown as Record<string, unknown>);
+  const deleteDocument = (id: string) => remove("documents", id);
+
+  const upsertEvent = (e: CalendarEvent) => upsert("events", e as unknown as Record<string, unknown>);
+  const deleteEvent = (id: string) => remove("events", id);
+
+  const upsertActivity = (a: Activity) => upsert("activities", a as unknown as Record<string, unknown>);
+  const deleteActivity = (id: string) => remove("activities", id);
 
   async function uploadAttachment(file: File, dealId?: string, clientId?: string) {
-    const sb = getSupabase();
-    const folder = dealId || clientId || "misc";
-    const path = `${folder}/${Date.now()}-${file.name}`;
-
-    const { error: upErr } = await sb.storage.from("crm-attachments").upload(path, file);
-    if (upErr) throw upErr;
-
-    const { data: { publicUrl } } = sb.storage.from("crm-attachments").getPublicUrl(path);
-
-    const { error } = await sb.from("attachments").insert({
-      id: uuid(),
-      deal_id: dealId || null,
-      client_id: clientId || null,
-      file_name: file.name,
-      file_url: publicUrl,
-      file_size: file.size,
-      created_by_id: userIdRef.current ?? undefined,
-    });
-    if (error) throw error;
+    const formData = new FormData();
+    formData.append("file", file);
+    if (dealId) formData.append("dealId", dealId);
+    if (clientId) formData.append("clientId", clientId);
+    const res = await fetch("/api/upload", { method: "POST", body: formData });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error || "Upload gagal");
+    }
     await load();
   }
 
   async function deleteAttachment(id: string) {
-    const sb = getSupabase();
-    const { data: att } = await sb.from("attachments").select("file_url").eq("id", id).single();
-    if (att?.file_url) {
-      try {
-        const url = new URL(att.file_url);
-        const parts = url.pathname.split("/crm-attachments/");
-        if (parts[1]) await sb.storage.from("crm-attachments").remove([decodeURIComponent(parts[1])]);
-      } catch (_) {}
-    }
-    const { error } = await sb.from("attachments").delete().eq("id", id);
-    if (error) throw error;
+    await api("/api/upload", "DELETE", { id });
     await load();
   }
 

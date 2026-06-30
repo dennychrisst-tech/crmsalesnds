@@ -1,47 +1,48 @@
 import { redirect } from "next/navigation";
-import { getServerClient } from "@/lib/supabase-server";
+import { getSession } from "@/lib/auth";
 import Link from "next/link";
 
+const NAV = [
+  { href: "/admin/dashboard", label: "Dashboard" },
+  { href: "/admin/users", label: "User" },
+  { href: "/admin/team", label: "Tim" },
+  { href: "/admin/settings", label: "Pengaturan" },
+  { href: "/admin/audit", label: "Audit Log" },
+  { href: "/admin/export", label: "Export" },
+];
+
+const linkStyle: React.CSSProperties = {
+  color: "#cbd5e1", fontSize: "13px", textDecoration: "none",
+  padding: "5px 12px", borderRadius: "6px", background: "#1e293b",
+};
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await getServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const session = await getSession();
 
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, name")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || !["super_admin", "admin"].includes(profile.role)) {
-    redirect("/");
-  }
+  if (!session) redirect("/login");
+  if (!["super_admin", "admin"].includes(session.role)) redirect("/");
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--paper)" }}>
       <header style={{
         background: "var(--ink)", color: "#fff", padding: "14px 24px",
-        display: "flex", alignItems: "center", gap: "16px",
+        display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap",
       }}>
         <Link href="/" style={{ color: "#94a3b8", fontSize: "13px", textDecoration: "none" }}>
           ← CRM
         </Link>
         <span style={{ color: "#334155" }}>|</span>
         <span style={{ fontWeight: 700, fontSize: "14px" }}>Admin Panel</span>
-        <nav style={{ display: "flex", gap: "4px", marginLeft: "8px" }}>
-          <Link href="/admin/users" style={{
-            color: "#cbd5e1", fontSize: "13px", textDecoration: "none",
-            padding: "5px 12px", borderRadius: "6px", background: "#1e293b",
-          }}>
-            Manajemen User
-          </Link>
+        <nav style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+          {NAV.map(n => (
+            <Link key={n.href} href={n.href} style={linkStyle}>{n.label}</Link>
+          ))}
         </nav>
         <div style={{ marginLeft: "auto", fontSize: "12px", color: "#64748b" }}>
-          {profile.name || user.email} · <span style={{ color: "#00AFA0" }}>{profile.role}</span>
+          {session.name || session.email} · <span style={{ color: "#00AFA0" }}>{session.role}</span>
         </div>
       </header>
-      <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "32px 24px" }}>
+      <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px 24px" }}>
         {children}
       </main>
     </div>

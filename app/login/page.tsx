@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { getSupabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -14,9 +13,14 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const { error } = await getSupabase().auth.signInWithPassword({ email, password });
-    if (error) {
-      setError(error.message);
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      setError(json.error || "Login gagal");
       setLoading(false);
     } else {
       router.replace("/");

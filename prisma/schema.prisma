@@ -1,0 +1,218 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String
+  email         String   @unique
+  password_hash String
+  role          String   @default("employee")
+  created_at    DateTime @default(now())
+
+  @@map("users")
+}
+
+model Client {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  sector       String   @default("Banking")
+  pic          Json     @default("[]")
+  contact      String   @default("")
+  status       String   @default("Prospect")
+  notes        String   @default("")
+  address      String   @default("")
+  website      String   @default("")
+  company_size String   @default("")
+  created_by_id String? @db.Uuid
+  created_at   DateTime @default(now())
+
+  contacts    Contact[]
+  visits      Visit[]
+  deals       Deal[]
+  projects    Project[]
+  tasks       Task[]
+  activities  Activity[]
+  attachments Attachment[]
+
+  @@map("clients")
+}
+
+model Contact {
+  id            String   @id @default(uuid()) @db.Uuid
+  client_id     String   @db.Uuid
+  name          String   @default("")
+  title         String   @default("")
+  email         String   @default("")
+  phone         String   @default("")
+  notes         String   @default("")
+  created_by_id String?  @db.Uuid
+  created_at    DateTime @default(now())
+
+  client Client @relation(fields: [client_id], references: [id], onDelete: Cascade)
+
+  @@map("contacts")
+}
+
+model Visit {
+  id            String   @id @default(uuid()) @db.Uuid
+  client_id     String   @db.Uuid
+  date          DateTime @db.Date
+  purpose       String   @default("")
+  approach      String   @default("")
+  status        String   @default("Planned")
+  pic           String   @default("")
+  pic_client    String   @default("")
+  summary       String   @default("")
+  created_by_id String?  @db.Uuid
+  created_at    DateTime @default(now())
+
+  client Client @relation(fields: [client_id], references: [id], onDelete: Cascade)
+
+  @@map("visits")
+}
+
+model Deal {
+  id               String    @id @default(uuid()) @db.Uuid
+  name             String
+  client_id        String    @db.Uuid
+  value            BigInt    @default(0)
+  stage            String    @default("Lead")
+  deal_type        String    @default("")
+  product          String    @default("")
+  close_date       DateTime? @db.Date
+  notes            String    @default("")
+  owner            String    @default("")
+  win_loss_reason  String    @default("")
+  competitor       String    @default("")
+  stage_updated_at DateTime?
+  created_by_id    String?   @db.Uuid
+  created_at       DateTime  @default(now())
+
+  client      Client       @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  documents   Document[]
+  attachments Attachment[]
+  activities  Activity[]
+  tasks       Task[]
+
+  @@map("deals")
+}
+
+model Project {
+  id            String    @id @default(uuid()) @db.Uuid
+  name          String
+  client_id     String    @db.Uuid
+  product       String    @default("")
+  status        String    @default("Initiation")
+  value         BigInt    @default(0)
+  golive        DateTime? @db.Date
+  notes         String    @default("")
+  created_by_id String?   @db.Uuid
+  created_at    DateTime  @default(now())
+
+  client Client @relation(fields: [client_id], references: [id], onDelete: Cascade)
+
+  @@map("projects")
+}
+
+model Task {
+  id            String    @id @default(uuid()) @db.Uuid
+  title         String
+  due_date      DateTime? @db.Date
+  client_id     String?   @db.Uuid
+  deal_id       String?   @db.Uuid
+  assigned_to   String    @default("")
+  status        String    @default("Open")
+  notes         String    @default("")
+  created_by_id String?   @db.Uuid
+  created_at    DateTime  @default(now())
+
+  client Client? @relation(fields: [client_id], references: [id], onDelete: SetNull)
+  deal   Deal?   @relation(fields: [deal_id], references: [id], onDelete: SetNull)
+
+  @@map("tasks")
+}
+
+model Product {
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String
+  category      String   @default("")
+  description   String   @default("")
+  created_by_id String?  @db.Uuid
+  created_at    DateTime @default(now())
+
+  @@map("products")
+}
+
+model Document {
+  id            String    @id @default(uuid()) @db.Uuid
+  deal_id       String    @db.Uuid
+  name          String    @default("")
+  type          String    @default("Proposal Teknis")
+  status        String    @default("Draft")
+  date          DateTime? @db.Date
+  notes         String    @default("")
+  created_by_id String?   @db.Uuid
+  created_at    DateTime  @default(now())
+
+  deal Deal @relation(fields: [deal_id], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+model Attachment {
+  id            String   @id @default(uuid()) @db.Uuid
+  deal_id       String?  @db.Uuid
+  client_id     String?  @db.Uuid
+  file_name     String
+  file_url      String
+  file_size     BigInt   @default(0)
+  created_by_id String?  @db.Uuid
+  uploaded_at   DateTime @default(now())
+
+  deal   Deal?   @relation(fields: [deal_id], references: [id], onDelete: Cascade)
+  client Client? @relation(fields: [client_id], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
+}
+
+model Activity {
+  id            String   @id @default(uuid()) @db.Uuid
+  deal_id       String?  @db.Uuid
+  client_id     String?  @db.Uuid
+  type          String   @default("Note")
+  description   String   @default("")
+  created_by    String   @default("")
+  created_by_id String?  @db.Uuid
+  created_at    DateTime @default(now())
+
+  deal   Deal?   @relation(fields: [deal_id], references: [id], onDelete: Cascade)
+  client Client? @relation(fields: [client_id], references: [id], onDelete: Cascade)
+
+  @@map("activities")
+}
+
+model Event {
+  id            String   @id @default(uuid()) @db.Uuid
+  title         String   @default("")
+  date          DateTime @db.Date
+  type          String   @default("Meeting Online")
+  description   String   @default("")
+  created_by    String   @default("")
+  created_by_id String?  @db.Uuid
+  created_at    DateTime @default(now())
+
+  @@map("events")
+}
+
+model AppSetting {
+  key        String   @id
+  value      String   @default("")
+  updated_at DateTime @default(now()) @updatedAt
+
+  @@map("app_settings")
+}

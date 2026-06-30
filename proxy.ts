@@ -1,45 +1,30 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
+import { jwtVerify } from "jose";
+
+const COOKIE = "crm_session";
 
 export default async function proxy(req: NextRequest) {
-  let response = NextResponse.next({ request: req });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return req.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
-          response = NextResponse.next({ request: req });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  // getUser() verifies JWT with Supabase Auth server — safe for auth decisions
-  const { data: { user } } = await supabase.auth.getUser();
-
   const path = req.nextUrl.pathname;
-  const isLoginPage = path === "/login";
+  const token = req.cookies.get(COOKIE)?.value;
 
-  if (!user && !isLoginPage) {
+  let valid = false;
+  if (token) {
+    try {
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+      await jwtVerify(token, secret);
+      valid = true;
+    } catch {}
+  }
+
+  if (!valid && path !== "/login") {
     return NextResponse.redirect(new URL("/login", req.url));
   }
-
-  if (user && isLoginPage) {
+  if (valid && path === "/login") {
     return NextResponse.redirect(new URL("/", req.url));
   }
-
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:png|svg|ico)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|api/|.*\\.(?:png|svg|ico)$).*)"],
 };
