@@ -12,6 +12,7 @@ import { exportClients } from "@/lib/export";
 interface Props {
   data: AppData;
   currentUserName: string;
+  isViewer?: boolean;
   onSaveClient: (c: Client) => Promise<void>;
   onDeleteClient: (id: string) => Promise<void>;
   onSaveContact: (c: Contact) => Promise<void>;
@@ -44,7 +45,7 @@ function lastContactDate(clientId: string, visits: Visit[], activities: Activity
   return dates.length ? dates[dates.length - 1] : null;
 }
 
-export default function Clients({ data, currentUserName, onSaveClient, onDeleteClient, onSaveContact, onDeleteContact, onSaveVisit, onDeleteVisit }: Props) {
+export default function Clients({ data, currentUserName, isViewer, onSaveClient, onDeleteClient, onSaveContact, onDeleteContact, onSaveVisit, onDeleteVisit }: Props) {
   const { clients, contacts, visits, deals, activities, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
@@ -71,7 +72,7 @@ export default function Clients({ data, currentUserName, onSaveClient, onDeleteC
       <div className="toolbar">
         <input className="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari client…" />
         <button className="btn btn-ghost btn-sm" onClick={() => exportClients(clients, openDealsCount)}>↓ Export CSV</button>
-        <button className="btn" onClick={() => { setEditClient(null); setClientModalOpen(true); }}>+ Client Baru</button>
+        {!isViewer && <button className="btn" onClick={() => { setEditClient(null); setClientModalOpen(true); }}>+ Client Baru</button>}
       </div>
 
       {filtered.length ? filtered.map(c => {
@@ -152,7 +153,7 @@ export default function Clients({ data, currentUserName, onSaveClient, onDeleteC
               <div className="cright">
                 <span className="chip">{c.status || "—"}</span>
                 <span className="chip">{openDealsCount(c.id)} deal aktif</span>
-                <button className="btn btn-ghost btn-sm" onClick={() => { setEditClient(c); setClientModalOpen(true); }}>Edit</button>
+                {!isViewer && <button className="btn btn-ghost btn-sm" onClick={() => { setEditClient(c); setClientModalOpen(true); }}>Edit</button>}
               </div>
             </div>
 
@@ -160,14 +161,14 @@ export default function Clients({ data, currentUserName, onSaveClient, onDeleteC
             <div className="contact-section">
               <div className="vt-title">
                 Kontak Person
-                <button className="btn btn-ghost btn-sm vt-add" style={{ marginLeft: "auto" }} onClick={() => openContactNew(c.id)}>+ Kontak</button>
+                {!isViewer && <button className="btn btn-ghost btn-sm vt-add" style={{ marginLeft: "auto" }} onClick={() => openContactNew(c.id)}>+ Kontak</button>}
               </div>
               {!clientContacts.length ? (
                 <div className="vt-empty">Belum ada kontak person.</div>
               ) : (
                 <div className="contact-grid">
                   {clientContacts.map(ct => (
-                    <div key={ct.id} className="contact-card" onClick={() => openContactEdit(ct)}>
+                    <div key={ct.id} className="contact-card" onClick={() => { if (!isViewer) openContactEdit(ct); }}>
                       <div className="contact-name">{ct.name}</div>
                       {ct.title && <div className="contact-title">{ct.title}</div>}
                       <div className="contact-meta">
@@ -190,7 +191,7 @@ export default function Clients({ data, currentUserName, onSaveClient, onDeleteC
             <div className="visit-track">
               <div className="vt-title">
                 Tracking approach per minggu {last && <><span style={{ marginRight: 4 }}>· terakhir:</span><VisitBadge status={last.status} /></>}
-                <button className="btn btn-ghost btn-sm vt-add" style={{ marginLeft: "auto" }} onClick={() => { setEditVisit(null); setPreClientId(c.id); setVisitModalOpen(true); }}>+ Visit</button>
+                {!isViewer && <button className="btn btn-ghost btn-sm vt-add" style={{ marginLeft: "auto" }} onClick={() => { setEditVisit(null); setPreClientId(c.id); setVisitModalOpen(true); }}>+ Visit</button>}
               </div>
               {!clientVisits.length ? (
                 <div className="vt-empty">Belum ada visit tercatat.</div>
@@ -198,7 +199,7 @@ export default function Clients({ data, currentUserName, onSaveClient, onDeleteC
                 <div key={k} className="week-group">
                   <div className="week-label">{groups[k].label}</div>
                   {groups[k].items.map(v => (
-                    <div key={v.id} className="vt-row" onClick={() => { setEditVisit(v); setPreClientId(undefined); setVisitModalOpen(true); }}>
+                    <div key={v.id} className="vt-row" onClick={() => { if (!isViewer) { setEditVisit(v); setPreClientId(undefined); setVisitModalOpen(true); } }}>
                       <span className="vt-date">{fmtDate(v.date)}</span>
                       <span className="vt-approach">{v.approach || "—"}{v.purpose ? ` · ${v.purpose}` : ""}</span>
                       <VisitBadge status={v.status} />

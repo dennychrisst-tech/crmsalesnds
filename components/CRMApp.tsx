@@ -95,32 +95,32 @@ export default function CRMApp() {
               <>
                 {view === "dashboard" && <Dashboard data={data} />}
                 {view === "calendar" && (
-                  <CalendarView data={data} currentUserName={currentUserName}
+                  <CalendarView data={data} currentUserName={currentUserName} isViewer={isViewer}
                     onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)}
                     onSaveEvent={ro(upsertEvent)} onDeleteEvent={ro(deleteEvent)}
                     onCreateTask={ro(upsertTask)} />
                 )}
                 {view === "clients" && (
-                  <Clients data={data} currentUserName={currentUserName}
+                  <Clients data={data} currentUserName={currentUserName} isViewer={isViewer}
                     onSaveClient={ro(upsertClient)} onDeleteClient={ro(deleteClient)}
                     onSaveContact={ro(upsertContact)} onDeleteContact={ro(deleteContact)}
                     onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)} />
                 )}
                 {view === "pipeline" && (
-                  <Pipeline data={data} currentUserName={currentUserName}
+                  <Pipeline data={data} currentUserName={currentUserName} isViewer={isViewer}
                     onSaveDeal={ro(upsertDeal)} onDeleteDeal={ro(deleteDeal)} onUpdateStage={ro(updateDealStage)}
                     onAddDocument={ro(upsertDocument)} onDeleteDocument={ro(deleteDocument)}
                     onUploadAttachment={ro(uploadAttachment)} onDeleteAttachment={ro(deleteAttachment)}
                     onAddActivity={ro(upsertActivity)} onDeleteActivity={ro(deleteActivity)} />
                 )}
                 {view === "projects" && (
-                  <Projects data={data} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)} />
+                  <Projects data={data} isViewer={isViewer} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)} />
                 )}
                 {view === "tasks" && (
-                  <TasksView data={data} currentUserName={currentUserName} onSaveTask={ro(upsertTask)} onDeleteTask={ro(deleteTask)} />
+                  <TasksView data={data} currentUserName={currentUserName} isViewer={isViewer} onSaveTask={ro(upsertTask)} onDeleteTask={ro(deleteTask)} />
                 )}
                 {view === "catalog" && (
-                  <ProductsView data={data} onSaveProduct={ro(upsertProduct)} onDeleteProduct={ro(deleteProduct)} />
+                  <ProductsView data={data} isViewer={isViewer} onSaveProduct={ro(upsertProduct)} onDeleteProduct={ro(deleteProduct)} />
                 )}
                 {view === "summary" && <SummaryView data={data} />}
               </>

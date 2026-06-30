@@ -6,11 +6,12 @@ import ProductModal from "./ProductModal";
 
 interface Props {
   data: AppData;
+  isViewer?: boolean;
   onSaveProduct: (p: Product) => Promise<void>;
   onDeleteProduct: (id: string) => Promise<void>;
 }
 
-export default function ProductsView({ data, onSaveProduct, onDeleteProduct }: Props) {
+export default function ProductsView({ data, isViewer, onSaveProduct, onDeleteProduct }: Props) {
   const { products } = data;
   const [modalOpen, setModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -29,7 +30,7 @@ export default function ProductsView({ data, onSaveProduct, onDeleteProduct }: P
         <select className="search" style={{ flex: "none", width: "auto" }} value={filterCat} onChange={e => setFilterCat(e.target.value)}>
           {categories.map(c => <option key={c} value={c}>{c === "All" ? "Semua kategori" : c}</option>)}
         </select>
-        <button className="btn" onClick={() => { setEditProduct(null); setModalOpen(true); }}>+ Produk Baru</button>
+        {!isViewer && <button className="btn" onClick={() => { setEditProduct(null); setModalOpen(true); }}>+ Produk Baru</button>}
       </div>
 
       {!filtered.length ? (
@@ -41,7 +42,7 @@ export default function ProductsView({ data, onSaveProduct, onDeleteProduct }: P
               <div className="catalog-cat">{p.category}</div>
               <div className="catalog-name">{p.name}</div>
               {p.description && <div className="catalog-desc">{p.description}</div>}
-              <button className="btn btn-ghost btn-sm" style={{ marginTop: 10 }} onClick={() => { setEditProduct(p); setModalOpen(true); }}>Edit</button>
+              {!isViewer && <button className="btn btn-ghost btn-sm" style={{ marginTop: 10 }} onClick={() => { setEditProduct(p); setModalOpen(true); }}>Edit</button>}
             </div>
           ))}
         </div>

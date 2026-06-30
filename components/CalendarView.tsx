@@ -12,6 +12,7 @@ import { v4 as uuid } from "uuid";
 interface Props {
   data: AppData;
   currentUserName: string;
+  isViewer?: boolean;
   onSaveVisit: (v: Visit) => Promise<void>;
   onDeleteVisit: (id: string) => Promise<void>;
   onSaveEvent: (e: CalendarEvent) => Promise<void>;
@@ -19,7 +20,7 @@ interface Props {
   onCreateTask: (t: Task) => Promise<void>;
 }
 
-export default function CalendarView({ data, currentUserName, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask }: Props) {
+export default function CalendarView({ data, currentUserName, isViewer, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask }: Props) {
   const { clients, visits, events, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin"].includes(p.role)).map(p => p.name).filter(Boolean);
 
@@ -77,8 +78,8 @@ export default function CalendarView({ data, currentUserName, onSaveVisit, onDel
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
           <button className="btn btn-ghost btn-sm" onClick={() => exportVisits(visits, id => clients.find(c => c.id === id)?.name || "—")}>↓ Export CSV</button>
-          <button className="btn btn-ghost" onClick={() => openNewEvent()}>+ Event</button>
-          <button className="btn" onClick={() => openNewVisit()}>+ Jadwalkan Visit</button>
+          {!isViewer && <button className="btn btn-ghost" onClick={() => openNewEvent()}>+ Event</button>}
+          {!isViewer && <button className="btn" onClick={() => openNewVisit()}>+ Jadwalkan Visit</button>}
         </div>
       </div>
 
@@ -99,18 +100,18 @@ export default function CalendarView({ data, currentUserName, onSaveVisit, onDel
             const dayEvents = events.filter(e => e.date === ds);
             return (
               <div key={ds} className={`cell${ds === today ? " today" : ""}`}
-                onDoubleClick={() => openNewVisit(ds)} title="Double-klik untuk tambah visit">
+                onDoubleClick={() => { if (!isViewer) openNewVisit(ds); }} title={isViewer ? "" : "Double-klik untuk tambah visit"}>
                 <div className="dnum">{day}</div>
                 {dayVisits.map(v => (
                   <div key={v.id} className={`vpill${v.status === "Done" ? " done" : ""}`}
-                    onClick={e => { e.stopPropagation(); openEditVisit(v); }}
+                    onClick={e => { e.stopPropagation(); if (!isViewer) openEditVisit(v); }}
                     title={`${clientName(v.client_id)}: ${v.purpose}`}>
                     {clientName(v.client_id)}
                   </div>
                 ))}
                 {dayEvents.map(ev => (
                   <div key={ev.id} className="vpill vpill-event"
-                    onClick={e => { e.stopPropagation(); openEditEvent(ev); }}
+                    onClick={e => { e.stopPropagation(); if (!isViewer) openEditEvent(ev); }}
                     title={ev.title}>
                     {ev.title}
                   </div>
@@ -137,7 +138,7 @@ export default function CalendarView({ data, currentUserName, onSaveVisit, onDel
                 <td><VisitBadge status={v.status} /></td>
                 <td style={{ fontWeight: 600 }}>{v.pic_client || <span className="muted">—</span>}</td>
                 <td>{v.pic || <span className="muted">—</span>}</td>
-                <td><button className="btn btn-ghost btn-sm" onClick={() => openEditVisit(v)}>Edit</button></td>
+                <td>{!isViewer && <button className="btn btn-ghost btn-sm" onClick={() => openEditVisit(v)}>Edit</button>}</td>
               </tr>
             )) : <tr><td colSpan={7} className="empty-state">Belum ada visit.</td></tr>}
           </tbody>
@@ -159,7 +160,7 @@ export default function CalendarView({ data, currentUserName, onSaveVisit, onDel
                 <td><span className="chip">{ev.type}</span></td>
                 <td>{ev.created_by || <span className="muted">—</span>}</td>
                 <td className="muted" style={{ fontSize: 12 }}>{ev.description || "—"}</td>
-                <td><button className="btn btn-ghost btn-sm" onClick={() => openEditEvent(ev)}>Edit</button></td>
+                <td>{!isViewer && <button className="btn btn-ghost btn-sm" onClick={() => openEditEvent(ev)}>Edit</button>}</td>
               </tr>
             )) : <tr><td colSpan={6} className="empty-state">Belum ada event.</td></tr>}
           </tbody>

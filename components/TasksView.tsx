@@ -8,6 +8,7 @@ import TaskModal from "./TaskModal";
 interface Props {
   data: AppData;
   currentUserName: string;
+  isViewer?: boolean;
   onSaveTask: (t: Task) => Promise<void>;
   onDeleteTask: (id: string) => Promise<void>;
 }
@@ -26,7 +27,7 @@ function urgencyClass(dueDate: string, status: string): string {
   return "";
 }
 
-export default function TasksView({ data, currentUserName, onSaveTask, onDeleteTask }: Props) {
+export default function TasksView({ data, currentUserName, isViewer, onSaveTask, onDeleteTask }: Props) {
   const { tasks, clients, deals, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [modalOpen, setModalOpen] = useState(false);
@@ -64,7 +65,7 @@ export default function TasksView({ data, currentUserName, onSaveTask, onDeleteT
         <select className="search" style={{ flex: "none", width: "auto" }} value={filterAssignee} onChange={e => setFilterAssignee(e.target.value)}>
           {assignees.map(a => <option key={a} value={a}>{a === "All" ? "Semua PIC" : a}</option>)}
         </select>
-        <button className="btn" onClick={openNew}>+ Task Baru</button>
+        {!isViewer && <button className="btn" onClick={openNew}>+ Task Baru</button>}
       </div>
 
       {(openCount > 0 || overdueCount > 0) && (
@@ -99,7 +100,7 @@ export default function TasksView({ data, currentUserName, onSaveTask, onDeleteT
                   <td>{clientName(t.client_id)}</td>
                   <td>{dealName(t.deal_id)}</td>
                   <td>{statusBadge(t.status)}</td>
-                  <td><button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)}>Edit</button></td>
+                  <td>{!isViewer && <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)}>Edit</button>}</td>
                 </tr>
               ))}
             </tbody>

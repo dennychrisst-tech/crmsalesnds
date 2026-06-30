@@ -24,6 +24,7 @@ import DealModal from "./DealModal";
 interface Props {
   data: AppData;
   currentUserName: string;
+  isViewer?: boolean;
   onSaveDeal: (d: Deal) => Promise<void>;
   onDeleteDeal: (id: string) => Promise<void>;
   onUpdateStage: (id: string, stage: string) => Promise<void>;
@@ -65,7 +66,7 @@ function Column({ stage, deals, clientName, onDealClick }: { stage: string; deal
   );
 }
 
-export default function Pipeline({ data, currentUserName, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity }: Props) {
+export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity }: Props) {
   const { clients, deals, products, documents, attachments, activities, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [modalOpen, setModalOpen] = useState(false);
@@ -99,13 +100,13 @@ export default function Pipeline({ data, currentUserName, onSaveDeal, onDeleteDe
       <div className="toolbar">
         <span className="muted">Tarik kartu antar kolom untuk ubah stage. Weighted pipeline: <b>{fmtIDR(Math.round(weighted))}</b></span>
         <button className="btn btn-ghost btn-sm" onClick={() => exportDeals(deals, clientName)}>↓ Export CSV</button>
-        <button className="btn" onClick={() => { setEditDeal(null); setModalOpen(true); }}>+ Deal Baru</button>
+        {!isViewer && <button className="btn" onClick={() => { setEditDeal(null); setModalOpen(true); }}>+ Deal Baru</button>}
       </div>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="board">
           {STAGES.map(stage => (
             <Column key={stage} stage={stage} deals={deals.filter(d => d.stage === stage)}
-              clientName={clientName} onDealClick={d => { setEditDeal(d); setModalOpen(true); }} />
+              clientName={clientName} onDealClick={d => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }} />
           ))}
         </div>
         <DragOverlay>

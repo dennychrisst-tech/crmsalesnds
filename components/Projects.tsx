@@ -7,11 +7,12 @@ import ProjectModal from "./ProjectModal";
 
 interface Props {
   data: AppData;
+  isViewer?: boolean;
   onSaveProject: (p: Project) => Promise<void>;
   onDeleteProject: (id: string) => Promise<void>;
 }
 
-export default function Projects({ data, onSaveProject, onDeleteProject }: Props) {
+export default function Projects({ data, isViewer, onSaveProject, onDeleteProject }: Props) {
   const { clients, projects } = data;
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -24,7 +25,7 @@ export default function Projects({ data, onSaveProject, onDeleteProject }: Props
     <section>
       <div className="toolbar">
         <input className="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari project…" />
-        <button className="btn" onClick={() => { setEditProject(null); setModalOpen(true); }}>+ Project Baru</button>
+        {!isViewer && <button className="btn" onClick={() => { setEditProject(null); setModalOpen(true); }}>+ Project Baru</button>}
       </div>
       <div className="panel">
         <table>
@@ -43,7 +44,7 @@ export default function Projects({ data, onSaveProject, onDeleteProject }: Props
                 <td>{p.status}</td>
                 <td>{fmtIDR(p.value)}</td>
                 <td>{fmtDate(p.golive)}</td>
-                <td><button className="btn btn-ghost btn-sm" onClick={() => { setEditProject(p); setModalOpen(true); }}>Edit</button></td>
+                <td>{!isViewer && <button className="btn btn-ghost btn-sm" onClick={() => { setEditProject(p); setModalOpen(true); }}>Edit</button>}</td>
               </tr>
             )) : <tr><td colSpan={7} className="empty-state">Belum ada project.</td></tr>}
           </tbody>
