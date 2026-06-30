@@ -2,7 +2,7 @@ export const STAGES = ["Lead", "Discovery", "Proposal", "Negotiation", "Won"] as
 export const STAGE_PROB: Record<string, number> = {
   Lead: 10, Discovery: 30, Proposal: 60, Negotiation: 80, Won: 100, Lost: 0,
 };
-export const VISIT_STATUS = ["Planned", "Done", "Follow-up", "No-go"] as const;
+export const VISIT_STATUS = ["Planned", "Done", "Cancel", "Reschedule"] as const;
 export const PROJ_STATUS = ["Initiation", "In Progress", "On Hold", "Delivered", "Closed"] as const;
 export const SECTORS = ["Banking", "Multifinance", "Insurance", "Health Care", "Industrial", "Technology", "Telekomunikasi", "Infrastruktur", "Transportasi", "Energy", "Lainnya"] as const;
 export const TEAM = ["Denny", "Dova", "Rio", "Cris"] as const;
@@ -54,7 +54,7 @@ export function stageBadgeClass(stage: string): string {
 
 export function visitStatusClass(status: string): string {
   const map: Record<string, string> = {
-    Planned: "st-planned", Done: "st-done", "Follow-up": "st-followup", "No-go": "st-nogo",
+    Planned: "st-planned", Done: "st-done", Cancel: "st-nogo", Reschedule: "st-followup",
   };
   return map[status] || "";
 }

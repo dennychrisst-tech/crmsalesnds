@@ -144,10 +144,10 @@ export default function Dashboard({ data, onNavigate }: Props) {
   // Visits
   const periodVisits = filteredVisits.filter(v => v.date && inPeriod(v.date));
   const upcoming = filteredVisits
-    .filter(v => v.date >= today && v.status !== "Done" && v.status !== "No-go")
+    .filter(v => v.date >= today && v.status !== "Done" && v.status !== "Cancel")
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 5);
-  const followups = filteredVisits.filter(v => v.status === "Follow-up").slice(0, 5);
+  const followups = filteredVisits.filter(v => v.status === "Reschedule").slice(0, 5);
 
   // Tasks
   const openTasks    = filteredTasks.filter(t => t.status === "Open");
@@ -217,7 +217,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
       color: "var(--brand)", view: "calendar" as ActiveView,
     },
     {
-      label: "Follow-up Pending", num: followups.length,
+      label: "Reschedule Pending", num: followups.length,
       sub: "butuh tindak lanjut",
       color: followups.length > 0 ? "var(--danger)" : "#16a34a", view: "calendar" as ActiveView,
     },
@@ -294,7 +294,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
         </div>
 
         <div className="panel">
-          <SectionHeader title={`Follow-up Pending (${followups.length})`} action="Buka Calendar" onClick={() => onNavigate("calendar")} />
+          <SectionHeader title={`Reschedule Pending (${followups.length})`} action="Buka Calendar" onClick={() => onNavigate("calendar")} />
           {followups.length ? followups.map(v => (
             <div key={v.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => onNavigate("calendar")}>
               <div className="ti-date"><b>{clientName(v.client_id)}</b> · {fmtDate(v.date)}</div>
