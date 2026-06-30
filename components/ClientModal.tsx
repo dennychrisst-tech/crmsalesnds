@@ -19,19 +19,15 @@ const emptyClient = (): Client => ({
   status: "Prospect", notes: "", address: "", website: "", company_size: "",
 });
 
-function getAssigned(client: Client | null): string {
-  if (!client) return "";
-  if (Array.isArray(client.pic) && client.pic.length > 0) {
-    const first = client.pic[0];
-    return typeof first === "string" ? first : (first as { name: string }).name || "";
-  }
-  return "";
+function getAssigned(client: Client | null): string[] {
+  if (!client || !Array.isArray(client.pic)) return [];
+  return client.pic.map(p => typeof p === "string" ? p : (p as { name: string }).name).filter(Boolean);
 }
 
 export default function ClientModal({ open, client, team, onSave, onDelete, onClose }: Props) {
   const isEdit = !!client;
   const [form, setForm] = useState<Client>(emptyClient());
-  const [assigned, setAssigned] = useState("");
+  const [assigned, setAssigned] = useState<string[]>([]);
   const [tab, setTab] = useState<"info" | "profile">("info");
 
   useEffect(() => {
@@ -40,16 +36,22 @@ export default function ClientModal({ open, client, team, onSave, onDelete, onCl
       setAssigned(getAssigned(client));
     } else {
       setForm(emptyClient());
-      setAssigned("");
+      setAssigned([]);
     }
     setTab("info");
   }, [client, open]);
 
   const set = <K extends keyof Client>(k: K, v: Client[K]) => setForm(f => ({ ...f, [k]: v }));
 
+  function toggleSales(name: string) {
+    setAssigned(prev =>
+      prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+    );
+  }
+
   async function handleSave() {
     if (!form.name.trim()) { alert("Nama client wajib diisi."); return; }
-    const pic = assigned ? [{ name: assigned, phone: "" }] : [];
+    const pic = assigned.map(name => ({ name, phone: "" }));
     await onSave({ ...form, pic });
     onClose();
   }
@@ -85,11 +87,33 @@ export default function ClientModal({ open, client, team, onSave, onDelete, onCl
             </Field>
           </div>
 
-          <Field label="Assign">
-            <select className={selectCls} value={assigned} onChange={e => setAssigned(e.target.value)}>
-              <option value="">— Pilih Sales —</option>
-              {team.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+          <Field label="Assign Sales">
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {team.map(t => {
+                const active = assigned.includes(t);
+                return (
+                  <button
+                    key={t} type="button"
+                    onClick={() => toggleSales(t)}
+                    style={{
+                      padding: "5px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600,
+                      cursor: "pointer", border: "1.5px solid",
+                      borderColor: active ? "var(--brand)" : "var(--line)",
+                      background: active ? "var(--brand)" : "var(--paper)",
+                      color: active ? "#fff" : "var(--ink-soft)",
+                      transition: "all .15s",
+                    }}
+                  >
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
+            {assigned.length > 0 && (
+              <div style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 6 }}>
+                Dipilih: <b>{assigned.join(", ")}</b>
+              </div>
+            )}
           </Field>
 
           <Field label="Catatan">
