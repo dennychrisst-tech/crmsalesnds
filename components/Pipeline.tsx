@@ -5,6 +5,7 @@ import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { Deal, CRMDocument, Attachment, Activity } from "@/types";
 import { STAGES, STAGE_PROB, fmtIDR, todayStr } from "@/lib/utils";
+import { exportDeals } from "@/lib/export";
 
 function agingDays(deal: Deal): number {
   const ref = deal.stage_updated_at || deal.created_at || todayStr();
@@ -95,7 +96,8 @@ export default function Pipeline({ data, onSaveDeal, onDeleteDeal, onUpdateStage
     <section>
       <div className="toolbar">
         <span className="muted">Tarik kartu antar kolom untuk ubah stage. Weighted pipeline: <b>{fmtIDR(Math.round(weighted))}</b></span>
-        <button className="btn" style={{ marginLeft: "auto" }} onClick={() => { setEditDeal(null); setModalOpen(true); }}>+ Deal Baru</button>
+        <button className="btn btn-ghost btn-sm" onClick={() => exportDeals(deals, clientName)}>↓ Export CSV</button>
+        <button className="btn" onClick={() => { setEditDeal(null); setModalOpen(true); }}>+ Deal Baru</button>
       </div>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="board">

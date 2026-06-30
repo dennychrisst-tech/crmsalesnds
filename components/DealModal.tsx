@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import { Deal, Client, Product, CRMDocument, Attachment, Activity } from "@/types";
-import { STAGES, TEAM, DEAL_TYPES, ACTIVITY_TYPES, fmtDate } from "@/lib/utils";
+import { STAGES, TEAM, DEAL_TYPES, ACTIVITY_TYPES, fmtDate, todayStr } from "@/lib/utils";
 import DocumentTracker from "./DocumentTracker";
 import AttachmentSection from "./AttachmentSection";
 
@@ -29,7 +29,7 @@ interface Props {
 const emptyDeal = (clientId: string): Deal => ({
   id: uuid(), name: "", client_id: clientId, value: 0,
   stage: "Lead", deal_type: "", product: "", close_date: "", notes: "",
-  owner: "", win_loss_reason: "", stage_updated_at: new Date().toISOString(),
+  owner: "", win_loss_reason: "", competitor: "", stage_updated_at: new Date().toISOString(),
 });
 
 const emptyActivity = (dealId: string): Omit<Activity, "id" | "created_at"> => ({
@@ -154,6 +154,9 @@ export default function DealModal({
               </datalist>
             </Field>
           </div>
+          <Field label="Kompetitor">
+            <input className={inputCls} value={form.competitor || ""} onChange={e => set("competitor", e.target.value)} placeholder="Nama vendor / kompetitor yang terlibat" />
+          </Field>
           {showWinLoss && (
             <Field label={`Alasan ${form.stage}`}>
               <textarea className={textareaCls} value={form.win_loss_reason} onChange={e => set("win_loss_reason", e.target.value)} placeholder={`Kenapa deal ini ${form.stage}?`} />

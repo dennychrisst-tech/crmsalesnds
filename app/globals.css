@@ -218,6 +218,46 @@ tr.task-soon td { background: #fffbeb; }
 .attachment-name:hover { text-decoration: underline; }
 .attachment-meta { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
 
+/* Global Search */
+.gs-wrap { position: relative; flex: 1; max-width: 320px; }
+.gs-input-wrap { display: flex; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 0 10px; gap: 6px; }
+.gs-icon { color: var(--ink-soft); font-size: 16px; }
+.gs-input { border: none; background: transparent; font-size: 13px; font-family: inherit; padding: 8px 0; flex: 1; outline: none; color: var(--ink); }
+.gs-clear { background: none; border: none; color: var(--ink-soft); cursor: pointer; font-size: 16px; padding: 0; }
+.gs-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); z-index: 100; max-height: 340px; overflow-y: auto; }
+.gs-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer; }
+.gs-item:hover { background: var(--paper); }
+.gs-type { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; }
+.gs-type-client { background: var(--brand-soft); color: var(--brand); }
+.gs-type-deal   { background: #FBF0DA; color: #9A6E12; }
+.gs-type-task   { background: #EFE2E2; color: #8A3A3A; }
+.gs-item-label  { font-size: 13px; font-weight: 600; color: var(--ink); }
+.gs-item-sub    { font-size: 11px; color: var(--ink-soft); margin-top: 1px; }
+.gs-empty { padding: 14px 12px; font-size: 13px; color: var(--ink-soft); }
+
+/* PIC with WA/Call links */
+.pic-list { display: flex; flex-direction: column; gap: 3px; margin-top: 5px; }
+.pic-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pic-name { font-size: 13px; font-weight: 600; }
+.pic-actions { display: flex; align-items: center; gap: 4px; }
+.pic-action-btn { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; text-decoration: none; cursor: pointer; }
+.pic-call { background: #E2F0EC; color: #0A6E5C; }
+.pic-call:hover { background: #0A6E5C; color: #fff; }
+.pic-wa { background: #DCF8C6; color: #128C7E; }
+.pic-wa:hover { background: #128C7E; color: #fff; }
+.pic-phone { font-size: 12px; color: var(--ink-soft); }
+
+/* Last contact indicator */
+.last-contact { font-size: 11px; margin-top: 4px; padding: 3px 8px; border-radius: 999px; display: inline-block; }
+.last-contact-fresh { background: #E2F0EC; color: #0A6E5C; }
+.last-contact-warm  { background: #FEF9C3; color: #854D0E; }
+.last-contact-cold  { background: #FEE2E2; color: #991B1B; }
+.last-contact-none  { background: #EAE6DA; color: #5C5440; }
+
+/* Google Maps link */
+.maps-link { color: var(--ink-soft); text-decoration: none; }
+.maps-link:hover { color: var(--brand); text-decoration: underline; }
+
 /* Activity Timeline */
 .activity-form { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 14px; }
 .activity-timeline { display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto; }

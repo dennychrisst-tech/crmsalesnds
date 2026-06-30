@@ -59,6 +59,7 @@ export interface Deal {
   notes: string;
   owner: string;
   win_loss_reason: string;
+  competitor: string;
   stage_updated_at?: string;
   created_at?: string;
 }

@@ -1,11 +1,13 @@
 "use client";
 import { useState } from "react";
 import { AppData } from "@/hooks/useData";
-import { Visit, CalendarEvent } from "@/types";
+import { Visit, CalendarEvent, Task } from "@/types";
 import { fmtDate, todayStr, visitStatusClass } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import VisitModal from "./VisitModal";
 import EventModal from "./EventModal";
+import { exportVisits } from "@/lib/export";
+import { v4 as uuid } from "uuid";
 
 interface Props {
   data: AppData;
@@ -13,10 +15,29 @@ interface Props {
   onDeleteVisit: (id: string) => Promise<void>;
   onSaveEvent: (e: CalendarEvent) => Promise<void>;
   onDeleteEvent: (id: string) => Promise<void>;
+  onCreateTask: (t: Task) => Promise<void>;
 }
 
-export default function CalendarView({ data, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent }: Props) {
+export default function CalendarView({ data, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask }: Props) {
   const { clients, visits, events } = data;
+
+  async function handleSaveVisit(v: Visit) {
+    await onSaveVisit(v);
+    if (v.status === "Done") {
+      const due = new Date(v.date + "T00:00:00");
+      due.setDate(due.getDate() + 3);
+      await onCreateTask({
+        id: uuid(),
+        title: `Follow-up: ${clients.find(c => c.id === v.client_id)?.name || "Client"}`,
+        due_date: due.toISOString().slice(0, 10),
+        client_id: v.client_id,
+        deal_id: null,
+        assigned_to: v.pic || "",
+        status: "Open",
+        notes: `Auto follow-up dari visit ${fmtDate(v.date)}${v.pic_client ? ` · PIC Client: ${v.pic_client}` : ""}`,
+      });
+    }
+  }
   const [cursor, setCursor] = useState(() => { const d = new Date(); d.setDate(1); return d; });
   const [visitModal, setVisitModal] = useState(false);
   const [eventModal, setEventModal] = useState(false);
@@ -53,6 +74,7 @@ export default function CalendarView({ data, onSaveVisit, onDeleteVisit, onSaveE
           <button className="cal-nav-btn" onClick={nextMonth}>›</button>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => exportVisits(visits, id => clients.find(c => c.id === id)?.name || "—")}>↓ Export CSV</button>
           <button className="btn btn-ghost" onClick={() => openNewEvent()}>+ Event</button>
           <button className="btn" onClick={() => openNewVisit()}>+ Jadwalkan Visit</button>
         </div>
@@ -143,7 +165,7 @@ export default function CalendarView({ data, onSaveVisit, onDeleteVisit, onSaveE
       </div>
 
       <VisitModal open={visitModal} visit={editVisit} preClientId={preClientId} clients={clients}
-        onSave={onSaveVisit} onDelete={onDeleteVisit} onClose={() => setVisitModal(false)} />
+        onSave={handleSaveVisit} onDelete={onDeleteVisit} onClose={() => setVisitModal(false)} />
       <EventModal open={eventModal} event={editEvent} preDate={preDate}
         onSave={onSaveEvent} onDelete={onDeleteEvent} onClose={() => setEventModal(false)} />
     </section>
