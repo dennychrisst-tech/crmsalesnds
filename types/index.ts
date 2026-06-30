@@ -88,6 +88,7 @@ export interface Project {
   value: number;
   golive: string;
   notes: string;
+  partner?: string;
   created_by_id?: string;
   created_at?: string;
 }

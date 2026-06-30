@@ -32,13 +32,13 @@ function fmtIDR(num: number): string {
 
 export default function ProjectModal({ open, project, clients, onSave, onDelete, onClose }: Props) {
   const isEdit = !!project;
-  const [form, setForm] = useState<Project>({ id: "", name: "", client_id: "", product: "", status: "Initiation", value: 0, golive: "", notes: "" });
+  const [form, setForm] = useState<Project>({ id: "", name: "", client_id: "", product: "", status: "Initiation", value: 0, golive: "", notes: "", partner: "" });
   const [valueDisplay, setValueDisplay] = useState("");
   const [productCat, setProductCat] = useState("");
   const [ibmSub, setIbmSub] = useState("");
 
   useEffect(() => {
-    const base = project || { id: uuid(), name: "", client_id: clients[0]?.id || "", product: "", status: "Initiation", value: 0, golive: "", notes: "" };
+    const base = project || { id: uuid(), name: "", client_id: clients[0]?.id || "", product: "", status: "Initiation", value: 0, golive: "", notes: "", partner: "" };
     setForm(base);
     setValueDisplay(fmtIDR(base.value || 0));
     const { category, sub } = parseProduct(base.product || "");
@@ -123,6 +123,14 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
           <input type="date" className={inputCls} value={form.golive} onChange={e => set("golive", e.target.value)} />
         </Field>
       </div>
+      <Field label="Partner (opsional)">
+        <select className={selectCls} value={form.partner || ""} onChange={e => set("partner", e.target.value)}>
+          <option value="">— Tidak ada partner —</option>
+          {clients.filter(c => c.id !== form.client_id).map(c => (
+            <option key={c.id} value={c.name}>{c.name}</option>
+          ))}
+        </select>
+      </Field>
       <Field label="Catatan">
         <textarea className={textareaCls} value={form.notes} onChange={e => set("notes", e.target.value)} />
       </Field>

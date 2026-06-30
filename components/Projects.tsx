@@ -31,7 +31,7 @@ export default function Projects({ data, isViewer, onSaveProject, onDeleteProjec
         <table>
           <thead>
             <tr>
-              <th>Project</th><th>Client</th><th>Produk / Solusi</th>
+              <th>Project</th><th>Client</th><th>Partner</th><th>Produk / Solusi</th>
               <th>Status</th><th>Nilai</th><th>Target Go-Live</th><th></th>
             </tr>
           </thead>
@@ -40,13 +40,14 @@ export default function Projects({ data, isViewer, onSaveProject, onDeleteProjec
               <tr key={p.id}>
                 <td><b>{p.name}</b><br /><span className="muted" style={{ fontSize: 11 }}>{p.notes}</span></td>
                 <td>{clientName(p.client_id)}</td>
+                <td>{p.partner ? <span style={{ fontSize: 12, background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 5, padding: "2px 8px" }}>{p.partner}</span> : <span className="muted">—</span>}</td>
                 <td>{p.product || "-"}</td>
                 <td>{p.status}</td>
                 <td>{fmtIDR(p.value)}</td>
                 <td>{fmtDate(p.golive)}</td>
                 <td>{!isViewer && <button className="btn btn-ghost btn-sm" onClick={() => { setEditProject(p); setModalOpen(true); }}>Edit</button>}</td>
               </tr>
-            )) : <tr><td colSpan={7} className="empty-state">Belum ada project.</td></tr>}
+            )) : <tr><td colSpan={8} className="empty-state">Belum ada project.</td></tr>}
           </tbody>
         </table>
       </div>
