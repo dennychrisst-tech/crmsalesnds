@@ -102,7 +102,7 @@ export default function CRMApp() {
                     onCreateTask={ro(upsertTask)} />
                 )}
                 {view === "clients" && (
-                  <Clients data={data} currentUserName={currentUserName} isViewer={isViewer}
+                  <Clients data={data} currentUserName={currentUserName} isViewer={isViewer} onNavigate={setView}
                     onSaveClient={ro(upsertClient)} onDeleteClient={ro(deleteClient)}
                     onSaveContact={ro(upsertContact)} onDeleteContact={ro(deleteContact)}
                     onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)} />

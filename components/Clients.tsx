@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { AppData } from "@/hooks/useData";
-import { Client, Contact, Visit, PIC, Activity } from "@/types";
+import { Client, Contact, Visit, PIC, Activity, ActiveView } from "@/types";
 import { fmtDate, isoWeekLabel, todayStr } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import ClientModal from "./ClientModal";
@@ -13,6 +13,7 @@ interface Props {
   data: AppData;
   currentUserName: string;
   isViewer?: boolean;
+  onNavigate: (view: ActiveView) => void;
   onSaveClient: (c: Client) => Promise<void>;
   onDeleteClient: (id: string) => Promise<void>;
   onSaveContact: (c: Contact) => Promise<void>;
@@ -45,8 +46,8 @@ function lastContactDate(clientId: string, visits: Visit[], activities: Activity
   return dates.length ? dates[dates.length - 1] : null;
 }
 
-export default function Clients({ data, currentUserName, isViewer, onSaveClient, onDeleteClient, onSaveContact, onDeleteContact, onSaveVisit, onDeleteVisit }: Props) {
-  const { clients, contacts, visits, deals, activities, profiles } = data;
+export default function Clients({ data, currentUserName, isViewer, onNavigate, onSaveClient, onDeleteClient, onSaveContact, onDeleteContact, onSaveVisit, onDeleteVisit }: Props) {
+  const { clients, contacts, visits, deals, activities, profiles, projects } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
   const [salesFilter, setSalesFilter] = useState("all");
@@ -198,6 +199,38 @@ export default function Clients({ data, currentUserName, isViewer, onSaveClient,
                 </div>
               )}
             </div>
+
+            {/* Projects */}
+            {(() => {
+              const clientProjects = projects.filter(p => p.client_id === c.id);
+              if (!clientProjects.length) return null;
+              return (
+                <div className="contact-section">
+                  <div className="vt-title">
+                    Project
+                    <button className="btn btn-ghost btn-sm" style={{ marginLeft: "auto", fontSize: 12 }} onClick={() => onNavigate("projects")}>
+                      Lihat semua →
+                    </button>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "6px 0" }}>
+                    {clientProjects.map(p => (
+                      <div key={p.id}
+                        onClick={() => onNavigate("projects")}
+                        style={{
+                          cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
+                          background: "var(--bg)", border: "1px solid var(--line)",
+                          borderRadius: 8, padding: "6px 12px",
+                        }}
+                      >
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{p.name}</span>
+                        <span style={{ fontSize: 11, color: "var(--ink-soft)" }}>{p.status}</span>
+                        {p.product && <span style={{ fontSize: 11, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 4, padding: "1px 6px", color: "var(--ink-soft)" }}>{p.product}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Visit tracking */}
             <div className="visit-track">
