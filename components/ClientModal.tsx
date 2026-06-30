@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
-import { Client } from "@/types";
+import { Client, PIC } from "@/types";
 import { SECTORS, COMPANY_SIZES } from "@/lib/utils";
 
 interface Props {
@@ -12,11 +12,6 @@ interface Props {
   onDelete: (id: string) => Promise<void>;
   onClose: () => void;
 }
-
-const emptyClient = (): Client => ({
-  id: uuid(), name: "", sector: "Banking", pic: [""], contact: "",
-  status: "Prospect", notes: "", address: "", website: "", company_size: "",
-});
 
 function formatPhone(value: string): string {
   const digits = value.replace(/\D/g, "");
@@ -30,6 +25,22 @@ function formatPhone(value: string): string {
   return parts.join("-");
 }
 
+const emptyPIC = (): PIC => ({ name: "", phone: "" });
+
+const emptyClient = (): Client => ({
+  id: uuid(), name: "", sector: "Banking", pic: [emptyPIC()], contact: "",
+  status: "Prospect", notes: "", address: "", website: "", company_size: "",
+});
+
+function normalizePic(raw: unknown): PIC[] {
+  if (!raw || !Array.isArray(raw)) return [emptyPIC()];
+  return (raw as unknown[]).map(p => {
+    if (typeof p === "string") return { name: p, phone: "" };
+    if (p && typeof p === "object" && "name" in p) return p as PIC;
+    return emptyPIC();
+  });
+}
+
 export default function ClientModal({ open, client, onSave, onDelete, onClose }: Props) {
   const isEdit = !!client;
   const [form, setForm] = useState<Client>(emptyClient());
@@ -37,7 +48,7 @@ export default function ClientModal({ open, client, onSave, onDelete, onClose }:
 
   useEffect(() => {
     if (client) {
-      setForm({ ...client, pic: Array.isArray(client.pic) ? client.pic : [client.pic || ""] });
+      setForm({ ...client, pic: normalizePic(client.pic) });
     } else {
       setForm(emptyClient());
     }
@@ -46,19 +57,18 @@ export default function ClientModal({ open, client, onSave, onDelete, onClose }:
 
   const set = <K extends keyof Client>(k: K, v: Client[K]) => setForm(f => ({ ...f, [k]: v }));
 
-  function setPic(index: number, value: string) {
+  function setPicField(index: number, field: keyof PIC, value: string) {
     setForm(f => {
-      const pics = [...f.pic];
-      pics[index] = value;
+      const pics = f.pic.map((p, i) => i === index ? { ...p, [field]: value } : p);
       return { ...f, pic: pics };
     });
   }
-  function addPic() { setForm(f => ({ ...f, pic: [...f.pic, ""] })); }
+  function addPic() { setForm(f => ({ ...f, pic: [...f.pic, emptyPIC()] })); }
   function removePic(index: number) { setForm(f => ({ ...f, pic: f.pic.filter((_, i) => i !== index) })); }
 
   async function handleSave() {
     if (!form.name.trim()) { alert("Nama client wajib diisi."); return; }
-    const cleaned = { ...form, pic: form.pic.filter(p => p.trim()) };
+    const cleaned = { ...form, pic: form.pic.filter(p => p.name.trim()) };
     await onSave(cleaned);
     onClose();
   }
@@ -69,8 +79,7 @@ export default function ClientModal({ open, client, onSave, onDelete, onClose }:
     onClose();
   }
 
-  const tabCls = (t: string) =>
-    `modal-tab${tab === t ? " modal-tab-active" : ""}`;
+  const tabCls = (t: string) => `modal-tab${tab === t ? " modal-tab-active" : ""}`;
 
   return (
     <Modal open={open} onClose={onClose} title={`${isEdit ? "Edit" : "Tambah"} Client`}>
@@ -94,29 +103,41 @@ export default function ClientModal({ open, client, onSave, onDelete, onClose }:
               <input className={inputCls} value={form.status} onChange={e => set("status", e.target.value)} placeholder="Prospect / Active / Inactive" />
             </Field>
           </div>
-          <Field label="PIC">
+
+          <Field label="PIC & Kontak">
+            <div className="pic-header-row">
+              <span className="pic-col-label">Nama PIC</span>
+              <span className="pic-col-label">No. Telepon</span>
+            </div>
             <div className="flex flex-col gap-2">
               {form.pic.map((p, i) => (
                 <div key={i} className="flex gap-2 items-center">
-                  <input className={inputCls} value={p} onChange={e => setPic(i, e.target.value)} placeholder={`PIC ${i + 1}`} />
+                  <input
+                    className={inputCls}
+                    value={p.name}
+                    onChange={e => setPicField(i, "name", e.target.value)}
+                    placeholder={`Nama PIC ${i + 1}`}
+                  />
+                  <input
+                    className={inputCls}
+                    value={formatPhone(p.phone)}
+                    onChange={e => setPicField(i, "phone", e.target.value.replace(/\D/g, ""))}
+                    placeholder="08xx-xxxx-xxxx"
+                    inputMode="tel"
+                  />
                   {form.pic.length > 1 && (
-                    <button type="button" onClick={() => removePic(i)} className="text-red-500 hover:text-red-700 text-lg leading-none px-1" title="Hapus PIC">×</button>
+                    <button type="button" onClick={() => removePic(i)}
+                      className="text-red-500 hover:text-red-700 text-lg leading-none px-1 flex-shrink-0"
+                      title="Hapus PIC">×</button>
                   )}
                 </div>
               ))}
-              <button type="button" onClick={addPic} className="text-sm text-[#1a5c4f] hover:underline self-start">+ Tambah PIC</button>
+              <button type="button" onClick={addPic} className="text-sm text-[#1a5c4f] hover:underline self-start">
+                + Tambah PIC
+              </button>
             </div>
           </Field>
-          <Field label="Kontak (No. Telepon)">
-            <input
-              className={inputCls}
-              value={formatPhone(form.contact)}
-              onChange={e => set("contact", e.target.value.replace(/\D/g, ""))}
-              placeholder="08xx-xxxx-xxxx"
-              inputMode="tel"
-              type="tel"
-            />
-          </Field>
+
           <Field label="Catatan">
             <textarea className={textareaCls} value={form.notes} onChange={e => set("notes", e.target.value)} />
           </Field>

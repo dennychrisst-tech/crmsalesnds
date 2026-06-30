@@ -69,8 +69,11 @@ export default function Clients({ data, onSaveClient, onDeleteClient, onSaveCont
                   {c.sector}
                   {c.company_size && ` · ${c.company_size}`}
                   {" · "}
-                  {(Array.isArray(c.pic) ? c.pic : [c.pic]).filter(Boolean).join(", ") || "—"}
-                  {c.contact ? ` · ${c.contact}` : ""}
+                  {(Array.isArray(c.pic) && c.pic.length > 0
+                    ? c.pic.map((p: { name: string; phone?: string } | string) =>
+                        typeof p === "string" ? p : `${p.name}${p.phone ? ` (${p.phone})` : ""}`
+                      ).filter(Boolean).join(" · ")
+                    : null) || "—"}
                 </div>
                 {c.website && (
                   <div className="cmeta">

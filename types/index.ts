@@ -4,11 +4,16 @@ export type VisitStatus = "Planned" | "Done" | "Follow-up" | "No-go";
 export type ProjectStatus = "Initiation" | "In Progress" | "On Hold" | "Delivered" | "Closed";
 export type TaskStatus = "Open" | "Done";
 
+export interface PIC {
+  name: string;
+  phone: string;
+}
+
 export interface Client {
   id: string;
   name: string;
   sector: Sector;
-  pic: string[];
+  pic: PIC[];
   contact: string;
   status: string;
   notes: string;

@@ -203,6 +203,10 @@ tr.task-soon td { background: #fffbeb; }
 .attachment-name:hover { text-decoration: underline; }
 .attachment-meta { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
 
+/* PIC side-by-side layout */
+.pic-header-row { display: flex; gap: 8px; margin-bottom: 4px; }
+.pic-col-label { flex: 1; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); font-weight: 600; }
+
 /* Product catalog */
 .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
 .catalog-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); }
