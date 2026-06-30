@@ -1,4 +1,5 @@
 "use client";
+import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
 import { ActiveView } from "@/types";
 import { STAGES, STAGE_PROB, fmtIDR, fmtDate, todayStr } from "@/lib/utils";
@@ -8,6 +9,8 @@ interface Props {
   data: AppData;
   onNavigate: (view: ActiveView) => void;
 }
+
+type Period = "daily" | "weekly" | "monthly";
 
 function SectionHeader({ title, action, onClick }: { title: string; action?: string; onClick?: () => void }) {
   return (
@@ -23,79 +26,167 @@ function SectionHeader({ title, action, onClick }: { title: string; action?: str
   );
 }
 
+function FilterBar({
+  period, setPeriod, salesList, salesFilter, setSalesFilter,
+}: {
+  period: Period; setPeriod: (p: Period) => void;
+  salesList: string[]; salesFilter: string; setSalesFilter: (s: string) => void;
+}) {
+  const btnBase: React.CSSProperties = {
+    padding: "6px 14px", borderRadius: 6, fontSize: 12, fontWeight: 700,
+    cursor: "pointer", border: "1px solid var(--line)", transition: "all .15s",
+  };
+  const active: React.CSSProperties = { background: "var(--ink)", color: "#fff", border: "1px solid var(--ink)" };
+  const inactive: React.CSSProperties = { background: "var(--paper)", color: "var(--ink-soft)" };
+
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+      background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10,
+      padding: "12px 16px", marginBottom: 16,
+    }}>
+      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-soft)", marginRight: 4 }}>Periode:</span>
+      {(["daily", "weekly", "monthly"] as Period[]).map(p => (
+        <button key={p} style={{ ...btnBase, ...(period === p ? active : inactive) }}
+          onClick={() => setPeriod(p)}>
+          {p === "daily" ? "Hari Ini" : p === "weekly" ? "Minggu Ini" : "Bulan Ini"}
+        </button>
+      ))}
+      <div style={{ width: 1, height: 20, background: "var(--line)", margin: "0 4px" }} />
+      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-soft)", marginRight: 4 }}>Sales:</span>
+      <select
+        value={salesFilter}
+        onChange={e => setSalesFilter(e.target.value)}
+        style={{
+          padding: "5px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+          border: "1px solid var(--line)", background: salesFilter !== "all" ? "var(--ink)" : "var(--paper)",
+          color: salesFilter !== "all" ? "#fff" : "var(--ink)", cursor: "pointer",
+        }}
+      >
+        <option value="all">Semua Sales</option>
+        {salesList.map(s => <option key={s} value={s}>{s}</option>)}
+      </select>
+    </div>
+  );
+}
+
 export default function Dashboard({ data, onNavigate }: Props) {
   const { clients, visits, deals, projects, tasks, activities, profiles } = data;
   const today = todayStr();
-  const [thisYear, thisMonth] = today.slice(0, 7).split("-");
-  const monthPrefix = `${thisYear}-${thisMonth}`;
 
-  // ── Deals ────────────────────────────────────────────────────────────────
-  const openDeals = deals.filter(d => d.stage !== "Won" && d.stage !== "Lost");
-  const wonDeals  = deals.filter(d => d.stage === "Won");
-  const lostDeals = deals.filter(d => d.stage === "Lost");
+  const [period, setPeriod] = useState<Period>("monthly");
+  const [salesFilter, setSalesFilter] = useState("all");
+
+  const salesList = profiles
+    .filter(p => !["super_admin", "admin", "viewer"].includes(p.role))
+    .map(p => p.name)
+    .filter(Boolean) as string[];
+
+  // ── Period range ────────────────────────────────────────────────────────
+  const { periodStart, periodEnd, periodLabel } = useMemo(() => {
+    const d = new Date(today);
+    if (period === "daily") {
+      return { periodStart: today, periodEnd: today, periodLabel: "Hari Ini" };
+    }
+    if (period === "weekly") {
+      const dow = d.getDay(); // 0=Sun
+      const mon = new Date(d); mon.setDate(d.getDate() - ((dow + 6) % 7));
+      const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+      return {
+        periodStart: mon.toISOString().slice(0, 10),
+        periodEnd: sun.toISOString().slice(0, 10),
+        periodLabel: "Minggu Ini",
+      };
+    }
+    // monthly
+    const [y, m] = today.slice(0, 7).split("-");
+    const lastDay = new Date(Number(y), Number(m), 0).getDate();
+    return {
+      periodStart: `${y}-${m}-01`,
+      periodEnd: `${y}-${m}-${String(lastDay).padStart(2, "0")}`,
+      periodLabel: "Bulan Ini",
+    };
+  }, [period, today]);
+
+  const inPeriod = (dateStr: string) => dateStr >= periodStart && dateStr <= periodEnd;
+  const bySales = (owner: string) => salesFilter === "all" || owner === salesFilter;
+
+  // ── Filtered data ──────────────────────────────────────────────────────
+  const filteredDeals = deals.filter(d => bySales(d.owner));
+  const filteredVisits = visits.filter(v => bySales(v.pic));
+  const filteredTasks = tasks.filter(t => bySales(t.assigned_to));
+
+  // Deals
+  const openDeals   = filteredDeals.filter(d => d.stage !== "Won" && d.stage !== "Lost");
+  const wonDeals    = filteredDeals.filter(d => d.stage === "Won");
+  const lostDeals   = filteredDeals.filter(d => d.stage === "Lost");
   const closedTotal = wonDeals.length + lostDeals.length;
-  const winRate  = closedTotal > 0 ? Math.round((wonDeals.length / closedTotal) * 100) : null;
-  const weighted = openDeals.reduce((s, d) => s + (d.value * STAGE_PROB[d.stage] / 100), 0);
-  const wonValue = wonDeals.reduce((s, d) => s + d.value, 0);
+  const winRate     = closedTotal > 0 ? Math.round((wonDeals.length / closedTotal) * 100) : null;
+  const weighted    = openDeals.reduce((s, d) => s + (d.value * STAGE_PROB[d.stage] / 100), 0);
+  const wonValue    = wonDeals.reduce((s, d) => s + d.value, 0);
   const pipelineValue = openDeals.reduce((s, d) => s + d.value, 0);
 
-  const in30 = new Date();
-  in30.setDate(in30.getDate() + 30);
+  const closingInPeriod = openDeals.filter(d => d.close_date && inPeriod(d.close_date));
+
+  const in30 = new Date(today); in30.setDate(in30.getDate() + 30);
   const in30Str = in30.toISOString().slice(0, 10);
   const closingSoon = openDeals
     .filter(d => d.close_date && d.close_date >= today && d.close_date <= in30Str)
     .sort((a, b) => (a.close_date || "").localeCompare(b.close_date || ""));
 
-  const closingThisMonth = openDeals.filter(d => d.close_date?.startsWith(monthPrefix));
-
   // Pipeline per stage
   const stageData = STAGES.filter(s => s !== "Won").map(stage => {
-    const stageDeals = openDeals.filter(d => d.stage === stage);
-    return { stage, count: stageDeals.length, value: stageDeals.reduce((s, d) => s + d.value, 0) };
+    const sd = openDeals.filter(d => d.stage === stage);
+    return { stage, count: sd.length, value: sd.reduce((s, d) => s + d.value, 0) };
   });
   const maxStageValue = Math.max(...stageData.map(s => s.value), 1);
 
-  // ── Visits ───────────────────────────────────────────────────────────────
-  const visitsThisMonth = visits.filter(v => v.date?.startsWith(monthPrefix));
-  const upcoming = visits
+  // Visits
+  const periodVisits = filteredVisits.filter(v => v.date && inPeriod(v.date));
+  const upcoming = filteredVisits
     .filter(v => v.date >= today && v.status !== "Done" && v.status !== "No-go")
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 5);
-  const followups = visits.filter(v => v.status === "Follow-up").slice(0, 5);
+  const followups = filteredVisits.filter(v => v.status === "Follow-up").slice(0, 5);
 
-  // ── Tasks ────────────────────────────────────────────────────────────────
-  const openTasks    = tasks.filter(t => t.status === "Open");
+  // Tasks
+  const openTasks    = filteredTasks.filter(t => t.status === "Open");
   const overdueTasks = openTasks.filter(t => t.due_date && t.due_date < today);
   const upcomingTasks = openTasks
     .filter(t => t.due_date)
     .sort((a, b) => a.due_date.localeCompare(b.due_date))
     .slice(0, 5);
 
-  // ── Activities ───────────────────────────────────────────────────────────
-  const activitiesThisMonth = activities.filter(a => (a.created_at || "").startsWith(monthPrefix));
+  // Activities
+  const periodActivities = activities
+    .filter(a => inPeriod((a.created_at || "").slice(0, 10)) && bySales(a.created_by));
 
-  // ── Projects ─────────────────────────────────────────────────────────────
+  // Projects (not filtered by sales — shared resource)
   const activeProjects = projects.filter(p => p.status === "In Progress" || p.status === "Initiation");
 
-  // ── Top clients by deal value ─────────────────────────────────────────────
+  // Top clients
   const clientDealValue: Record<string, number> = {};
   openDeals.forEach(d => { clientDealValue[d.client_id] = (clientDealValue[d.client_id] || 0) + d.value; });
   const topClients = Object.entries(clientDealValue)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
+    .sort((a, b) => b[1] - a[1]).slice(0, 5)
     .map(([id, val]) => ({ id, name: clients.find(c => c.id === id)?.name || "—", value: val }));
 
-  // ── Team activity this month ──────────────────────────────────────────────
-  const teamActivity: Record<string, { visits: number; tasks: number }> = {};
-  profiles.filter(p => !["super_admin", "admin", "viewer"].includes(p.role)).forEach(p => {
-    if (!p.name) return;
-    teamActivity[p.name] = {
-      visits: visitsThisMonth.filter(v => v.pic === p.name).length,
-      tasks: tasks.filter(t => t.assigned_to === p.name && t.status === "Open").length,
+  // Team activity for period
+  const teamActivity: Record<string, { visits: number; tasks: number; activities: number }> = {};
+  salesList.forEach(name => {
+    teamActivity[name] = {
+      visits: filteredVisits.filter(v => v.pic === name && v.date && inPeriod(v.date)).length,
+      tasks: tasks.filter(t => t.assigned_to === name && t.status === "Open").length,
+      activities: activities.filter(a => a.created_by === name && inPeriod((a.created_at || "").slice(0, 10))).length,
     };
   });
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
+
+  const STAGE_COLOR: Record<string, string> = {
+    Lead: "#94a3b8", Discovery: "#60a5fa", Proposal: "#f59e0b",
+    Negotiation: "#f97316", Won: "#16a34a", Lost: "#ef4444",
+  };
 
   const kpis = [
     {
@@ -116,13 +207,13 @@ export default function Dashboard({ data, onNavigate }: Props) {
       color: winRate !== null && winRate >= 50 ? "#16a34a" : "var(--gold)", view: "pipeline" as ActiveView,
     },
     {
-      label: "Closing Bulan Ini", num: closingThisMonth.length,
-      sub: fmtIDR(closingThisMonth.reduce((s, d) => s + d.value, 0)),
-      color: closingThisMonth.length > 0 ? "var(--gold)" : "var(--ink-soft)", view: "pipeline" as ActiveView,
+      label: `Closing ${periodLabel}`, num: closingInPeriod.length,
+      sub: fmtIDR(closingInPeriod.reduce((s, d) => s + d.value, 0)),
+      color: closingInPeriod.length > 0 ? "var(--gold)" : "var(--ink-soft)", view: "pipeline" as ActiveView,
     },
     {
-      label: "Visit Bulan Ini", num: visitsThisMonth.length,
-      sub: `${visitsThisMonth.filter(v => v.status === "Done").length} selesai`,
+      label: `Visit ${periodLabel}`, num: periodVisits.length,
+      sub: `${periodVisits.filter(v => v.status === "Done").length} selesai`,
       color: "var(--brand)", view: "calendar" as ActiveView,
     },
     {
@@ -131,9 +222,9 @@ export default function Dashboard({ data, onNavigate }: Props) {
       color: followups.length > 0 ? "var(--danger)" : "#16a34a", view: "calendar" as ActiveView,
     },
     {
-      label: "Project Aktif", num: activeProjects.length,
-      sub: `${projects.length} total project`,
-      color: "var(--brand)", view: "projects" as ActiveView,
+      label: `Aktivitas ${periodLabel}`, num: periodActivities.length,
+      sub: "log aktivitas",
+      color: "var(--brand)", view: "clients" as ActiveView,
     },
     {
       label: "Task Open", num: openTasks.length,
@@ -143,17 +234,18 @@ export default function Dashboard({ data, onNavigate }: Props) {
     },
   ];
 
-  const STAGE_COLOR: Record<string, string> = {
-    Lead: "#94a3b8", Discovery: "#60a5fa", Proposal: "#f59e0b",
-    Negotiation: "#f97316", Won: "#16a34a", Lost: "#ef4444",
-  };
-
   return (
     <section>
+      {/* ── Filter Bar ── */}
+      <FilterBar
+        period={period} setPeriod={setPeriod}
+        salesList={salesList} salesFilter={salesFilter} setSalesFilter={setSalesFilter}
+      />
+
       {/* ── KPI Strip ── */}
       <div className="kpis">
         {kpis.map((k, i) => (
-          <div key={i} className={`kpi${k.warn ? " kpi-warn" : ""}`}
+          <div key={i} className={`kpi${(k as {warn?: boolean}).warn ? " kpi-warn" : ""}`}
             style={{ cursor: "pointer" }}
             onClick={() => onNavigate(k.view)}
             title={`Buka ${k.view}`}
@@ -182,7 +274,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
                 }} />
               </div>
               <div style={{ width: 110, fontSize: 12, textAlign: "right", color: "var(--ink)", fontWeight: 600, flexShrink: 0 }}>{fmtIDR(s.value)}</div>
-              <div style={{ width: 40, fontSize: 12, textAlign: "right", color: "var(--ink-soft)", flexShrink: 0 }}>{s.count} deal</div>
+              <div style={{ width: 50, fontSize: 12, textAlign: "right", color: "var(--ink-soft)", flexShrink: 0 }}>{s.count} deal</div>
             </div>
           ))}
         </div>
@@ -209,7 +301,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
               <div className="ti-body">{v.summary || v.purpose}</div>
               {v.pic && <div className="muted" style={{ fontSize: 11 }}>PIC: {v.pic}</div>}
             </div>
-          )) : <div className="empty-state" style={{ color: "#16a34a" }}>Tidak ada follow-up tertunda. 🎉</div>}
+          )) : <div className="empty-state" style={{ color: "#16a34a" }}>Tidak ada follow-up tertunda.</div>}
         </div>
       </div>
 
@@ -309,29 +401,35 @@ export default function Dashboard({ data, onNavigate }: Props) {
       </div>
 
       {/* ── Row 5: Team Activity ── */}
-      {Object.keys(teamActivity).length > 0 && (
+      {salesList.length > 0 && (
         <div className="panel">
-          <SectionHeader title="Aktivitas Tim Bulan Ini" />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}>
-            {Object.entries(teamActivity).map(([name, stat]) => (
-              <div key={name} style={{
-                background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 10,
-                padding: "12px 14px",
-              }}>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: "var(--ink)" }}>{name}</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                    <span style={{ fontWeight: 700, color: "var(--brand)", marginRight: 4 }}>{stat.visits}</span>visit bulan ini
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
-                    <span style={{
-                      fontWeight: 700, marginRight: 4,
-                      color: stat.tasks > 0 ? "var(--gold)" : "#16a34a",
-                    }}>{stat.tasks}</span>task open
+          <SectionHeader title={`Aktivitas Tim — ${periodLabel}`} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 12 }}>
+            {(salesFilter === "all" ? salesList : [salesFilter]).map(name => {
+              const stat = teamActivity[name] || { visits: 0, tasks: 0, activities: 0 };
+              return (
+                <div key={name} style={{
+                  background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 10,
+                  padding: "12px 14px",
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: "var(--ink)" }}>{name}</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                    <div style={{ fontSize: 12, color: "var(--ink-soft)", display: "flex", justifyContent: "space-between" }}>
+                      <span>Visit</span>
+                      <span style={{ fontWeight: 700, color: "var(--brand)" }}>{stat.visits}</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--ink-soft)", display: "flex", justifyContent: "space-between" }}>
+                      <span>Aktivitas</span>
+                      <span style={{ fontWeight: 700, color: "var(--brand)" }}>{stat.activities}</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--ink-soft)", display: "flex", justifyContent: "space-between" }}>
+                      <span>Task Open</span>
+                      <span style={{ fontWeight: 700, color: stat.tasks > 0 ? "var(--gold)" : "#16a34a" }}>{stat.tasks}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
