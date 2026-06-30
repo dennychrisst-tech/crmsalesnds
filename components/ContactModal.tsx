@@ -25,21 +25,47 @@ function formatPhone(value: string): string {
   return parts.join("-");
 }
 
-const empty = (clientId: string): Contact => ({ id: uuid(), client_id: clientId, name: "", title: "", email: "", phone: "", notes: "" });
+const emptyRow = (clientId: string): Contact => ({ id: uuid(), client_id: clientId, name: "", title: "", email: "", phone: "", notes: "" });
 
 export default function ContactModal({ open, contact, clientId, onSave, onDelete, onClose }: Props) {
   const isEdit = !!contact;
-  const [form, setForm] = useState<Contact>(empty(clientId));
+
+  // Edit mode: single form
+  const [form, setForm] = useState<Contact>(emptyRow(clientId));
+  // Add mode: multiple rows
+  const [rows, setRows] = useState<Contact[]>([emptyRow(clientId)]);
 
   useEffect(() => {
-    setForm(contact ? { ...contact } : empty(clientId));
-  }, [contact, clientId, open]);
+    if (isEdit) {
+      setForm({ ...contact });
+    } else {
+      setRows([emptyRow(clientId)]);
+    }
+  }, [contact, clientId, open, isEdit]);
 
-  const set = <K extends keyof Contact>(k: K, v: Contact[K]) => setForm(f => ({ ...f, [k]: v }));
+  const setField = <K extends keyof Contact>(k: K, v: Contact[K]) => setForm(f => ({ ...f, [k]: v }));
+
+  function setRow<K extends keyof Contact>(i: number, k: K, v: Contact[K]) {
+    setRows(rs => rs.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
+  }
+
+  function addRow() {
+    setRows(rs => [...rs, emptyRow(clientId)]);
+  }
+
+  function removeRow(i: number) {
+    setRows(rs => rs.filter((_, idx) => idx !== i));
+  }
 
   async function handleSave() {
-    if (!form.name.trim()) { alert("Nama kontak wajib diisi."); return; }
-    await onSave(form);
+    if (isEdit) {
+      if (!form.name.trim()) { alert("Nama kontak wajib diisi."); return; }
+      await onSave(form);
+    } else {
+      const valid = rows.filter(r => r.name.trim());
+      if (!valid.length) { alert("Isi minimal satu nama kontak."); return; }
+      for (const r of valid) await onSave(r);
+    }
     onClose();
   }
 
@@ -49,37 +75,81 @@ export default function ContactModal({ open, contact, clientId, onSave, onDelete
     onClose();
   }
 
+  const rowStyle: React.CSSProperties = {
+    border: "1px solid var(--line)", borderRadius: 10,
+    padding: "14px 14px 10px", marginBottom: 10, position: "relative",
+    background: "var(--paper)",
+  };
+
   return (
     <Modal open={open} onClose={onClose} title={`${isEdit ? "Edit" : "Tambah"} Kontak`}>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Nama">
-          <input className={inputCls} value={form.name} onChange={e => set("name", e.target.value)} />
-        </Field>
-        <Field label="Jabatan">
-          <input className={inputCls} value={form.title} onChange={e => set("title", e.target.value)} placeholder="Sales Manager, IT Head…" />
-        </Field>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Email">
-          <input type="email" className={inputCls} value={form.email} onChange={e => set("email", e.target.value)} />
-        </Field>
-        <Field label="No. Telepon">
-          <input
-            className={inputCls}
-            value={formatPhone(form.phone)}
-            onChange={e => set("phone", e.target.value.replace(/\D/g, ""))}
-            placeholder="08xx-xxxx-xxxx"
-            inputMode="tel"
-          />
-        </Field>
-      </div>
-      <Field label="Catatan">
-        <textarea className={textareaCls} value={form.notes} onChange={e => set("notes", e.target.value)} />
-      </Field>
+      {isEdit ? (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Nama">
+              <input className={inputCls} value={form.name} onChange={e => setField("name", e.target.value)} />
+            </Field>
+            <Field label="Jabatan">
+              <input className={inputCls} value={form.title} onChange={e => setField("title", e.target.value)} placeholder="Sales Manager, IT Head…" />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Email">
+              <input type="email" className={inputCls} value={form.email} onChange={e => setField("email", e.target.value)} />
+            </Field>
+            <Field label="No. Telepon">
+              <input className={inputCls} value={formatPhone(form.phone)} onChange={e => setField("phone", e.target.value.replace(/\D/g, ""))} placeholder="08xx-xxxx-xxxx" inputMode="tel" />
+            </Field>
+          </div>
+          <Field label="Catatan">
+            <textarea className={textareaCls} value={form.notes} onChange={e => setField("notes", e.target.value)} />
+          </Field>
+        </>
+      ) : (
+        <>
+          {rows.map((row, i) => (
+            <div key={row.id} style={rowStyle}>
+              {rows.length > 1 && (
+                <button
+                  onClick={() => removeRow(i)}
+                  style={{ position: "absolute", top: 10, right: 10, background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "var(--ink-soft)", lineHeight: 1 }}
+                  title="Hapus baris ini"
+                >×</button>
+              )}
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ink-soft)", marginBottom: 8, textTransform: "uppercase", letterSpacing: ".05em" }}>
+                Kontak {i + 1}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Nama">
+                  <input className={inputCls} value={row.name} onChange={e => setRow(i, "name", e.target.value)} placeholder="Nama kontak" />
+                </Field>
+                <Field label="Jabatan">
+                  <input className={inputCls} value={row.title} onChange={e => setRow(i, "title", e.target.value)} placeholder="Sales Manager, IT Head…" />
+                </Field>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Email">
+                  <input type="email" className={inputCls} value={row.email} onChange={e => setRow(i, "email", e.target.value)} />
+                </Field>
+                <Field label="No. Telepon">
+                  <input className={inputCls} value={formatPhone(row.phone)} onChange={e => setRow(i, "phone", e.target.value.replace(/\D/g, ""))} placeholder="08xx-xxxx-xxxx" inputMode="tel" />
+                </Field>
+              </div>
+            </div>
+          ))}
+          <button
+            className="btn btn-ghost"
+            style={{ width: "100%", marginBottom: 4 }}
+            onClick={addRow}
+          >
+            + Tambah Kontak Lagi
+          </button>
+        </>
+      )}
       <ModalActions>
         {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-        <button className="btn" onClick={handleSave}>Simpan</button>
+        <button className="btn" onClick={handleSave}>Simpan {!isEdit && rows.filter(r => r.name.trim()).length > 1 ? `(${rows.filter(r => r.name.trim()).length} kontak)` : ""}</button>
       </ModalActions>
     </Modal>
   );
