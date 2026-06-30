@@ -93,7 +93,7 @@ export default function CRMApp() {
             const currentUserName = currentProfile?.name ?? "";
             return (
               <>
-                {view === "dashboard" && <Dashboard data={data} />}
+                {view === "dashboard" && <Dashboard data={data} onNavigate={setView} />}
                 {view === "calendar" && (
                   <CalendarView data={data} currentUserName={currentUserName} isViewer={isViewer}
                     onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)}
