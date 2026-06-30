@@ -39,12 +39,14 @@ export interface Contact {
 export interface Visit {
   id: string;
   client_id: string;
+  project_id?: string | null;
   date: string;
   purpose: string;
   approach: string;
   status: VisitStatus;
   pic: string;
   pic_client: string;
+  jabatan: string;
   summary: string;
   created_by_id?: string;
   created_at?: string;
