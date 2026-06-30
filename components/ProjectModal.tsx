@@ -24,15 +24,23 @@ function parseProduct(product: string) {
   return { category: cat || "", sub: "" };
 }
 
+function fmtIDR(num: number): string {
+  if (!num) return "";
+  return num.toLocaleString("id-ID");
+}
+
+
 export default function ProjectModal({ open, project, clients, onSave, onDelete, onClose }: Props) {
   const isEdit = !!project;
   const [form, setForm] = useState<Project>({ id: "", name: "", client_id: "", product: "", status: "Initiation", value: 0, golive: "", notes: "" });
+  const [valueDisplay, setValueDisplay] = useState("");
   const [productCat, setProductCat] = useState("");
   const [ibmSub, setIbmSub] = useState("");
 
   useEffect(() => {
     const base = project || { id: uuid(), name: "", client_id: clients[0]?.id || "", product: "", status: "Initiation", value: 0, golive: "", notes: "" };
     setForm(base);
+    setValueDisplay(fmtIDR(base.value || 0));
     const { category, sub } = parseProduct(base.product || "");
     setProductCat(category);
     setIbmSub(sub);
@@ -79,8 +87,23 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
             {PROJ_STATUS.map(s => <option key={s}>{s}</option>)}
           </select>
         </Field>
-        <Field label="Nilai (Rp)">
-          <input type="number" className={inputCls} value={form.value} onChange={e => set("value", +e.target.value)} />
+        <Field label="Nilai Project">
+          <div style={{ position: "relative" }}>
+            <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "var(--ink-soft)", pointerEvents: "none" }}>IDR</span>
+            <input
+              className={inputCls}
+              style={{ paddingLeft: 38 }}
+              inputMode="numeric"
+              value={valueDisplay}
+              onChange={e => {
+                const raw = e.target.value.replace(/\D/g, "");
+                const num = parseInt(raw, 10) || 0;
+                setValueDisplay(raw ? num.toLocaleString("id-ID") : "");
+                setForm(f => ({ ...f, value: num }));
+              }}
+              placeholder="0"
+            />
+          </div>
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-3">
