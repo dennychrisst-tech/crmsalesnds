@@ -33,6 +33,7 @@ export default function CRMApp() {
     upsertProduct, deleteProduct,
     upsertDocument, deleteDocument,
     uploadAttachment, deleteAttachment,
+    upsertActivity, deleteActivity,
   } = useData();
 
   return (
@@ -67,7 +68,8 @@ export default function CRMApp() {
             <Pipeline data={data}
               onSaveDeal={upsertDeal} onDeleteDeal={deleteDeal} onUpdateStage={updateDealStage}
               onAddDocument={upsertDocument} onDeleteDocument={deleteDocument}
-              onUploadAttachment={uploadAttachment} onDeleteAttachment={deleteAttachment} />
+              onUploadAttachment={uploadAttachment} onDeleteAttachment={deleteAttachment}
+              onAddActivity={upsertActivity} onDeleteActivity={deleteActivity} />
           )}
           {view === "projects" && (
             <Projects data={data} onSaveProject={upsertProject} onDeleteProject={deleteProject} />

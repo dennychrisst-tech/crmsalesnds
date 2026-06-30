@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { v4 as uuid } from "uuid";
 import { getSupabase } from "@/lib/supabase";
-import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment } from "@/types";
+import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity } from "@/types";
 
 export interface AppData {
   clients: Client[];
@@ -14,19 +14,20 @@ export interface AppData {
   products: Product[];
   documents: CRMDocument[];
   attachments: Attachment[];
+  activities: Activity[];
 }
 
 export function useData() {
   const [data, setData] = useState<AppData>({
     clients: [], contacts: [], visits: [], deals: [], projects: [],
-    tasks: [], products: [], documents: [], attachments: [],
+    tasks: [], products: [], documents: [], attachments: [], activities: [],
   });
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState("Memuat…");
 
   const load = useCallback(async () => {
     try {
-      const [c, ct, v, d, p, t, pr, doc, att] = await Promise.all([
+      const [c, ct, v, d, p, t, pr, doc, att, act] = await Promise.all([
         getSupabase().from("clients").select("*").order("created_at"),
         getSupabase().from("contacts").select("*").order("created_at"),
         getSupabase().from("visits").select("*").order("date"),
@@ -36,6 +37,7 @@ export function useData() {
         getSupabase().from("products").select("*").order("name"),
         getSupabase().from("documents").select("*").order("created_at"),
         getSupabase().from("attachments").select("*").order("uploaded_at"),
+        getSupabase().from("activities").select("*").order("created_at", { ascending: false }),
       ]);
       setData({
         clients: (c.data || []) as Client[],
@@ -47,6 +49,7 @@ export function useData() {
         products: (pr.data || []) as Product[],
         documents: (doc.data || []) as CRMDocument[],
         attachments: (att.data || []) as Attachment[],
+        activities: (act.data || []) as Activity[],
       });
       setSyncStatus("Tersimpan otomatis");
     } catch (e) {
@@ -152,6 +155,17 @@ export function useData() {
     await load();
   }
 
+  async function upsertActivity(activity: Activity) {
+    const { error } = await getSupabase().from("activities").upsert(activity);
+    if (error) throw error;
+    await load();
+  }
+  async function deleteActivity(id: string) {
+    const { error } = await getSupabase().from("activities").delete().eq("id", id);
+    if (error) throw error;
+    await load();
+  }
+
   async function uploadAttachment(file: File, dealId?: string, clientId?: string) {
     const sb = getSupabase();
     const folder = dealId || clientId || "misc";
@@ -200,5 +214,6 @@ export function useData() {
     upsertProduct, deleteProduct,
     upsertDocument, deleteDocument,
     uploadAttachment, deleteAttachment,
+    upsertActivity, deleteActivity,
   };
 }

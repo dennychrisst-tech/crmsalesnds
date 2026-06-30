@@ -52,11 +52,22 @@ export interface Deal {
   client_id: string;
   value: number;
   stage: DealStage;
+  deal_type: string;
   product: string;
   close_date: string;
   notes: string;
   owner: string;
   win_loss_reason: string;
+  created_at?: string;
+}
+
+export interface Activity {
+  id: string;
+  deal_id: string | null;
+  client_id: string | null;
+  type: string;
+  description: string;
+  created_by: string;
   created_at?: string;
 }
 
