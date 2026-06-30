@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { v4 as uuid } from "uuid";
 import { getSupabase } from "@/lib/supabase";
 import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity, CalendarEvent, Profile } from "@/types";
@@ -26,6 +26,7 @@ export function useData() {
     profiles: [],
   });
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
+  const userIdRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState("Memuat…");
 
@@ -48,6 +49,7 @@ export function useData() {
         sb.auth.getUser(),
       ]);
       const profiles = (prof.data || []) as Profile[];
+      userIdRef.current = user?.id ?? null;
       setData({
         clients: (c.data || []) as Client[],
         contacts: (ct.data || []) as Contact[],
@@ -74,8 +76,16 @@ export function useData() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Tags a new record with the current user's ID if not already set
+  function withCreator<T extends { created_by_id?: string }>(record: T): T {
+    if (!record.created_by_id && userIdRef.current) {
+      return { ...record, created_by_id: userIdRef.current };
+    }
+    return record;
+  }
+
   async function upsertClient(client: Client) {
-    const { error } = await getSupabase().from("clients").upsert(client);
+    const { error } = await getSupabase().from("clients").upsert(withCreator(client));
     if (error) throw error;
     await load();
   }
@@ -86,7 +96,7 @@ export function useData() {
   }
 
   async function upsertContact(contact: Contact) {
-    const { error } = await getSupabase().from("contacts").upsert(contact);
+    const { error } = await getSupabase().from("contacts").upsert(withCreator(contact));
     if (error) throw error;
     await load();
   }
@@ -97,7 +107,7 @@ export function useData() {
   }
 
   async function upsertVisit(visit: Visit) {
-    const { error } = await getSupabase().from("visits").upsert(visit);
+    const { error } = await getSupabase().from("visits").upsert(withCreator(visit));
     if (error) throw error;
     await load();
   }
@@ -108,7 +118,7 @@ export function useData() {
   }
 
   async function upsertDeal(deal: Deal) {
-    const { error } = await getSupabase().from("deals").upsert(deal);
+    const { error } = await getSupabase().from("deals").upsert(withCreator(deal));
     if (error) throw error;
     await load();
   }
@@ -124,7 +134,7 @@ export function useData() {
   }
 
   async function upsertProject(project: Project) {
-    const { error } = await getSupabase().from("projects").upsert(project);
+    const { error } = await getSupabase().from("projects").upsert(withCreator(project));
     if (error) throw error;
     await load();
   }
@@ -135,7 +145,7 @@ export function useData() {
   }
 
   async function upsertTask(task: Task) {
-    const { error } = await getSupabase().from("tasks").upsert(task);
+    const { error } = await getSupabase().from("tasks").upsert(withCreator(task));
     if (error) throw error;
     await load();
   }
@@ -146,7 +156,7 @@ export function useData() {
   }
 
   async function upsertProduct(product: Product) {
-    const { error } = await getSupabase().from("products").upsert(product);
+    const { error } = await getSupabase().from("products").upsert(withCreator(product));
     if (error) throw error;
     await load();
   }
@@ -157,7 +167,7 @@ export function useData() {
   }
 
   async function upsertDocument(doc: CRMDocument) {
-    const { error } = await getSupabase().from("documents").upsert(doc);
+    const { error } = await getSupabase().from("documents").upsert(withCreator(doc));
     if (error) throw error;
     await load();
   }
@@ -168,7 +178,7 @@ export function useData() {
   }
 
   async function upsertEvent(event: CalendarEvent) {
-    const { error } = await getSupabase().from("events").upsert(event);
+    const { error } = await getSupabase().from("events").upsert(withCreator(event));
     if (error) throw error;
     await load();
   }
@@ -179,7 +189,7 @@ export function useData() {
   }
 
   async function upsertActivity(activity: Activity) {
-    const { error } = await getSupabase().from("activities").upsert(activity);
+    const { error } = await getSupabase().from("activities").upsert(withCreator(activity));
     if (error) throw error;
     await load();
   }
@@ -206,6 +216,7 @@ export function useData() {
       file_name: file.name,
       file_url: publicUrl,
       file_size: file.size,
+      created_by_id: userIdRef.current ?? undefined,
     });
     if (error) throw error;
     await load();

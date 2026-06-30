@@ -84,36 +84,43 @@ export default function CRMApp() {
         <div className="empty-state">Memuat data…</div>
       ) : (
         <>
-          {view === "dashboard" && <Dashboard data={data} />}
-          {view === "calendar" && (
-            <CalendarView data={data}
-              onSaveVisit={upsertVisit} onDeleteVisit={deleteVisit}
-              onSaveEvent={upsertEvent} onDeleteEvent={deleteEvent}
-              onCreateTask={upsertTask} />
-          )}
-          {view === "clients" && (
-            <Clients data={data}
-              onSaveClient={upsertClient} onDeleteClient={deleteClient}
-              onSaveContact={upsertContact} onDeleteContact={deleteContact}
-              onSaveVisit={upsertVisit} onDeleteVisit={deleteVisit} />
-          )}
-          {view === "pipeline" && (
-            <Pipeline data={data}
-              onSaveDeal={upsertDeal} onDeleteDeal={deleteDeal} onUpdateStage={updateDealStage}
-              onAddDocument={upsertDocument} onDeleteDocument={deleteDocument}
-              onUploadAttachment={uploadAttachment} onDeleteAttachment={deleteAttachment}
-              onAddActivity={upsertActivity} onDeleteActivity={deleteActivity} />
-          )}
-          {view === "projects" && (
-            <Projects data={data} onSaveProject={upsertProject} onDeleteProject={deleteProject} />
-          )}
-          {view === "tasks" && (
-            <TasksView data={data} onSaveTask={upsertTask} onDeleteTask={deleteTask} />
-          )}
-          {view === "catalog" && (
-            <ProductsView data={data} onSaveProduct={upsertProduct} onDeleteProduct={deleteProduct} />
-          )}
-          {view === "summary" && <SummaryView data={data} />}
+          {(() => {
+            const currentUserName = currentProfile?.name ?? "";
+            return (
+              <>
+                {view === "dashboard" && <Dashboard data={data} />}
+                {view === "calendar" && (
+                  <CalendarView data={data} currentUserName={currentUserName}
+                    onSaveVisit={upsertVisit} onDeleteVisit={deleteVisit}
+                    onSaveEvent={upsertEvent} onDeleteEvent={deleteEvent}
+                    onCreateTask={upsertTask} />
+                )}
+                {view === "clients" && (
+                  <Clients data={data} currentUserName={currentUserName}
+                    onSaveClient={upsertClient} onDeleteClient={deleteClient}
+                    onSaveContact={upsertContact} onDeleteContact={deleteContact}
+                    onSaveVisit={upsertVisit} onDeleteVisit={deleteVisit} />
+                )}
+                {view === "pipeline" && (
+                  <Pipeline data={data} currentUserName={currentUserName}
+                    onSaveDeal={upsertDeal} onDeleteDeal={deleteDeal} onUpdateStage={updateDealStage}
+                    onAddDocument={upsertDocument} onDeleteDocument={deleteDocument}
+                    onUploadAttachment={uploadAttachment} onDeleteAttachment={deleteAttachment}
+                    onAddActivity={upsertActivity} onDeleteActivity={deleteActivity} />
+                )}
+                {view === "projects" && (
+                  <Projects data={data} onSaveProject={upsertProject} onDeleteProject={deleteProject} />
+                )}
+                {view === "tasks" && (
+                  <TasksView data={data} currentUserName={currentUserName} onSaveTask={upsertTask} onDeleteTask={deleteTask} />
+                )}
+                {view === "catalog" && (
+                  <ProductsView data={data} onSaveProduct={upsertProduct} onDeleteProduct={deleteProduct} />
+                )}
+                {view === "summary" && <SummaryView data={data} />}
+              </>
+            );
+          })()}
         </>
       )}
     </div>

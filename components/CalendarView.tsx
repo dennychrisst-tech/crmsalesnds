@@ -11,6 +11,7 @@ import { v4 as uuid } from "uuid";
 
 interface Props {
   data: AppData;
+  currentUserName: string;
   onSaveVisit: (v: Visit) => Promise<void>;
   onDeleteVisit: (id: string) => Promise<void>;
   onSaveEvent: (e: CalendarEvent) => Promise<void>;
@@ -18,7 +19,7 @@ interface Props {
   onCreateTask: (t: Task) => Promise<void>;
 }
 
-export default function CalendarView({ data, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask }: Props) {
+export default function CalendarView({ data, currentUserName, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask }: Props) {
   const { clients, visits, events, profiles } = data;
   const team = profiles.map(p => p.name).filter(Boolean);
 
@@ -165,9 +166,9 @@ export default function CalendarView({ data, onSaveVisit, onDeleteVisit, onSaveE
         </table>
       </div>
 
-      <VisitModal open={visitModal} visit={editVisit} preClientId={preClientId} clients={clients} team={team}
+      <VisitModal open={visitModal} visit={editVisit} preClientId={preClientId} clients={clients} team={team} defaultPic={currentUserName}
         onSave={handleSaveVisit} onDelete={onDeleteVisit} onClose={() => setVisitModal(false)} />
-      <EventModal open={eventModal} event={editEvent} preDate={preDate} team={team}
+      <EventModal open={eventModal} event={editEvent} preDate={preDate} team={team} defaultMember={currentUserName}
         onSave={onSaveEvent} onDelete={onDeleteEvent} onClose={() => setEventModal(false)} />
     </section>
   );

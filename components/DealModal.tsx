@@ -16,6 +16,7 @@ interface Props {
   attachments: Attachment[];
   activities: Activity[];
   team: string[];
+  defaultOwner?: string;
   onSave: (d: Deal) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onAddDocument: (d: CRMDocument) => Promise<void>;
@@ -27,10 +28,10 @@ interface Props {
   onClose: () => void;
 }
 
-const emptyDeal = (clientId: string): Deal => ({
+const emptyDeal = (clientId: string, defaultOwner = ""): Deal => ({
   id: uuid(), name: "", client_id: clientId, value: 0,
   stage: "Lead", deal_type: "", product: "", close_date: "", notes: "",
-  owner: "", win_loss_reason: "", competitor: "", stage_updated_at: new Date().toISOString(),
+  owner: defaultOwner, win_loss_reason: "", competitor: "", stage_updated_at: new Date().toISOString(),
 });
 
 const emptyActivity = (dealId: string): Omit<Activity, "id" | "created_at"> => ({
@@ -38,20 +39,20 @@ const emptyActivity = (dealId: string): Omit<Activity, "id" | "created_at"> => (
 });
 
 export default function DealModal({
-  open, deal, clients, products, documents, attachments, activities, team,
+  open, deal, clients, products, documents, attachments, activities, team, defaultOwner = "",
   onSave, onDelete, onAddDocument, onDeleteDocument,
   onUploadAttachment, onDeleteAttachment,
   onAddActivity, onDeleteActivity,
   onClose,
 }: Props) {
   const isEdit = !!deal;
-  const [form, setForm] = useState<Deal>(emptyDeal(clients[0]?.id || ""));
+  const [form, setForm] = useState<Deal>(emptyDeal(clients[0]?.id || "", defaultOwner));
   const [tab, setTab] = useState<"info" | "activity" | "docs" | "files">("info");
   const [actForm, setActForm] = useState(emptyActivity(deal?.id || ""));
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const d = deal || emptyDeal(clients[0]?.id || "");
+    const d = deal || emptyDeal(clients[0]?.id || "", defaultOwner);
     setForm(d);
     setActForm(emptyActivity(d.id));
     setTab("info");

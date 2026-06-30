@@ -23,6 +23,7 @@ import DealModal from "./DealModal";
 
 interface Props {
   data: AppData;
+  currentUserName: string;
   onSaveDeal: (d: Deal) => Promise<void>;
   onDeleteDeal: (id: string) => Promise<void>;
   onUpdateStage: (id: string, stage: string) => Promise<void>;
@@ -64,7 +65,7 @@ function Column({ stage, deals, clientName, onDealClick }: { stage: string; deal
   );
 }
 
-export default function Pipeline({ data, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity }: Props) {
+export default function Pipeline({ data, currentUserName, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity }: Props) {
   const { clients, deals, products, documents, attachments, activities, profiles } = data;
   const team = profiles.map(p => p.name).filter(Boolean);
   const [modalOpen, setModalOpen] = useState(false);
@@ -118,7 +119,7 @@ export default function Pipeline({ data, onSaveDeal, onDeleteDeal, onUpdateStage
         </DragOverlay>
       </DndContext>
       <DealModal
-        open={modalOpen} deal={editDeal} clients={clients} products={products} team={team}
+        open={modalOpen} deal={editDeal} clients={clients} products={products} team={team} defaultOwner={currentUserName}
         documents={dealDocuments} attachments={dealAttachments} activities={dealActivities}
         onSave={onSaveDeal} onDelete={onDeleteDeal}
         onAddDocument={onAddDocument} onDeleteDocument={onDeleteDocument}

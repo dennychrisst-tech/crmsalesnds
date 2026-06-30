@@ -11,16 +11,17 @@ interface Props {
   preClientId?: string;
   clients: Client[];
   team: string[];
+  defaultPic?: string;
   onSave: (v: Visit) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onClose: () => void;
 }
 
-function emptyVisit(clientId: string): Visit {
+function emptyVisit(clientId: string, defaultPic = ""): Visit {
   return {
     id: uuid(), client_id: clientId, date: todayStr(),
     purpose: "", approach: "", status: "Planned",
-    pic: "", pic_client: "", summary: "",
+    pic: defaultPic, pic_client: "", summary: "",
   };
 }
 
@@ -30,17 +31,17 @@ function getPics(clients: Client[], clientId: string): PIC[] {
   return (Array.isArray(client.pic) ? client.pic : []).filter((p: PIC) => p.name?.trim());
 }
 
-export default function VisitModal({ open, visit, preClientId, clients, team, onSave, onDelete, onClose }: Props) {
+export default function VisitModal({ open, visit, preClientId, clients, team, defaultPic = "", onSave, onDelete, onClose }: Props) {
   const isEdit = !!visit;
-  const [form, setForm] = useState<Visit>(emptyVisit(clients[0]?.id || ""));
+  const [form, setForm] = useState<Visit>(emptyVisit(clients[0]?.id || "", defaultPic));
 
   useEffect(() => {
     if (visit) {
       setForm(visit);
     } else {
-      setForm(emptyVisit(preClientId || clients[0]?.id || ""));
+      setForm(emptyVisit(preClientId || clients[0]?.id || "", defaultPic));
     }
-  }, [visit, preClientId, clients, open]);
+  }, [visit, preClientId, clients, open, defaultPic]);
 
   const set = (k: keyof Visit, v: string) => setForm(f => ({ ...f, [k]: v }));
 

@@ -11,6 +11,7 @@ interface Props {
   clients: Client[];
   deals: Deal[];
   team: string[];
+  defaultAssignee?: string;
   preClientId?: string;
   preDealId?: string;
   onSave: (t: Task) => Promise<void>;
@@ -18,22 +19,22 @@ interface Props {
   onClose: () => void;
 }
 
-const empty = (): Task => ({
+const empty = (defaultAssignee = ""): Task => ({
   id: uuid(), title: "", due_date: todayStr(),
-  client_id: null, deal_id: null, assigned_to: "", status: "Open", notes: "",
+  client_id: null, deal_id: null, assigned_to: defaultAssignee, status: "Open", notes: "",
 });
 
-export default function TaskModal({ open, task, clients, deals, team, preClientId, preDealId, onSave, onDelete, onClose }: Props) {
+export default function TaskModal({ open, task, clients, deals, team, defaultAssignee = "", preClientId, preDealId, onSave, onDelete, onClose }: Props) {
   const isEdit = !!task;
-  const [form, setForm] = useState<Task>(empty());
+  const [form, setForm] = useState<Task>(empty(defaultAssignee));
 
   useEffect(() => {
     if (task) {
       setForm({ ...task });
     } else {
-      setForm({ ...empty(), client_id: preClientId || null, deal_id: preDealId || null });
+      setForm({ ...empty(defaultAssignee), client_id: preClientId || null, deal_id: preDealId || null });
     }
-  }, [task, preClientId, preDealId, open]);
+  }, [task, preClientId, preDealId, open, defaultAssignee]);
 
   const set = <K extends keyof Task>(k: K, v: Task[K]) => setForm(f => ({ ...f, [k]: v }));
 

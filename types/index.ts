@@ -20,6 +20,7 @@ export interface Client {
   address?: string;
   website?: string;
   company_size?: string;
+  created_by_id?: string;
   created_at?: string;
 }
 
@@ -31,6 +32,7 @@ export interface Contact {
   email: string;
   phone: string;
   notes: string;
+  created_by_id?: string;
   created_at?: string;
 }
 
@@ -44,6 +46,7 @@ export interface Visit {
   pic: string;
   pic_client: string;
   summary: string;
+  created_by_id?: string;
   created_at?: string;
 }
 
@@ -61,6 +64,7 @@ export interface Deal {
   win_loss_reason: string;
   competitor: string;
   stage_updated_at?: string;
+  created_by_id?: string;
   created_at?: string;
 }
 
@@ -71,6 +75,7 @@ export interface Activity {
   type: string;
   description: string;
   created_by: string;
+  created_by_id?: string;
   created_at?: string;
 }
 
@@ -83,6 +88,7 @@ export interface Project {
   value: number;
   golive: string;
   notes: string;
+  created_by_id?: string;
   created_at?: string;
 }
 
@@ -95,6 +101,7 @@ export interface Task {
   assigned_to: string;
   status: TaskStatus;
   notes: string;
+  created_by_id?: string;
   created_at?: string;
 }
 
@@ -103,6 +110,7 @@ export interface Product {
   name: string;
   category: string;
   description: string;
+  created_by_id?: string;
   created_at?: string;
 }
 
@@ -114,6 +122,7 @@ export interface CRMDocument {
   status: string;
   date: string;
   notes: string;
+  created_by_id?: string;
   created_at?: string;
 }
 
@@ -124,6 +133,7 @@ export interface Attachment {
   file_name: string;
   file_url: string;
   file_size: number;
+  created_by_id?: string;
   uploaded_at?: string;
 }
 
@@ -134,6 +144,7 @@ export interface CalendarEvent {
   type: string;
   description: string;
   created_by: string;
+  created_by_id?: string;
   created_at?: string;
 }
 

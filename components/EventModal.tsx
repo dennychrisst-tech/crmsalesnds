@@ -10,6 +10,7 @@ interface Props {
   event: CalendarEvent | null;
   preDate?: string;
   team: string[];
+  defaultMember?: string;
   onSave: (e: CalendarEvent) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onClose: () => void;
@@ -27,7 +28,7 @@ function joinMembers(arr: string[]): string {
   return arr.join(", ");
 }
 
-export default function EventModal({ open, event, preDate, team, onSave, onDelete, onClose }: Props) {
+export default function EventModal({ open, event, preDate, team, defaultMember = "", onSave, onDelete, onClose }: Props) {
   const isEdit = !!event;
   const [form, setForm] = useState<CalendarEvent>(emptyEvent(preDate));
   const [selected, setSelected] = useState<string[]>([]);
@@ -35,8 +36,10 @@ export default function EventModal({ open, event, preDate, team, onSave, onDelet
   useEffect(() => {
     const base = event || emptyEvent(preDate);
     setForm(base);
-    setSelected(parseMembers(base.created_by));
-  }, [event, preDate, open]);
+    const members = parseMembers(base.created_by);
+    // Auto-select current user when creating a new event
+    setSelected(event ? members : (defaultMember && !members.includes(defaultMember) ? [defaultMember] : members));
+  }, [event, preDate, open, defaultMember]);
 
   const set = (k: keyof CalendarEvent, v: string) => setForm(f => ({ ...f, [k]: v }));
 

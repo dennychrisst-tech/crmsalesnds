@@ -7,6 +7,7 @@ import TaskModal from "./TaskModal";
 
 interface Props {
   data: AppData;
+  currentUserName: string;
   onSaveTask: (t: Task) => Promise<void>;
   onDeleteTask: (id: string) => Promise<void>;
 }
@@ -25,7 +26,7 @@ function urgencyClass(dueDate: string, status: string): string {
   return "";
 }
 
-export default function TasksView({ data, onSaveTask, onDeleteTask }: Props) {
+export default function TasksView({ data, currentUserName, onSaveTask, onDeleteTask }: Props) {
   const { tasks, clients, deals, profiles } = data;
   const team = profiles.map(p => p.name).filter(Boolean);
   const [modalOpen, setModalOpen] = useState(false);
@@ -106,7 +107,7 @@ export default function TasksView({ data, onSaveTask, onDeleteTask }: Props) {
         </div>
       )}
 
-      <TaskModal open={modalOpen} task={editTask} clients={clients} deals={deals} team={team}
+      <TaskModal open={modalOpen} task={editTask} clients={clients} deals={deals} team={team} defaultAssignee={currentUserName}
         onSave={onSaveTask} onDelete={onDeleteTask} onClose={() => setModalOpen(false)} />
     </section>
   );
