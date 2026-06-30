@@ -39,7 +39,7 @@ export interface Contact {
 export interface Visit {
   id: string;
   client_id: string;
-  project_id?: string | null;
+  project?: string | null;
   date: string;
   purpose: string;
   approach: string;
