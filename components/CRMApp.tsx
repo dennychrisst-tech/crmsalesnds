@@ -34,6 +34,7 @@ export default function CRMApp() {
     upsertDocument, deleteDocument,
     uploadAttachment, deleteAttachment,
     upsertActivity, deleteActivity,
+    upsertEvent, deleteEvent,
   } = useData();
 
   return (
@@ -72,7 +73,7 @@ export default function CRMApp() {
       ) : (
         <>
           {view === "dashboard" && <Dashboard data={data} />}
-          {view === "calendar" && <CalendarView data={data} onSaveVisit={upsertVisit} onDeleteVisit={deleteVisit} />}
+          {view === "calendar" && <CalendarView data={data} onSaveVisit={upsertVisit} onDeleteVisit={deleteVisit} onSaveEvent={upsertEvent} onDeleteEvent={deleteEvent} />}
           {view === "clients" && (
             <Clients data={data}
               onSaveClient={upsertClient} onDeleteClient={deleteClient}

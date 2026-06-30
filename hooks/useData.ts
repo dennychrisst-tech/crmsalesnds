@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { v4 as uuid } from "uuid";
 import { getSupabase } from "@/lib/supabase";
-import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity } from "@/types";
+import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity, CalendarEvent } from "@/types";
 
 export interface AppData {
   clients: Client[];
@@ -15,19 +15,20 @@ export interface AppData {
   documents: CRMDocument[];
   attachments: Attachment[];
   activities: Activity[];
+  events: CalendarEvent[];
 }
 
 export function useData() {
   const [data, setData] = useState<AppData>({
     clients: [], contacts: [], visits: [], deals: [], projects: [],
-    tasks: [], products: [], documents: [], attachments: [], activities: [],
+    tasks: [], products: [], documents: [], attachments: [], activities: [], events: [],
   });
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState("Memuat…");
 
   const load = useCallback(async () => {
     try {
-      const [c, ct, v, d, p, t, pr, doc, att, act] = await Promise.all([
+      const [c, ct, v, d, p, t, pr, doc, att, act, ev] = await Promise.all([
         getSupabase().from("clients").select("*").order("created_at"),
         getSupabase().from("contacts").select("*").order("created_at"),
         getSupabase().from("visits").select("*").order("date"),
@@ -38,6 +39,7 @@ export function useData() {
         getSupabase().from("documents").select("*").order("created_at"),
         getSupabase().from("attachments").select("*").order("uploaded_at"),
         getSupabase().from("activities").select("*").order("created_at", { ascending: false }),
+        getSupabase().from("events").select("*").order("date"),
       ]);
       setData({
         clients: (c.data || []) as Client[],
@@ -50,6 +52,7 @@ export function useData() {
         documents: (doc.data || []) as CRMDocument[],
         attachments: (att.data || []) as Attachment[],
         activities: (act.data || []) as Activity[],
+        events: (ev.data || []) as CalendarEvent[],
       });
       setSyncStatus("Tersimpan otomatis");
     } catch (e) {
@@ -155,6 +158,17 @@ export function useData() {
     await load();
   }
 
+  async function upsertEvent(event: CalendarEvent) {
+    const { error } = await getSupabase().from("events").upsert(event);
+    if (error) throw error;
+    await load();
+  }
+  async function deleteEvent(id: string) {
+    const { error } = await getSupabase().from("events").delete().eq("id", id);
+    if (error) throw error;
+    await load();
+  }
+
   async function upsertActivity(activity: Activity) {
     const { error } = await getSupabase().from("activities").upsert(activity);
     if (error) throw error;
@@ -215,5 +229,6 @@ export function useData() {
     upsertDocument, deleteDocument,
     uploadAttachment, deleteAttachment,
     upsertActivity, deleteActivity,
+    upsertEvent, deleteEvent,
   };
 }

@@ -98,6 +98,12 @@ nav.tabs button.active { background: var(--ink); color: #fff; border-color: var(
 .cell.today .dnum { color: var(--brand); }
 .vpill { background: var(--brand-soft); color: var(--brand); border-radius: 6px; padding: 3px 5px; margin-top: 4px; cursor: pointer; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vpill.done { background: #E7E4DB; color: var(--ink-soft); }
+.vpill-event { background: #EDE9FE; color: #6D28D9; }
+.cal-legend { display: flex; gap: 16px; margin-bottom: 10px; }
+.cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-soft); }
+.cal-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.cal-dot-visit { background: var(--brand-soft); border: 1px solid var(--brand); }
+.cal-dot-event { background: #EDE9FE; border: 1px solid #6D28D9; }
 
 /* Tables */
 table { width: 100%; border-collapse: collapse; }

@@ -125,4 +125,14 @@ export interface Attachment {
   uploaded_at?: string;
 }
 
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string;
+  type: string;
+  description: string;
+  created_by: string;
+  created_at?: string;
+}
+
 export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects" | "tasks" | "catalog";
