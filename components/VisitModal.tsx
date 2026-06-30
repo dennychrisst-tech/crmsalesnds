@@ -196,7 +196,13 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       </Field>
 
       <Field label="Jenis approach">
-        <input className={inputCls} value={form.approach} onChange={e => set("approach", e.target.value)} placeholder="First meeting / Follow-up / Demo / Negotiation" />
+        <select className={selectCls} value={form.approach} onChange={e => set("approach", e.target.value)}>
+          <option value="">— Pilih —</option>
+          <option value="First Meeting">First Meeting</option>
+          <option value="Negosiasi">Negosiasi</option>
+          <option value="Followup">Followup</option>
+          <option value="Maintain Relation">Maintain Relation</option>
+        </select>
       </Field>
       <Field label="Tujuan visit">
         <input className={inputCls} value={form.purpose} onChange={e => set("purpose", e.target.value)} placeholder="Mis. business introduction, review SLA" />
