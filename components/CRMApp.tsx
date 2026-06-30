@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useData } from "@/hooks/useData";
-import { getSupabase } from "@/lib/supabase";
+
 import { ActiveView } from "@/types";
 import Dashboard from "./Dashboard";
 import CalendarView from "./CalendarView";
@@ -30,7 +30,7 @@ export default function CRMApp() {
   const [view, setView] = useState<ActiveView>("dashboard");
 
   async function handleLogout() {
-    await getSupabase().auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
     router.replace("/login");
   }
   const {
