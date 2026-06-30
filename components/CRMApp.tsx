@@ -34,7 +34,7 @@ export default function CRMApp() {
     router.replace("/login");
   }
   const {
-    data, loading, syncStatus,
+    data, loading, syncStatus, currentProfile,
     upsertClient, deleteClient,
     upsertContact, deleteContact,
     upsertVisit, deleteVisit,
@@ -66,6 +66,9 @@ export default function CRMApp() {
         </div>
         {!loading && <GlobalSearch data={data} onNavigate={setView} />}
         <div className="sync-status">{syncStatus}</div>
+        {currentProfile && ["super_admin", "admin"].includes(currentProfile.role) && (
+          <a href="/admin/users" className="btn-admin">Admin</a>
+        )}
         <button onClick={handleLogout} className="btn-logout">Keluar</button>
       </header>
 

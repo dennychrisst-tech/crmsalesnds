@@ -3,13 +3,14 @@ import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import { Task, Client, Deal } from "@/types";
-import { TEAM, todayStr } from "@/lib/utils";
+import { todayStr } from "@/lib/utils";
 
 interface Props {
   open: boolean;
   task: Task | null;
   clients: Client[];
   deals: Deal[];
+  team: string[];
   preClientId?: string;
   preDealId?: string;
   onSave: (t: Task) => Promise<void>;
@@ -19,10 +20,10 @@ interface Props {
 
 const empty = (): Task => ({
   id: uuid(), title: "", due_date: todayStr(),
-  client_id: null, deal_id: null, assigned_to: "Denny", status: "Open", notes: "",
+  client_id: null, deal_id: null, assigned_to: "", status: "Open", notes: "",
 });
 
-export default function TaskModal({ open, task, clients, deals, preClientId, preDealId, onSave, onDelete, onClose }: Props) {
+export default function TaskModal({ open, task, clients, deals, team, preClientId, preDealId, onSave, onDelete, onClose }: Props) {
   const isEdit = !!task;
   const [form, setForm] = useState<Task>(empty());
 
@@ -62,7 +63,7 @@ export default function TaskModal({ open, task, clients, deals, preClientId, pre
         <Field label="Assigned to">
           <select className={selectCls} value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)}>
             <option value="">— Pilih —</option>
-            {TEAM.map(t => <option key={t}>{t}</option>)}
+            {team.map(t => <option key={t}>{t}</option>)}
           </select>
         </Field>
       </div>

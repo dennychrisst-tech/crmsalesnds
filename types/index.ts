@@ -138,3 +138,13 @@ export interface CalendarEvent {
 }
 
 export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects" | "tasks" | "catalog" | "summary";
+
+export type UserRole = "super_admin" | "admin" | "employee";
+
+export interface Profile {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  created_at?: string;
+}

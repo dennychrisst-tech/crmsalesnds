@@ -26,7 +26,8 @@ function urgencyClass(dueDate: string, status: string): string {
 }
 
 export default function TasksView({ data, onSaveTask, onDeleteTask }: Props) {
-  const { tasks, clients, deals } = data;
+  const { tasks, clients, deals, profiles } = data;
+  const team = profiles.map(p => p.name).filter(Boolean);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [filterStatus, setFilterStatus] = useState<"All" | "Open" | "Done">("Open");
@@ -105,7 +106,7 @@ export default function TasksView({ data, onSaveTask, onDeleteTask }: Props) {
         </div>
       )}
 
-      <TaskModal open={modalOpen} task={editTask} clients={clients} deals={deals}
+      <TaskModal open={modalOpen} task={editTask} clients={clients} deals={deals} team={team}
         onSave={onSaveTask} onDelete={onDeleteTask} onClose={() => setModalOpen(false)} />
     </section>
   );

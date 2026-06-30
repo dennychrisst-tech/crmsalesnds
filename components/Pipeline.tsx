@@ -65,7 +65,8 @@ function Column({ stage, deals, clientName, onDealClick }: { stage: string; deal
 }
 
 export default function Pipeline({ data, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity }: Props) {
-  const { clients, deals, products, documents, attachments, activities } = data;
+  const { clients, deals, products, documents, attachments, activities, profiles } = data;
+  const team = profiles.map(p => p.name).filter(Boolean);
   const [modalOpen, setModalOpen] = useState(false);
   const [editDeal, setEditDeal] = useState<Deal | null>(null);
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null);
@@ -117,7 +118,7 @@ export default function Pipeline({ data, onSaveDeal, onDeleteDeal, onUpdateStage
         </DragOverlay>
       </DndContext>
       <DealModal
-        open={modalOpen} deal={editDeal} clients={clients} products={products}
+        open={modalOpen} deal={editDeal} clients={clients} products={products} team={team}
         documents={dealDocuments} attachments={dealAttachments} activities={dealActivities}
         onSave={onSaveDeal} onDelete={onDeleteDeal}
         onAddDocument={onAddDocument} onDeleteDocument={onDeleteDocument}

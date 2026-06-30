@@ -3,12 +3,13 @@ import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import { CalendarEvent } from "@/types";
-import { EVENT_TYPES, TEAM, todayStr } from "@/lib/utils";
+import { EVENT_TYPES, todayStr } from "@/lib/utils";
 
 interface Props {
   open: boolean;
   event: CalendarEvent | null;
   preDate?: string;
+  team: string[];
   onSave: (e: CalendarEvent) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onClose: () => void;
@@ -26,7 +27,7 @@ function joinMembers(arr: string[]): string {
   return arr.join(", ");
 }
 
-export default function EventModal({ open, event, preDate, onSave, onDelete, onClose }: Props) {
+export default function EventModal({ open, event, preDate, team, onSave, onDelete, onClose }: Props) {
   const isEdit = !!event;
   const [form, setForm] = useState<CalendarEvent>(emptyEvent(preDate));
   const [selected, setSelected] = useState<string[]>([]);
@@ -77,7 +78,7 @@ export default function EventModal({ open, event, preDate, onSave, onDelete, onC
 
       <Field label="Peserta (Tim Sales)">
         <div className="member-grid">
-          {(TEAM as readonly string[]).map(name => {
+          {team.map(name => {
             const active = selected.includes(name);
             return (
               <button

@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { v4 as uuid } from "uuid";
 import { getSupabase } from "@/lib/supabase";
-import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity, CalendarEvent } from "@/types";
+import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity, CalendarEvent, Profile } from "@/types";
 
 export interface AppData {
   clients: Client[];
@@ -16,31 +16,38 @@ export interface AppData {
   attachments: Attachment[];
   activities: Activity[];
   events: CalendarEvent[];
+  profiles: Profile[];
 }
 
 export function useData() {
   const [data, setData] = useState<AppData>({
     clients: [], contacts: [], visits: [], deals: [], projects: [],
     tasks: [], products: [], documents: [], attachments: [], activities: [], events: [],
+    profiles: [],
   });
+  const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState("Memuat…");
 
   const load = useCallback(async () => {
     try {
-      const [c, ct, v, d, p, t, pr, doc, att, act, ev] = await Promise.all([
-        getSupabase().from("clients").select("*").order("created_at"),
-        getSupabase().from("contacts").select("*").order("created_at"),
-        getSupabase().from("visits").select("*").order("date"),
-        getSupabase().from("deals").select("*").order("created_at"),
-        getSupabase().from("projects").select("*").order("created_at"),
-        getSupabase().from("tasks").select("*").order("due_date"),
-        getSupabase().from("products").select("*").order("name"),
-        getSupabase().from("documents").select("*").order("created_at"),
-        getSupabase().from("attachments").select("*").order("uploaded_at"),
-        getSupabase().from("activities").select("*").order("created_at", { ascending: false }),
-        getSupabase().from("events").select("*").order("date"),
+      const sb = getSupabase();
+      const [c, ct, v, d, p, t, pr, doc, att, act, ev, prof, { data: { user } }] = await Promise.all([
+        sb.from("clients").select("*").order("created_at"),
+        sb.from("contacts").select("*").order("created_at"),
+        sb.from("visits").select("*").order("date"),
+        sb.from("deals").select("*").order("created_at"),
+        sb.from("projects").select("*").order("created_at"),
+        sb.from("tasks").select("*").order("due_date"),
+        sb.from("products").select("*").order("name"),
+        sb.from("documents").select("*").order("created_at"),
+        sb.from("attachments").select("*").order("uploaded_at"),
+        sb.from("activities").select("*").order("created_at", { ascending: false }),
+        sb.from("events").select("*").order("date"),
+        sb.from("profiles").select("id, name, email, role").order("name"),
+        sb.auth.getUser(),
       ]);
+      const profiles = (prof.data || []) as Profile[];
       setData({
         clients: (c.data || []) as Client[],
         contacts: (ct.data || []) as Contact[],
@@ -53,7 +60,9 @@ export function useData() {
         attachments: (att.data || []) as Attachment[],
         activities: (act.data || []) as Activity[],
         events: (ev.data || []) as CalendarEvent[],
+        profiles,
       });
+      setCurrentProfile(profiles.find(p => p.id === user?.id) ?? null);
       setSyncStatus("Tersimpan otomatis");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Gagal memuat data";
@@ -218,7 +227,7 @@ export function useData() {
   }
 
   return {
-    data, loading, syncStatus,
+    data, loading, syncStatus, currentProfile,
     upsertClient, deleteClient,
     upsertContact, deleteContact,
     upsertVisit, deleteVisit,

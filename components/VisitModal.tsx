@@ -3,13 +3,14 @@ import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import { Visit, Client, PIC } from "@/types";
-import { VISIT_STATUS, TEAM, todayStr } from "@/lib/utils";
+import { VISIT_STATUS, todayStr } from "@/lib/utils";
 
 interface Props {
   open: boolean;
   visit: Visit | null;
   preClientId?: string;
   clients: Client[];
+  team: string[];
   onSave: (v: Visit) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onClose: () => void;
@@ -19,7 +20,7 @@ function emptyVisit(clientId: string): Visit {
   return {
     id: uuid(), client_id: clientId, date: todayStr(),
     purpose: "", approach: "", status: "Planned",
-    pic: "Denny", pic_client: "", summary: "",
+    pic: "", pic_client: "", summary: "",
   };
 }
 
@@ -29,7 +30,7 @@ function getPics(clients: Client[], clientId: string): PIC[] {
   return (Array.isArray(client.pic) ? client.pic : []).filter((p: PIC) => p.name?.trim());
 }
 
-export default function VisitModal({ open, visit, preClientId, clients, onSave, onDelete, onClose }: Props) {
+export default function VisitModal({ open, visit, preClientId, clients, team, onSave, onDelete, onClose }: Props) {
   const isEdit = !!visit;
   const [form, setForm] = useState<Visit>(emptyVisit(clients[0]?.id || ""));
 
@@ -96,7 +97,7 @@ export default function VisitModal({ open, visit, preClientId, clients, onSave, 
         <Field label="PIC NDS (sales)">
           <select className={selectCls} value={form.pic} onChange={e => set("pic", e.target.value)}>
             <option value="">— Pilih —</option>
-            {TEAM.map(t => <option key={t}>{t}</option>)}
+            {team.map(t => <option key={t}>{t}</option>)}
           </select>
         </Field>
       </div>

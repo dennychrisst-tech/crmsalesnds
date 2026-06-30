@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
-import { TEAM, fmtIDR, fmtDate } from "@/lib/utils";
+import { fmtIDR, fmtDate } from "@/lib/utils";
 
 interface Props { data: AppData; }
 
@@ -45,7 +45,8 @@ interface FeedItem {
 }
 
 export default function SummaryView({ data }: Props) {
-  const { clients, deals, visits, tasks, activities, events } = data;
+  const { clients, deals, visits, tasks, activities, events, profiles } = data;
+  const team = profiles.map(p => p.name).filter(Boolean);
   const [period, setPeriod] = useState<Period>("week");
   const [offset, setOffset] = useState(0);
 
@@ -119,7 +120,7 @@ export default function SummaryView({ data }: Props) {
   }, [feed]);
 
   // Per-person breakdown
-  const teamStats = TEAM.map(name => ({
+  const teamStats = team.map(name => ({
     name,
     visits: periodVisits.filter(v => v.pic === name).length,
     visitsDone: periodVisits.filter(v => v.pic === name && v.status === "Done").length,

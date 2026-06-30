@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import { Deal, Client, Product, CRMDocument, Attachment, Activity } from "@/types";
-import { STAGES, TEAM, DEAL_TYPES, ACTIVITY_TYPES, fmtDate, todayStr } from "@/lib/utils";
+import { STAGES, DEAL_TYPES, ACTIVITY_TYPES, fmtDate, todayStr } from "@/lib/utils";
 import DocumentTracker from "./DocumentTracker";
 import AttachmentSection from "./AttachmentSection";
 
@@ -15,6 +15,7 @@ interface Props {
   documents: CRMDocument[];
   attachments: Attachment[];
   activities: Activity[];
+  team: string[];
   onSave: (d: Deal) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onAddDocument: (d: CRMDocument) => Promise<void>;
@@ -37,7 +38,7 @@ const emptyActivity = (dealId: string): Omit<Activity, "id" | "created_at"> => (
 });
 
 export default function DealModal({
-  open, deal, clients, products, documents, attachments, activities,
+  open, deal, clients, products, documents, attachments, activities, team,
   onSave, onDelete, onAddDocument, onDeleteDocument,
   onUploadAttachment, onDeleteAttachment,
   onAddActivity, onDeleteActivity,
@@ -130,7 +131,7 @@ export default function DealModal({
             <Field label="Owner (Sales)">
               <select className={selectCls} value={form.owner} onChange={e => set("owner", e.target.value)}>
                 <option value="">— Pilih —</option>
-                {TEAM.map(t => <option key={t}>{t}</option>)}
+                {team.map(t => <option key={t}>{t}</option>)}
               </select>
             </Field>
             <Field label="Target closing">
@@ -182,7 +183,7 @@ export default function DealModal({
               </select>
               <select className={selectCls} value={actForm.created_by} onChange={e => setActForm(f => ({ ...f, created_by: e.target.value }))}>
                 <option value="">— Oleh —</option>
-                {TEAM.map(t => <option key={t}>{t}</option>)}
+                {team.map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
             <textarea

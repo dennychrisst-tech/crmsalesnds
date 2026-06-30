@@ -44,7 +44,8 @@ function lastContactDate(clientId: string, visits: Visit[], activities: Activity
 }
 
 export default function Clients({ data, onSaveClient, onDeleteClient, onSaveContact, onDeleteContact, onSaveVisit, onDeleteVisit }: Props) {
-  const { clients, contacts, visits, deals, activities } = data;
+  const { clients, contacts, visits, deals, activities, profiles } = data;
+  const team = profiles.map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
 
   const [clientModalOpen, setClientModalOpen] = useState(false);
@@ -213,7 +214,7 @@ export default function Clients({ data, onSaveClient, onDeleteClient, onSaveCont
         onSave={onSaveClient} onDelete={onDeleteClient} onClose={() => setClientModalOpen(false)} />
       <ContactModal open={contactModalOpen} contact={editContact} clientId={contactClientId}
         onSave={onSaveContact} onDelete={onDeleteContact} onClose={() => setContactModalOpen(false)} />
-      <VisitModal open={visitModalOpen} visit={editVisit} preClientId={preClientId} clients={clients}
+      <VisitModal open={visitModalOpen} visit={editVisit} preClientId={preClientId} clients={clients} team={team}
         onSave={onSaveVisit} onDelete={onDeleteVisit} onClose={() => setVisitModalOpen(false)} />
     </section>
   );
