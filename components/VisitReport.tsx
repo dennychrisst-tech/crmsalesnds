@@ -182,6 +182,7 @@ export default function VisitReport({ data }: Props) {
                         <th style={thSt}>Jenis Approach</th>
                         <th style={thSt}>Tujuan Visit</th>
                         <th style={thSt}>PIC Client</th>
+                        <th style={thSt}>Jabatan</th>
                         <th style={{ ...thSt, width: 32 }}></th>
                       </tr>
                     </thead>
@@ -215,13 +216,16 @@ export default function VisitReport({ data }: Props) {
                             <td style={{ padding: "10px 14px", fontSize: 13, color: "var(--ink-soft)" }}>
                               {v.pic_client || <span className="muted">—</span>}
                             </td>
+                            <td style={{ padding: "10px 14px", fontSize: 13, color: "var(--ink-soft)" }}>
+                              {v.jabatan || <span className="muted">—</span>}
+                            </td>
                             <td style={{ padding: "10px 14px", textAlign: "center", fontSize: 13, color: "var(--ink-soft)" }}>
                               {expanded === v.id ? "▲" : "▼"}
                             </td>
                           </tr>
                           {expanded === v.id && (
                             <tr key={v.id + "-detail"} style={{ borderBottom: "1px solid var(--line)" }}>
-                              <td colSpan={6} style={{ padding: "0 16px 16px 16px", background: "var(--bg)" }}>
+                              <td colSpan={7} style={{ padding: "0 16px 16px 16px", background: "var(--bg)" }}>
                                 <div style={{
                                   display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16,
                                   paddingTop: 14, borderTop: "1px dashed var(--line)",
@@ -248,6 +252,7 @@ export default function VisitReport({ data }: Props) {
                                         ["Tanggal", fmtDate(v.date)],
                                         ["PIC NDS", v.pic || "—"],
                                         ["PIC Client", v.pic_client || "—"],
+                                        ["Jabatan", v.jabatan || "—"],
                                         ["Jenis Approach", v.approach || "—"],
                                         ["Tujuan Visit", v.purpose || "—"],
                                         ["Status", v.status],
