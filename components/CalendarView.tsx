@@ -44,6 +44,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
       });
     }
   }
+  const [salesFilter, setSalesFilter] = useState("all");
   const [cursor, setCursor] = useState(() => { const d = new Date(); d.setDate(1); return d; });
   const [visitModal, setVisitModal] = useState(false);
   const [eventModal, setEventModal] = useState(false);
@@ -68,7 +69,9 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
   function openNewEvent(dateStr?: string) { setEditEvent(null); setPreDate(dateStr); setEventModal(true); }
   function openEditEvent(e: CalendarEvent) { setEditEvent(e); setPreDate(undefined); setEventModal(true); }
 
-  const sortedVisits = [...visits].sort((a, b) => b.date.localeCompare(a.date));
+  const sortedVisits = [...visits]
+    .filter(v => salesFilter === "all" || v.pic === salesFilter)
+    .sort((a, b) => b.date.localeCompare(a.date));
   const sortedEvents = [...events].sort((a, b) => b.date.localeCompare(a.date));
 
   return (
@@ -127,10 +130,23 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
 
       {/* Visit table */}
       <div className="panel">
-        <h2>Jadwal Visit <span className="count">({sortedVisits.length})</span></h2>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+          <h2 style={{ margin: 0 }}>Jadwal Visit <span className="count">({sortedVisits.length})</span></h2>
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>Sales:</span>
+            <select
+              value={salesFilter}
+              onChange={e => setSalesFilter(e.target.value)}
+              style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)", cursor: "pointer" }}
+            >
+              <option value="all">Semua</option>
+              {team.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+        </div>
         <table>
           <thead>
-            <tr><th>Tanggal</th><th>Client</th><th>Tujuan / Approach</th><th>Status</th><th>PIC Client</th><th>PIC NDS</th><th></th></tr>
+            <tr><th>Tanggal</th><th>Client</th><th>Tujuan / Approach</th><th>Status</th><th>PIC Client</th><th>Sales</th><th></th></tr>
           </thead>
           <tbody>
             {sortedVisits.length ? sortedVisits.map(v => (
