@@ -51,6 +51,10 @@ export default function VisitModal({ open, visit, preClientId, clients, team, de
   }
 
   async function handleSave() {
+    if (!form.date) {
+      alert("Tanggal approach wajib diisi.");
+      return;
+    }
     await onSave(form);
     onClose();
   }

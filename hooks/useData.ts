@@ -107,7 +107,11 @@ export function useData() {
   }
 
   async function upsertVisit(visit: Visit) {
-    const { error } = await getSupabase().from("visits").upsert(withCreator(visit));
+    const payload = withCreator({
+      ...visit,
+      date: visit.date ? new Date(visit.date + "T00:00:00").toISOString() : visit.date,
+    });
+    const { error } = await getSupabase().from("visits").upsert(payload);
     if (error) throw error;
     await load();
   }
