@@ -148,7 +148,7 @@ export interface CalendarEvent {
   created_at?: string;
 }
 
-export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects" | "tasks" | "catalog" | "summary";
+export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects" | "tasks" | "catalog" | "summary" | "visit-report";
 
 export type UserRole = "super_admin" | "admin" | "employee" | "viewer";
 

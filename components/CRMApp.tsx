@@ -13,6 +13,7 @@ import TasksView from "./TasksView";
 import ProductsView from "./ProductsView";
 import GlobalSearch from "./GlobalSearch";
 import SummaryView from "./SummaryView";
+import VisitReport from "./VisitReport";
 
 const TABS: { id: ActiveView; label: string }[] = [
   { id: "dashboard", label: "Dashboard" },
@@ -23,6 +24,7 @@ const TABS: { id: ActiveView; label: string }[] = [
   { id: "tasks", label: "Tasks" },
   { id: "catalog", label: "Catalog" },
   { id: "summary", label: "Summary" },
+  { id: "visit-report", label: "Laporan Visit" },
 ];
 
 export default function CRMApp() {
@@ -123,6 +125,7 @@ export default function CRMApp() {
                   <ProductsView data={data} isViewer={isViewer} onSaveProduct={ro(upsertProduct)} onDeleteProduct={ro(deleteProduct)} />
                 )}
                 {view === "summary" && <SummaryView data={data} />}
+                {view === "visit-report" && <VisitReport data={data} />}
               </>
             );
           })()}

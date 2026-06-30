@@ -47,4 +47,13 @@ export function exportVisits(visits: Visit[], clientName: (id: string) => string
   download(`visits_${today()}.csv`, csv([header, ...rows]));
 }
 
+export function exportVisitReport(visits: Visit[], clientName: (id: string) => string) {
+  const header = ["Tanggal", "Client", "PIC NDS", "PIC Client", "Jenis Approach", "Tujuan Visit", "Summary / Hasil", "Status"];
+  const rows = visits.map(v => [
+    v.date, clientName(v.client_id), v.pic || "", v.pic_client || "",
+    v.approach || "", v.purpose || "", v.summary || "", v.status,
+  ]);
+  download(`visit_report_${today()}.csv`, csv([header, ...rows]));
+}
+
 function today() { return new Date().toISOString().slice(0, 10); }
