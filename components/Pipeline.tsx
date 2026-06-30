@@ -4,7 +4,20 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, u
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { Deal, CRMDocument, Attachment, Activity } from "@/types";
-import { STAGES, STAGE_PROB, fmtIDR } from "@/lib/utils";
+import { STAGES, STAGE_PROB, fmtIDR, todayStr } from "@/lib/utils";
+
+function agingDays(deal: Deal): number {
+  const ref = deal.stage_updated_at || deal.created_at || todayStr();
+  return Math.floor((Date.now() - new Date(ref).getTime()) / 86_400_000);
+}
+
+function AgingBadge({ days }: { days: number }) {
+  let cls = "aging-fresh";
+  if (days >= 30) cls = "aging-critical";
+  else if (days >= 14) cls = "aging-warn";
+  else if (days >= 7)  cls = "aging-caution";
+  return <span className={`aging-badge ${cls}`}>{days}h</span>;
+}
 import DealModal from "./DealModal";
 
 interface Props {
@@ -23,10 +36,15 @@ interface Props {
 function DealCard({ deal, clientName, onClick }: { deal: Deal; clientName: string; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: deal.id });
   const style = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
+  const days = agingDays(deal);
+  const isClosed = deal.stage === "Won" || deal.stage === "Lost";
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style} className="deal" onClick={onClick}>
-      <div className="dn">{deal.name}</div>
-      <div className="dc">{clientName} · {deal.product}</div>
+      <div className="deal-top">
+        <div className="dn">{deal.name}</div>
+        {!isClosed && <AgingBadge days={days} />}
+      </div>
+      <div className="dc">{clientName}{deal.product ? ` · ${deal.product}` : ""}</div>
       {deal.owner && <div className="dc">👤 {deal.owner}</div>}
       <div className="dv">{fmtIDR(deal.value)}</div>
     </div>

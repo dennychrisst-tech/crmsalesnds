@@ -109,7 +109,7 @@ export function useData() {
     await load();
   }
   async function updateDealStage(id: string, stage: string) {
-    const { error } = await getSupabase().from("deals").update({ stage }).eq("id", id);
+    const { error } = await getSupabase().from("deals").update({ stage, stage_updated_at: new Date().toISOString() }).eq("id", id);
     if (error) throw error;
     await load();
   }

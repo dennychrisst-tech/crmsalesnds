@@ -29,7 +29,7 @@ interface Props {
 const emptyDeal = (clientId: string): Deal => ({
   id: uuid(), name: "", client_id: clientId, value: 0,
   stage: "Lead", deal_type: "", product: "", close_date: "", notes: "",
-  owner: "", win_loss_reason: "",
+  owner: "", win_loss_reason: "", stage_updated_at: new Date().toISOString(),
 });
 
 const emptyActivity = (dealId: string): Omit<Activity, "id" | "created_at"> => ({
@@ -113,7 +113,9 @@ export default function DealModal({
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Stage">
-              <select className={selectCls} value={form.stage} onChange={e => set("stage", e.target.value as Deal["stage"])}>
+              <select className={selectCls} value={form.stage} onChange={e => {
+                setForm(f => ({ ...f, stage: e.target.value as Deal["stage"], stage_updated_at: new Date().toISOString() }));
+              }}>
                 {[...STAGES, "Lost"].map(s => <option key={s}>{s}</option>)}
               </select>
             </Field>

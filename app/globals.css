@@ -79,9 +79,15 @@ nav.tabs button.active { background: var(--ink); color: #fff; border-color: var(
   touch-action: none;
 }
 .deal:active { cursor: grabbing; }
-.dn { font-weight: 700; }
+.deal-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+.dn { font-weight: 700; flex: 1; }
 .dc { color: var(--ink-soft); font-size: 12px; margin-top: 2px; }
 .dv { color: var(--brand); font-weight: 700; font-size: 12px; margin-top: 6px; }
+.aging-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 999px; flex-shrink: 0; white-space: nowrap; }
+.aging-fresh   { background: #E2F0EC; color: #0A6E5C; }
+.aging-caution { background: #FEF9C3; color: #854D0E; }
+.aging-warn    { background: #FEE2E2; color: #991B1B; }
+.aging-critical { background: #7F1D1D; color: #FEE2E2; }
 .col.over { background: var(--brand-soft); border-color: var(--brand); }
 
 /* Calendar */
