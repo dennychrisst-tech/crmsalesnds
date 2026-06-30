@@ -21,7 +21,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [invite, setInvite] = useState({ email: "", name: "", role: "employee" as UserRole });
+  const [invite, setInvite] = useState({ email: "", name: "", role: "employee" as UserRole, password: "" });
   const [inviting, setInviting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -45,8 +45,8 @@ export default function AdminUsersPage() {
     });
     const json = await res.json();
     if (!res.ok) { setError(json.error); setInviting(false); return; }
-    setSuccess(`Undangan dikirim ke ${invite.email}`);
-    setInvite({ email: "", name: "", role: "employee" });
+    setSuccess(`User ${invite.email} berhasil dibuat`);
+    setInvite({ email: "", name: "", role: "employee", password: "" });
     setInviting(false);
     setInviteOpen(false);
     fetchUsers();
@@ -92,7 +92,7 @@ export default function AdminUsersPage() {
             borderRadius: "8px", fontWeight: 700, fontSize: "13px", cursor: "pointer",
           }}
         >
-          + Undang User
+          + Tambah User
         </button>
       </div>
 
@@ -112,7 +112,7 @@ export default function AdminUsersPage() {
             background: "var(--card)", borderRadius: "14px", padding: "28px", width: "100%",
             maxWidth: "420px", border: "1px solid var(--line)", boxShadow: "var(--shadow)",
           }}>
-            <h2 style={{ fontSize: "16px", fontWeight: 700, margin: "0 0 20px" }}>Undang Anggota Tim</h2>
+            <h2 style={{ fontSize: "16px", fontWeight: 700, margin: "0 0 20px" }}>Tambah Anggota Tim</h2>
             <form onSubmit={handleInvite} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--ink-soft)", marginBottom: "5px", textTransform: "uppercase", letterSpacing: ".08em" }}>Nama Lengkap</label>
@@ -128,13 +128,17 @@ export default function AdminUsersPage() {
                   {ROLES.map(r => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
                 </select>
               </div>
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--ink-soft)", marginBottom: "5px", textTransform: "uppercase", letterSpacing: ".08em" }}>Password</label>
+                <input type="password" style={inputStyle} value={invite.password} onChange={e => setInvite(i => ({ ...i, password: e.target.value }))} required minLength={6} placeholder="Min. 6 karakter" />
+              </div>
               {error && (
                 <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "7px", padding: "9px 12px", fontSize: "12px", color: "var(--danger)" }}>{error}</div>
               )}
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "4px" }}>
                 <button type="button" onClick={() => setInviteOpen(false)} style={{ padding: "9px 16px", borderRadius: "7px", border: "1px solid var(--line)", background: "transparent", cursor: "pointer", fontSize: "13px" }}>Batal</button>
                 <button type="submit" disabled={inviting} style={{ padding: "9px 18px", borderRadius: "7px", background: "var(--ink)", color: "#fff", border: "none", cursor: inviting ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "13px" }}>
-                  {inviting ? "Mengirim…" : "Kirim Undangan"}
+                  {inviting ? "Menyimpan…" : "Buat User"}
                 </button>
               </div>
             </form>

@@ -1,22 +1,12 @@
 import { redirect } from "next/navigation";
-import { getServerClient } from "@/lib/supabase-server";
+import { getSession } from "@/lib/auth";
 import Link from "next/link";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await getServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const session = await getSession();
 
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, name")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || !["super_admin", "admin"].includes(profile.role)) {
-    redirect("/");
-  }
+  if (!session) redirect("/login");
+  if (!["super_admin", "admin"].includes(session.role)) redirect("/");
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--paper)" }}>
@@ -38,7 +28,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </Link>
         </nav>
         <div style={{ marginLeft: "auto", fontSize: "12px", color: "#64748b" }}>
-          {profile.name || user.email} · <span style={{ color: "#00AFA0" }}>{profile.role}</span>
+          {session.name || session.email} · <span style={{ color: "#00AFA0" }}>{session.role}</span>
         </div>
       </header>
       <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "32px 24px" }}>
