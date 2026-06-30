@@ -38,7 +38,7 @@ function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit
     id: uuid(), client_id: clientId, project: null, date,
     purpose: "", approach: "", status: "Planned",
     pic: defaultPic, pic_client: "", jabatan: "",
-    followup_date: addDays(date, 7), summary: "",
+    followup_date: null, summary: "",
   };
 }
 
@@ -52,7 +52,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   function buildDefaultTask(f: Visit): TaskDraft {
     return {
       title: `Follow-up: ${clientName(f.client_id)}${f.project ? ` · ${f.project}` : ""}`,
-      due_date: f.followup_date || addDays(f.date, 7),
+      due_date: f.followup_date || "",
       assigned_to: f.pic || "",
       notes: f.pic_client ? `PIC Client: ${f.pic_client}${f.jabatan ? ` (${f.jabatan})` : ""}` : "",
     };
@@ -65,7 +65,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         ...visit,
         jabatan: visit.jabatan ?? "",
         project: visit.project ?? null,
-        followup_date: visit.followup_date ?? addDays(date, 7),
+        followup_date: visit.followup_date ?? null,
       };
       setForm(restored);
       if (visit.status === "Done") setTask(buildDefaultTask(restored));
