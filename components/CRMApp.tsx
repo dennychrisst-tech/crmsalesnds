@@ -39,8 +39,23 @@ export default function CRMApp() {
   return (
     <div className="app">
       <header className="top">
-        <div className="logo">NDS<span>·</span>CRM</div>
-        <div className="tag">Sales Pipeline · Banking / Multifinance / Insurance</div>
+        <div className="header-brand">
+          <svg viewBox="0 0 210 72" height="44" aria-label="NDS – Nusantara Duta Solusindo" xmlns="http://www.w3.org/2000/svg">
+            {/* N */}
+            <text x="0" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#58595B">N</text>
+            {/* Teal arc ) */}
+            <path d="M68 6 C90 6 104 20 104 36 C104 52 90 66 68 66" stroke="#00AFA0" strokeWidth="7" fill="none" strokeLinecap="round"/>
+            {/* S */}
+            <text x="108" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#58595B">S</text>
+            {/* Company name – three lines */}
+            <text x="148" y="28" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="#58595B">NUSANTARA</text>
+            <text x="148" y="42" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="#58595B">
+              <tspan fill="#00AFA0">D</tspan>UTA
+            </text>
+            <text x="148" y="56" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="#58595B">SOLUSINDO</text>
+          </svg>
+          <div className="header-crm-tag">CRM</div>
+        </div>
         <div className="sync-status">{syncStatus}</div>
       </header>
 
