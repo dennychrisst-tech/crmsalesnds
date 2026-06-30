@@ -26,23 +26,6 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
 
   async function handleSaveVisit(v: Visit) {
     await onSaveVisit(v);
-    if (v.status === "Done") {
-      const dueStr = v.followup_date || (() => {
-        const d = new Date(v.date + "T00:00:00");
-        d.setDate(d.getDate() + 7);
-        return d.toISOString().slice(0, 10);
-      })();
-      await onCreateTask({
-        id: uuid(),
-        title: `Follow-up: ${clients.find(c => c.id === v.client_id)?.name || "Client"}`,
-        due_date: dueStr,
-        client_id: v.client_id,
-        deal_id: null,
-        assigned_to: v.pic || "",
-        status: "Open",
-        notes: `Auto follow-up dari visit ${fmtDate(v.date)}${v.pic_client ? ` · PIC Client: ${v.pic_client}` : ""}`,
-      });
-    }
   }
   const [salesFilter, setSalesFilter] = useState("all");
   const [cursor, setCursor] = useState(() => { const d = new Date(); d.setDate(1); return d; });
@@ -187,7 +170,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
       </div>
 
       <VisitModal open={visitModal} visit={editVisit} preClientId={preClientId} preDate={preDate} clients={clients} contacts={contacts} team={team} defaultPic={currentUserName}
-        onSave={handleSaveVisit} onDelete={onDeleteVisit} onClose={() => setVisitModal(false)} />
+        onSave={handleSaveVisit} onDelete={onDeleteVisit} onCreateTask={onCreateTask} onClose={() => setVisitModal(false)} />
       <EventModal open={eventModal} event={editEvent} preDate={preDate} team={team} defaultMember={currentUserName}
         onSave={onSaveEvent} onDelete={onDeleteEvent} onClose={() => setEventModal(false)} />
     </section>

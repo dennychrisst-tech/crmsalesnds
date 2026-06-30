@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
-import { Visit, Client, Contact } from "@/types";
+import { Visit, Client, Contact, Task } from "@/types";
 import { VISIT_STATUS, todayStr } from "@/lib/utils";
 
 interface Props {
@@ -16,7 +16,15 @@ interface Props {
   defaultPic?: string;
   onSave: (v: Visit) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onCreateTask?: (t: Task) => Promise<void>;
   onClose: () => void;
+}
+
+interface TaskDraft {
+  title: string;
+  due_date: string;
+  assigned_to: string;
+  notes: string;
 }
 
 function addDays(dateStr: string, days: number): string {
@@ -34,27 +42,46 @@ function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit
   };
 }
 
-export default function VisitModal({ open, visit, preClientId, preDate, clients, contacts, team, defaultPic = "", onSave, onDelete, onClose }: Props) {
+export default function VisitModal({ open, visit, preClientId, preDate, clients, contacts, team, defaultPic = "", onSave, onDelete, onCreateTask, onClose }: Props) {
   const isEdit = !!visit;
   const [form, setForm] = useState<Visit>(emptyVisit(clients[0]?.id || "", defaultPic));
+  const [task, setTask] = useState<TaskDraft>({ title: "", due_date: "", assigned_to: "", notes: "" });
+
+  const clientName = (id: string) => clients.find(c => c.id === id)?.name || "";
+
+  function buildDefaultTask(f: Visit): TaskDraft {
+    return {
+      title: `Follow-up: ${clientName(f.client_id)}${f.project ? ` · ${f.project}` : ""}`,
+      due_date: f.followup_date || addDays(f.date, 7),
+      assigned_to: f.pic || "",
+      notes: f.pic_client ? `PIC Client: ${f.pic_client}${f.jabatan ? ` (${f.jabatan})` : ""}` : "",
+    };
+  }
 
   useEffect(() => {
     if (visit) {
       const date = visit.date || todayStr();
-      setForm({
+      const restored: Visit = {
         ...visit,
         jabatan: visit.jabatan ?? "",
         project: visit.project ?? null,
         followup_date: visit.followup_date ?? addDays(date, 7),
-      });
+      };
+      setForm(restored);
+      if (visit.status === "Done") setTask(buildDefaultTask(restored));
     } else {
-      setForm(emptyVisit(preClientId || clients[0]?.id || "", defaultPic, preDate || todayStr()));
+      const f = emptyVisit(preClientId || clients[0]?.id || "", defaultPic, preDate || todayStr());
+      setForm(f);
+      setTask({ title: "", due_date: "", assigned_to: "", notes: "" });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visit, preClientId, preDate, clients, open, defaultPic]);
 
   const set = (k: keyof Visit, v: string | null) => setForm(f => ({ ...f, [k]: v }));
+  const setT = (k: keyof TaskDraft, v: string) => setTask(t => ({ ...t, [k]: v }));
 
   const clientContacts = contacts.filter(c => c.client_id === form.client_id);
+  const isDone = form.status === "Done";
 
   function handleClientChange(clientId: string) {
     setForm(f => ({ ...f, client_id: clientId, pic_client: "", jabatan: "", project: null }));
@@ -65,9 +92,29 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
     setForm(f => ({ ...f, pic_client: name, jabatan: contact?.title || f.jabatan }));
   }
 
+  function handleStatusChange(status: Visit["status"]) {
+    setForm(f => {
+      const next = { ...f, status };
+      if (status === "Done") setTask(buildDefaultTask(next));
+      return next;
+    });
+  }
+
   async function handleSave() {
     if (!form.date) { alert("Tanggal approach wajib diisi."); return; }
     await onSave(form);
+    if (isDone && onCreateTask && task.title.trim()) {
+      await onCreateTask({
+        id: uuid(),
+        title: task.title.trim(),
+        due_date: task.due_date || addDays(form.date, 7),
+        client_id: form.client_id,
+        deal_id: null,
+        assigned_to: task.assigned_to || form.pic || "",
+        status: "Open",
+        notes: task.notes,
+      });
+    }
     onClose();
   }
 
@@ -76,6 +123,11 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
     await onDelete(form.id);
     onClose();
   }
+
+  const sectionStyle: React.CSSProperties = {
+    borderTop: "1px dashed var(--line)",
+    marginTop: 16, paddingTop: 14,
+  };
 
   return (
     <Modal open={open} onClose={onClose} title={`${isEdit ? "Edit" : "Jadwalkan"} Visit`}>
@@ -93,14 +145,11 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         <Field label="Tanggal approach">
           <input type="date" className={inputCls} value={form.date} onChange={e => {
             const newDate = e.target.value;
-            setForm(f => ({
-              ...f, date: newDate,
-              followup_date: f.followup_date ? f.followup_date : addDays(newDate, 7),
-            }));
+            setForm(f => ({ ...f, date: newDate, followup_date: f.followup_date || addDays(newDate, 7) }));
           }} />
         </Field>
         <Field label="Status">
-          <select className={selectCls} value={form.status} onChange={e => set("status", e.target.value as Visit["status"])}>
+          <select className={selectCls} value={form.status} onChange={e => handleStatusChange(e.target.value as Visit["status"])}>
             {VISIT_STATUS.map(s => <option key={s}>{s}</option>)}
           </select>
         </Field>
@@ -143,9 +192,45 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       <Field label="Tujuan visit">
         <input className={inputCls} value={form.purpose} onChange={e => set("purpose", e.target.value)} placeholder="Mis. business introduction, review SLA" />
       </Field>
-      <Field label="Summary / hasil">
-        <textarea className={textareaCls} value={form.summary} onChange={e => set("summary", e.target.value)} placeholder="Ringkasan hasil pertemuan & next step" />
-      </Field>
+
+      {/* Summary & Task — hanya muncul saat status Done */}
+      {isDone && (
+        <>
+          <div style={sectionStyle}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 10 }}>
+              Hasil Visit
+            </div>
+            <Field label="Summary / Hasil">
+              <textarea className={textareaCls} value={form.summary} onChange={e => set("summary", e.target.value)} placeholder="Ringkasan hasil pertemuan & next step" />
+            </Field>
+          </div>
+
+          {onCreateTask && (
+            <div style={sectionStyle}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 10 }}>
+                Buat Task Follow-up <span style={{ fontWeight: 400, textTransform: "none", fontSize: 11 }}>(kosongkan judul jika tidak perlu)</span>
+              </div>
+              <Field label="Judul task">
+                <input className={inputCls} value={task.title} onChange={e => setT("title", e.target.value)} placeholder="Mis. Follow-up proposal ke Siloam Hospital" />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Due date">
+                  <input type="date" className={inputCls} value={task.due_date} onChange={e => setT("due_date", e.target.value)} />
+                </Field>
+                <Field label="Assign ke">
+                  <select className={selectCls} value={task.assigned_to} onChange={e => setT("assigned_to", e.target.value)}>
+                    <option value="">— Pilih —</option>
+                    {team.map(t => <option key={t}>{t}</option>)}
+                  </select>
+                </Field>
+              </div>
+              <Field label="Catatan task">
+                <input className={inputCls} value={task.notes} onChange={e => setT("notes", e.target.value)} placeholder="Detail task (opsional)" />
+              </Field>
+            </div>
+          )}
+        </>
+      )}
 
       <ModalActions>
         {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
