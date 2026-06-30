@@ -67,7 +67,7 @@ function Column({ stage, deals, clientName, onDealClick }: { stage: string; deal
 
 export default function Pipeline({ data, currentUserName, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity }: Props) {
   const { clients, deals, products, documents, attachments, activities, profiles } = data;
-  const team = profiles.map(p => p.name).filter(Boolean);
+  const team = profiles.filter(p => !["super_admin","admin"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [modalOpen, setModalOpen] = useState(false);
   const [editDeal, setEditDeal] = useState<Deal | null>(null);
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null);

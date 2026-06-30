@@ -21,7 +21,7 @@ interface Props {
 
 export default function CalendarView({ data, currentUserName, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask }: Props) {
   const { clients, visits, events, profiles } = data;
-  const team = profiles.map(p => p.name).filter(Boolean);
+  const team = profiles.filter(p => !["super_admin","admin"].includes(p.role)).map(p => p.name).filter(Boolean);
 
   async function handleSaveVisit(v: Visit) {
     await onSaveVisit(v);
