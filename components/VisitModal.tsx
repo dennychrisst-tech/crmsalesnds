@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
-import { Visit, Client, Contact, Task } from "@/types";
+import { Visit, Client, Contact, Project, Task } from "@/types";
 import { VISIT_STATUS, todayStr } from "@/lib/utils";
 
 interface Props {
@@ -12,6 +12,7 @@ interface Props {
   preDate?: string;
   clients: Client[];
   contacts: Contact[];
+  projects: Project[];
   team: string[];
   defaultPic?: string;
   onSave: (v: Visit) => Promise<void>;
@@ -42,7 +43,7 @@ function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit
   };
 }
 
-export default function VisitModal({ open, visit, preClientId, preDate, clients, contacts, team, defaultPic = "", onSave, onDelete, onCreateTask, onClose }: Props) {
+export default function VisitModal({ open, visit, preClientId, preDate, clients, contacts, projects, team, defaultPic = "", onSave, onDelete, onCreateTask, onClose }: Props) {
   const isEdit = !!visit;
   const [form, setForm] = useState<Visit>(emptyVisit(clients[0]?.id || "", defaultPic));
   const [task, setTask] = useState<TaskDraft>({ title: "", due_date: "", assigned_to: "", notes: "" });
@@ -81,6 +82,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   const setT = (k: keyof TaskDraft, v: string) => setTask(t => ({ ...t, [k]: v }));
 
   const clientContacts = contacts.filter(c => c.client_id === form.client_id);
+  const clientProjects = projects.filter(p => p.client_id === form.client_id);
   const isDone = form.status === "Done";
 
   function handleClientChange(clientId: string) {
@@ -138,7 +140,14 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       </Field>
 
       <Field label="Project (opsional)">
-        <input className={inputCls} value={form.project || ""} onChange={e => set("project", e.target.value || null)} placeholder="Nama project (opsional)" />
+        {clientProjects.length > 0 ? (
+          <select className={selectCls} value={form.project || ""} onChange={e => set("project", e.target.value || null)}>
+            <option value="">— Tidak terkait project —</option>
+            {clientProjects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+          </select>
+        ) : (
+          <input className={inputCls} value={form.project || ""} onChange={e => set("project", e.target.value || null)} placeholder="Nama project (opsional)" />
+        )}
       </Field>
 
       <div className="grid grid-cols-2 gap-3">
