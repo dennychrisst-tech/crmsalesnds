@@ -41,8 +41,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
   const body = await req.json();
   const model = getModel(table as TableName);
 
-  // Auto-tag creator on new records
-  if (!body.created_by_id) body.created_by_id = session.id;
+  // created_by_id intentionally not auto-set — FK references auth.users which
+  // is not managed by this app's auth layer; leave null to avoid constraint errors
 
   // Handle BigInt fields
   if (body.value !== undefined) body.value = BigInt(body.value);

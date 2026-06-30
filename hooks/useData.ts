@@ -44,18 +44,21 @@ export function useData() {
   const load = useCallback(async () => {
     try {
       const json = await api("/api/data");
+      // Normalize date fields back to "YYYY-MM-DD" — Prisma returns full ISO strings
+      // but <input type="date"> and date logic throughout the app expect "YYYY-MM-DD"
+      const d10 = (v: unknown) => (typeof v === "string" && v ? v.slice(0, 10) : v);
       setData({
         clients: json.clients ?? [],
         contacts: json.contacts ?? [],
-        visits: json.visits ?? [],
-        deals: json.deals ?? [],
+        visits: (json.visits ?? []).map((v: Record<string, unknown>) => ({ ...v, date: d10(v.date) })),
+        deals: (json.deals ?? []).map((v: Record<string, unknown>) => ({ ...v, close_date: d10(v.close_date) })),
         projects: json.projects ?? [],
-        tasks: json.tasks ?? [],
+        tasks: (json.tasks ?? []).map((v: Record<string, unknown>) => ({ ...v, due_date: d10(v.due_date) })),
         products: json.products ?? [],
         documents: json.documents ?? [],
         attachments: json.attachments ?? [],
-        activities: json.activities ?? [],
-        events: json.events ?? [],
+        activities: (json.activities ?? []).map((v: Record<string, unknown>) => ({ ...v, date: d10(v.date) })),
+        events: (json.events ?? []).map((v: Record<string, unknown>) => ({ ...v, date: d10(v.date) })),
         profiles: json.profiles ?? [],
       });
       if (json.currentUser) {
