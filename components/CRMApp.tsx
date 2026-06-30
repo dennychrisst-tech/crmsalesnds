@@ -22,7 +22,7 @@ const TABS: { id: ActiveView; label: string }[] = [
   { id: "pipeline", label: "Pipeline" },
   { id: "projects", label: "Project" },
   { id: "tasks", label: "Tasks" },
-  { id: "summary", label: "Summary" },
+  { id: "summary", label: "Summary Activity" },
   { id: "visit-report", label: "Laporan Visit" },
 ];
 
