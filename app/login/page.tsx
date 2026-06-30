@@ -54,58 +54,71 @@ export default function LoginPage() {
       <div className="lp-brand" style={{
         flex: "0 0 52%", position: "relative", overflow: "hidden",
         background: "linear-gradient(145deg, #0A6E5C 0%, #0B2540 55%, #081624 100%)",
-        display: "flex", flexDirection: "column", justifyContent: "space-between",
-        padding: "52px 64px",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        padding: "52px 60px",
       }}>
-        {/* Decorative rings */}
+        {/* Decorative rings — centered */}
         <div style={{
-          position: "absolute", right: -120, top: "50%", transform: "translateY(-50%)",
-          width: 480, height: 480, borderRadius: "50%",
-          border: "1px solid rgba(255,255,255,.06)", pointerEvents: "none",
+          position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
+          width: 560, height: 560, borderRadius: "50%",
+          border: "1px solid rgba(255,255,255,.05)", pointerEvents: "none",
         }} />
         <div style={{
-          position: "absolute", right: -60, top: "50%", transform: "translateY(-50%)",
-          width: 320, height: 320, borderRadius: "50%",
-          border: "1px solid rgba(0,175,160,.14)", pointerEvents: "none",
+          position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
+          width: 380, height: 380, borderRadius: "50%",
+          border: "1px solid rgba(0,175,160,.10)", pointerEvents: "none",
         }} />
         <div style={{
-          position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-          width: 160, height: 160, borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(0,175,160,.12) 0%, transparent 70%)", pointerEvents: "none",
+          position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
+          width: 200, height: 200, borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(0,175,160,.10) 0%, transparent 70%)", pointerEvents: "none",
         }} />
 
-        {/* Top: Logo */}
-        <div>{NDS_LOGO}</div>
+        {/* Center content */}
+        <div style={{ position: "relative", textAlign: "center", maxWidth: 400 }}>
+          {/* Big logo */}
+          <div style={{ marginBottom: 20 }}>
+            <svg viewBox="0 0 210 72" height="72" aria-label="NDS" xmlns="http://www.w3.org/2000/svg" style={{ display: "inline-block" }}>
+              <text x="0" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#fff">N</text>
+              <path d="M68 6 C90 6 104 20 104 36 C104 52 90 66 68 66" stroke="#00AFA0" strokeWidth="7" fill="none" strokeLinecap="round"/>
+              <text x="108" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#fff">S</text>
+              <text x="148" y="28" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.55)">NUSANTARA</text>
+              <text x="148" y="42" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.55)"><tspan fill="#00AFA0">D</tspan>UTA</text>
+              <text x="148" y="56" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.55)">SOLUSINDO</text>
+            </svg>
+          </div>
 
-        {/* Middle: Headline */}
-        <div>
+          {/* Divider */}
+          <div style={{ width: 40, height: 2, background: "#00AFA0", borderRadius: 999, margin: "0 auto 20px" }} />
+
           <div style={{
             display: "inline-block", fontSize: 10, fontWeight: 800, letterSpacing: ".22em",
             textTransform: "uppercase", background: "#00AFA0", color: "#fff",
-            padding: "4px 12px", borderRadius: 6, marginBottom: 20,
+            padding: "4px 14px", borderRadius: 6, marginBottom: 22,
           }}>Sales CRM</div>
+
           <h2 style={{
-            fontSize: 34, fontWeight: 800, color: "#fff", margin: "0 0 14px",
-            lineHeight: 1.2, letterSpacing: "-.6px", maxWidth: 380,
+            fontSize: 28, fontWeight: 800, color: "#fff", margin: "0 0 12px",
+            lineHeight: 1.25, letterSpacing: "-.5px",
           }}>
-            Satu platform untuk semua aktivitas sales
+            Satu platform untuk<br />semua aktivitas sales
           </h2>
-          <p style={{ fontSize: 14, color: "rgba(255,255,255,.55)", lineHeight: 1.7, maxWidth: 380, margin: 0 }}>
-            Dari pipeline deal hingga laporan mingguan — semua tersedia dalam satu dashboard yang terintegrasi.
+          <p style={{ fontSize: 13.5, color: "rgba(255,255,255,.5)", lineHeight: 1.7, margin: "0 0 36px" }}>
+            Pipeline · Kunjungan · Laporan · Project
           </p>
 
           {/* Feature cards */}
-          <div style={{ marginTop: 36, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, textAlign: "left" }}>
             {FEATURES.map(f => (
               <div key={f.title} style={{
-                display: "flex", alignItems: "flex-start", gap: 14,
-                background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.08)",
-                borderRadius: 12, padding: "14px 16px",
+                display: "flex", alignItems: "center", gap: 14,
+                background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.08)",
+                borderRadius: 12, padding: "12px 16px",
               }}>
-                <span style={{ fontSize: 20, flexShrink: 0, marginTop: 1 }}>{f.icon}</span>
+                <span style={{ fontSize: 18, flexShrink: 0 }}>{f.icon}</span>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 2 }}>{f.title}</div>
-                  <div style={{ fontSize: 12, color: "rgba(255,255,255,.5)", lineHeight: 1.5 }}>{f.desc}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{f.title}</div>
+                  <div style={{ fontSize: 11.5, color: "rgba(255,255,255,.45)", lineHeight: 1.4, marginTop: 1 }}>{f.desc}</div>
                 </div>
               </div>
             ))}
@@ -113,7 +126,7 @@ export default function LoginPage() {
         </div>
 
         {/* Bottom: Copyright */}
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,.3)" }}>
+        <div style={{ position: "absolute", bottom: 28, fontSize: 11, color: "rgba(255,255,255,.25)" }}>
           © 2025 PT Nusantara Duta Solusindo
         </div>
       </div>
