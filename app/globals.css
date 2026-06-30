@@ -153,3 +153,59 @@ tr:hover td { background: var(--paper); }
 .vt-approach { color: var(--ink-soft); flex: 1; }
 .vt-empty { font-size: 12px; color: var(--ink-soft); font-style: italic; }
 .vt-add { font-size: 12px; margin-left: auto; }
+
+/* Modal tabs */
+.modal-tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.modal-tab { background: transparent; border: 1px solid var(--line); color: var(--ink-soft); padding: 5px 14px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: inherit; }
+.modal-tab:hover { border-color: var(--brand); color: var(--brand); }
+.modal-tab-active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.tab-badge { display: inline-block; background: var(--brand); color: #fff; font-size: 10px; font-weight: 700; border-radius: 999px; padding: 0 5px; margin-left: 4px; }
+
+/* Contact persons */
+.contact-section { border-top: 1px dashed var(--line); padding-top: 12px; margin-bottom: 12px; }
+.contact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin-top: 6px; }
+.contact-card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+.contact-card:hover { border-color: var(--brand); }
+.contact-name { font-size: 13px; font-weight: 700; }
+.contact-title { font-size: 11px; color: var(--brand); font-weight: 600; margin-top: 2px; }
+.contact-meta { font-size: 11px; color: var(--ink-soft); margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+
+/* KPI warning */
+.kpi-warn { border-color: #f59e0b; }
+.kpi-warn .kpi-sub { color: #b45309; font-weight: 700; }
+.overdue-chip { display: inline-block; background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 8px; }
+
+/* Task items on dashboard */
+.task-item { background: var(--paper); border: 1px solid var(--line); border-left: 3px solid var(--brand); border-radius: 8px; padding: 10px 12px; }
+.task-item-overdue { border-left-color: var(--danger); background: #fff5f5; }
+.task-item-title { font-size: 13px; font-weight: 600; }
+.task-item-meta { font-size: 11px; color: var(--ink-soft); margin-top: 3px; }
+
+/* Tasks view */
+.task-summary { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; }
+.task-summary-item { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.task-overdue-badge { color: var(--danger); }
+tr.task-overdue td { background: #fff5f5; }
+tr.task-soon td { background: #fffbeb; }
+
+/* Document tracker */
+.doc-tracker { padding: 4px 0; }
+.doc-form { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-top: 10px; }
+
+/* Attachment section */
+.attachment-section { padding: 4px 0; }
+.attachment-upload { display: flex; align-items: center; margin-bottom: 12px; }
+.attachment-list { display: flex; flex-direction: column; gap: 6px; }
+.attachment-row { display: flex; align-items: center; gap: 10px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+.attachment-icon { font-size: 18px; flex-shrink: 0; }
+.attachment-info { flex: 1; min-width: 0; }
+.attachment-name { font-size: 13px; font-weight: 600; color: var(--brand); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.attachment-name:hover { text-decoration: underline; }
+.attachment-meta { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+
+/* Product catalog */
+.catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.catalog-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); }
+.catalog-cat { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--brand); font-weight: 700; margin-bottom: 4px; }
+.catalog-name { font-size: 15px; font-weight: 800; }
+.catalog-desc { font-size: 12px; color: var(--ink-soft); margin-top: 6px; line-height: 1.4; }

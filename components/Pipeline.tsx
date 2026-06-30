@@ -1,10 +1,9 @@
 "use client";
 import { useState } from "react";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { useDroppable } from "@dnd-kit/core";
-import { useDraggable } from "@dnd-kit/core";
+import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
-import { Deal } from "@/types";
+import { Deal, CRMDocument, Attachment } from "@/types";
 import { STAGES, STAGE_PROB, fmtIDR } from "@/lib/utils";
 import DealModal from "./DealModal";
 
@@ -13,6 +12,10 @@ interface Props {
   onSaveDeal: (d: Deal) => Promise<void>;
   onDeleteDeal: (id: string) => Promise<void>;
   onUpdateStage: (id: string, stage: string) => Promise<void>;
+  onAddDocument: (d: CRMDocument) => Promise<void>;
+  onDeleteDocument: (id: string) => Promise<void>;
+  onUploadAttachment: (file: File, dealId: string) => Promise<void>;
+  onDeleteAttachment: (id: string) => Promise<void>;
 }
 
 function DealCard({ deal, clientName, onClick }: { deal: Deal; clientName: string; onClick: () => void }) {
@@ -22,6 +25,7 @@ function DealCard({ deal, clientName, onClick }: { deal: Deal; clientName: strin
     <div ref={setNodeRef} {...listeners} {...attributes} style={style} className="deal" onClick={onClick}>
       <div className="dn">{deal.name}</div>
       <div className="dc">{clientName} · {deal.product}</div>
+      {deal.owner && <div className="dc">👤 {deal.owner}</div>}
       <div className="dv">{fmtIDR(deal.value)}</div>
     </div>
   );
@@ -39,8 +43,8 @@ function Column({ stage, deals, clientName, onDealClick }: { stage: string; deal
   );
 }
 
-export default function Pipeline({ data, onSaveDeal, onDeleteDeal, onUpdateStage }: Props) {
-  const { clients, deals } = data;
+export default function Pipeline({ data, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment }: Props) {
+  const { clients, deals, products, documents, attachments } = data;
   const [modalOpen, setModalOpen] = useState(false);
   const [editDeal, setEditDeal] = useState<Deal | null>(null);
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null);
@@ -60,15 +64,16 @@ export default function Pipeline({ data, onSaveDeal, onDeleteDeal, onUpdateStage
     const { over, active } = e;
     if (!over) return;
     const deal = deals.find(d => d.id === active.id);
-    if (deal && deal.stage !== over.id) {
-      await onUpdateStage(deal.id, String(over.id));
-    }
+    if (deal && deal.stage !== over.id) await onUpdateStage(deal.id, String(over.id));
   }
+
+  const dealDocuments = editDeal ? documents.filter(d => d.deal_id === editDeal.id) : [];
+  const dealAttachments = editDeal ? attachments.filter(a => a.deal_id === editDeal.id) : [];
 
   return (
     <section>
       <div className="toolbar">
-        <span className="muted">Tarik kartu antar kolom untuk ubah stage. Total weighted pipeline: <b>{fmtIDR(Math.round(weighted))}</b></span>
+        <span className="muted">Tarik kartu antar kolom untuk ubah stage. Weighted pipeline: <b>{fmtIDR(Math.round(weighted))}</b></span>
         <button className="btn" style={{ marginLeft: "auto" }} onClick={() => { setEditDeal(null); setModalOpen(true); }}>+ Deal Baru</button>
       </div>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -88,8 +93,14 @@ export default function Pipeline({ data, onSaveDeal, onDeleteDeal, onUpdateStage
           )}
         </DragOverlay>
       </DndContext>
-      <DealModal open={modalOpen} deal={editDeal} clients={clients}
-        onSave={onSaveDeal} onDelete={onDeleteDeal} onClose={() => setModalOpen(false)} />
+      <DealModal
+        open={modalOpen} deal={editDeal} clients={clients} products={products}
+        documents={dealDocuments} attachments={dealAttachments}
+        onSave={onSaveDeal} onDelete={onDeleteDeal}
+        onAddDocument={onAddDocument} onDeleteDocument={onDeleteDocument}
+        onUploadAttachment={onUploadAttachment} onDeleteAttachment={onDeleteAttachment}
+        onClose={() => setModalOpen(false)}
+      />
     </section>
   );
 }

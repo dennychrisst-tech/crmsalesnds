@@ -5,6 +5,11 @@ export const STAGE_PROB: Record<string, number> = {
 export const VISIT_STATUS = ["Planned", "Done", "Follow-up", "No-go"] as const;
 export const PROJ_STATUS = ["Initiation", "In Progress", "On Hold", "Delivered", "Closed"] as const;
 export const SECTORS = ["Banking", "Multifinance", "Insurance", "Health Care", "Industrial", "Technology", "Telekomunikasi", "Infrastruktur", "Transportasi", "Energy", "Lainnya"] as const;
+export const TEAM = ["Denny", "Dova", "Rio", "Cris"] as const;
+export const DOC_TYPES = ["RFI", "RFP/BRD", "Proposal Teknis", "Offering Letter", "Kontrak", "PO", "NDA", "Lainnya"] as const;
+export const DOC_STATUSES = ["Draft", "Sent", "Received", "Approved", "Rejected"] as const;
+export const PRODUCT_CATEGORIES = ["ECM / BPM", "AI / Analytics", "Security", "Cloud", "Managed Service", "Outsourcing", "Lainnya"] as const;
+export const COMPANY_SIZES = ["< 50 karyawan", "50–200 karyawan", "200–1000 karyawan", "> 1000 karyawan"] as const;
 
 export function fmtIDR(n: number): string {
   return "Rp " + (Number(n) || 0).toLocaleString("id-ID");

@@ -2,6 +2,7 @@ export type Sector = "Banking" | "Multifinance" | "Insurance" | "Health Care" | 
 export type DealStage = "Lead" | "Discovery" | "Proposal" | "Negotiation" | "Won" | "Lost";
 export type VisitStatus = "Planned" | "Done" | "Follow-up" | "No-go";
 export type ProjectStatus = "Initiation" | "In Progress" | "On Hold" | "Delivered" | "Closed";
+export type TaskStatus = "Open" | "Done";
 
 export interface Client {
   id: string;
@@ -10,6 +11,20 @@ export interface Client {
   pic: string[];
   contact: string;
   status: string;
+  notes: string;
+  address?: string;
+  website?: string;
+  company_size?: string;
+  created_at?: string;
+}
+
+export interface Contact {
+  id: string;
+  client_id: string;
+  name: string;
+  title: string;
+  email: string;
+  phone: string;
   notes: string;
   created_at?: string;
 }
@@ -35,6 +50,8 @@ export interface Deal {
   product: string;
   close_date: string;
   notes: string;
+  owner: string;
+  win_loss_reason: string;
   created_at?: string;
 }
 
@@ -50,4 +67,45 @@ export interface Project {
   created_at?: string;
 }
 
-export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects";
+export interface Task {
+  id: string;
+  title: string;
+  due_date: string;
+  client_id: string | null;
+  deal_id: string | null;
+  assigned_to: string;
+  status: TaskStatus;
+  notes: string;
+  created_at?: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  created_at?: string;
+}
+
+export interface CRMDocument {
+  id: string;
+  deal_id: string;
+  name: string;
+  type: string;
+  status: string;
+  date: string;
+  notes: string;
+  created_at?: string;
+}
+
+export interface Attachment {
+  id: string;
+  deal_id: string | null;
+  client_id: string | null;
+  file_name: string;
+  file_url: string;
+  file_size: number;
+  uploaded_at?: string;
+}
+
+export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects" | "tasks" | "catalog";
