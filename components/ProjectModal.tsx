@@ -14,15 +14,42 @@ interface Props {
   onClose: () => void;
 }
 
+const PRODUCT_CATEGORIES = ["Solution", "Talent", "License", "IBM"] as const;
+const IBM_PRODUCTS = ["IBM Filenet", "IBM MQ", "IBM BAW", "IBM BOB"] as const;
+
+function parseProduct(product: string) {
+  const ibmMatch = IBM_PRODUCTS.find(p => product === p);
+  if (ibmMatch) return { category: "IBM", sub: ibmMatch };
+  const cat = PRODUCT_CATEGORIES.find(c => c !== "IBM" && c === product);
+  return { category: cat || "", sub: "" };
+}
+
 export default function ProjectModal({ open, project, clients, onSave, onDelete, onClose }: Props) {
   const isEdit = !!project;
   const [form, setForm] = useState<Project>({ id: "", name: "", client_id: "", product: "", status: "Initiation", value: 0, golive: "", notes: "" });
+  const [productCat, setProductCat] = useState("");
+  const [ibmSub, setIbmSub] = useState("");
 
   useEffect(() => {
-    setForm(project || { id: uuid(), name: "", client_id: clients[0]?.id || "", product: "", status: "Initiation", value: 0, golive: "", notes: "" });
+    const base = project || { id: uuid(), name: "", client_id: clients[0]?.id || "", product: "", status: "Initiation", value: 0, golive: "", notes: "" };
+    setForm(base);
+    const { category, sub } = parseProduct(base.product || "");
+    setProductCat(category);
+    setIbmSub(sub);
   }, [project, clients, open]);
 
   const set = (k: keyof Project, v: string | number) => setForm(f => ({ ...f, [k]: v }));
+
+  function handleProductCatChange(cat: string) {
+    setProductCat(cat);
+    setIbmSub("");
+    setForm(f => ({ ...f, product: cat === "IBM" ? "" : cat }));
+  }
+
+  function handleIbmSubChange(sub: string) {
+    setIbmSub(sub);
+    setForm(f => ({ ...f, product: sub }));
+  }
 
   async function handleSave() {
     if (!form.name.trim()) { alert("Nama project wajib diisi."); return; }
@@ -58,7 +85,16 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Produk / solusi">
-          <input className={inputCls} value={form.product} onChange={e => set("product", e.target.value)} />
+          <select className={selectCls} value={productCat} onChange={e => handleProductCatChange(e.target.value)}>
+            <option value="">— Pilih —</option>
+            {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          {productCat === "IBM" && (
+            <select className={selectCls} style={{ marginTop: 6 }} value={ibmSub} onChange={e => handleIbmSubChange(e.target.value)}>
+              <option value="">— Pilih Produk IBM —</option>
+              {IBM_PRODUCTS.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          )}
         </Field>
         <Field label="Target go-live">
           <input type="date" className={inputCls} value={form.golive} onChange={e => set("golive", e.target.value)} />
