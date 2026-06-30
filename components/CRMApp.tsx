@@ -49,11 +49,9 @@ export default function CRMApp() {
   } = useData();
 
   const isViewer = currentProfile?.role === "viewer";
-  const readOnly = async () => { alert("Anda hanya memiliki akses lihat (view only)."); };
+  const warnViewer = () => { alert("Anda hanya memiliki akses lihat (view only)."); return Promise.resolve(); };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ro = <T,>(_fn: (v: T) => Promise<void>) => isViewer ? (readOnly as any) : _fn;
-  const roDel = (fn: (id: string) => Promise<void>) => isViewer ? (readOnly as (id: string) => Promise<void>) : fn;
-  const roUpload = (fn: (f: File, d?: string, c?: string) => Promise<void>) => isViewer ? (readOnly as typeof fn) : fn;
+  const ro = (fn: any) => isViewer ? (() => warnViewer()) : fn;
 
   return (
     <div className="app">
@@ -98,31 +96,31 @@ export default function CRMApp() {
                 {view === "dashboard" && <Dashboard data={data} />}
                 {view === "calendar" && (
                   <CalendarView data={data} currentUserName={currentUserName}
-                    onSaveVisit={ro(upsertVisit)} onDeleteVisit={roDel(deleteVisit)}
-                    onSaveEvent={ro(upsertEvent)} onDeleteEvent={roDel(deleteEvent)}
+                    onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)}
+                    onSaveEvent={ro(upsertEvent)} onDeleteEvent={ro(deleteEvent)}
                     onCreateTask={ro(upsertTask)} />
                 )}
                 {view === "clients" && (
                   <Clients data={data} currentUserName={currentUserName}
-                    onSaveClient={ro(upsertClient)} onDeleteClient={roDel(deleteClient)}
-                    onSaveContact={ro(upsertContact)} onDeleteContact={roDel(deleteContact)}
-                    onSaveVisit={ro(upsertVisit)} onDeleteVisit={roDel(deleteVisit)} />
+                    onSaveClient={ro(upsertClient)} onDeleteClient={ro(deleteClient)}
+                    onSaveContact={ro(upsertContact)} onDeleteContact={ro(deleteContact)}
+                    onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)} />
                 )}
                 {view === "pipeline" && (
                   <Pipeline data={data} currentUserName={currentUserName}
-                    onSaveDeal={ro(upsertDeal)} onDeleteDeal={roDel(deleteDeal)} onUpdateStage={roDel(updateDealStage)}
-                    onAddDocument={ro(upsertDocument)} onDeleteDocument={roDel(deleteDocument)}
-                    onUploadAttachment={roUpload(uploadAttachment)} onDeleteAttachment={roDel(deleteAttachment)}
-                    onAddActivity={ro(upsertActivity)} onDeleteActivity={roDel(deleteActivity)} />
+                    onSaveDeal={ro(upsertDeal)} onDeleteDeal={ro(deleteDeal)} onUpdateStage={ro(updateDealStage)}
+                    onAddDocument={ro(upsertDocument)} onDeleteDocument={ro(deleteDocument)}
+                    onUploadAttachment={ro(uploadAttachment)} onDeleteAttachment={ro(deleteAttachment)}
+                    onAddActivity={ro(upsertActivity)} onDeleteActivity={ro(deleteActivity)} />
                 )}
                 {view === "projects" && (
-                  <Projects data={data} onSaveProject={ro(upsertProject)} onDeleteProject={roDel(deleteProject)} />
+                  <Projects data={data} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)} />
                 )}
                 {view === "tasks" && (
-                  <TasksView data={data} currentUserName={currentUserName} onSaveTask={ro(upsertTask)} onDeleteTask={roDel(deleteTask)} />
+                  <TasksView data={data} currentUserName={currentUserName} onSaveTask={ro(upsertTask)} onDeleteTask={ro(deleteTask)} />
                 )}
                 {view === "catalog" && (
-                  <ProductsView data={data} onSaveProduct={ro(upsertProduct)} onDeleteProduct={roDel(deleteProduct)} />
+                  <ProductsView data={data} onSaveProduct={ro(upsertProduct)} onDeleteProduct={ro(deleteProduct)} />
                 )}
                 {view === "summary" && <SummaryView data={data} />}
               </>
