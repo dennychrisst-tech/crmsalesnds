@@ -52,7 +52,7 @@ export function useData() {
         contacts: json.contacts ?? [],
         visits: (json.visits ?? []).map((v: Record<string, unknown>) => ({ ...v, date: d10(v.date) })),
         deals: (json.deals ?? []).map((v: Record<string, unknown>) => ({ ...v, close_date: d10(v.close_date) })),
-        projects: json.projects ?? [],
+        projects: (json.projects ?? []).map((v: Record<string, unknown>) => ({ ...v, golive: d10(v.golive) })),
         tasks: (json.tasks ?? []).map((v: Record<string, unknown>) => ({ ...v, due_date: d10(v.due_date) })),
         products: json.products ?? [],
         documents: json.documents ?? [],

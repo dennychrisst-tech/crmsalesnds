@@ -61,6 +61,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
     tasks: ["due_date"],
     activities: ["date"],
     events: ["date"],
+    projects: ["golive"],
   };
   for (const field of DATE_FIELDS[table] ?? []) {
     if (body[field] && typeof body[field] === "string") {
