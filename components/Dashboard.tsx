@@ -13,6 +13,47 @@ interface Props {
 
 type Period = "daily" | "weekly" | "monthly";
 
+function weeklyCount<T>(items: T[], getDate: (item: T) => string, weeks = 7): number[] {
+  const today = new Date();
+  return Array.from({ length: weeks }, (_, i) => {
+    const mon = new Date(today);
+    mon.setDate(today.getDate() - ((today.getDay() + 6) % 7) - (weeks - 1 - i) * 7);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    const s = mon.toISOString().slice(0, 10);
+    const e = sun.toISOString().slice(0, 10);
+    return items.filter(item => { const d = getDate(item); return d >= s && d <= e; }).length;
+  });
+}
+
+function Sparkline({ data, color = "var(--brand)", warn = false }: { data: number[]; color?: string; warn?: boolean }) {
+  if (!data.length) return null;
+  const max = Math.max(...data, 1);
+  const min = Math.min(...data);
+  const W = 72, H = 28, pad = 2;
+  const step = (W - pad * 2) / Math.max(data.length - 1, 1);
+  const pts = data.map((v, i) => {
+    const x = pad + i * step;
+    const y = H - pad - ((v - min) / (max - min || 1)) * (H - pad * 2);
+    return [x, y] as [number, number];
+  });
+  const line = pts.map(([x, y]) => `${x},${y}`).join(" ");
+  const area = `${pts[0][0]},${H} ` + line + ` ${pts[pts.length - 1][0]},${H}`;
+  const last = data[data.length - 1];
+  const prev = data[data.length - 2] ?? last;
+  const trend = last > prev ? "↑" : last < prev ? "↓" : "→";
+  const trendColor = warn ? (last > prev ? "#DC2626" : "#16A34A") : (last >= prev ? "#0A6E5C" : "#94A3B8");
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
+      <svg width={W} height={H} style={{ display: "block", flexShrink: 0 }}>
+        <polyline points={area} fill={color} fillOpacity={0.08} stroke="none" />
+        <polyline points={line} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r={2.5} fill={color} />
+      </svg>
+      <span style={{ fontSize: 11, fontWeight: 700, color: trendColor, lineHeight: 1 }}>{trend}</span>
+    </div>
+  );
+}
+
 function SectionHeader({ title, accent, action, onClick }: { title: string; icon?: string; accent?: string; action?: string; onClick?: () => void }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
@@ -196,50 +237,66 @@ export default function Dashboard({ data, onNavigate }: Props) {
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
+  const sparkDeals   = weeklyCount(deals.filter(d => bySales(d.owner)), d => (d.created_at || "").slice(0, 10));
+  const sparkWon     = weeklyCount(wonDeals, d => (d.stage_updated_at || d.created_at || "").slice(0, 10));
+  const sparkVisits  = weeklyCount(filteredVisits, v => v.date);
+  const sparkActivities = weeklyCount(activities.filter(a => bySales(a.created_by)), a => (a.created_at || "").slice(0, 10));
+  const sparkTasks   = weeklyCount(filteredTasks, t => t.due_date || "");
+  const sparkReschedule = weeklyCount(filteredVisits.filter(v => v.status === "Reschedule"), v => v.date);
+
   const kpis = [
     {
       label: "Pipeline Aktif", num: openDeals.length, sub: fmtIDR(pipelineValue),
-      abbr: "PL", accent: "var(--brand)", view: "pipeline" as ActiveView,
+      accent: "var(--brand)", view: "pipeline" as ActiveView,
+      spark: sparkDeals, warn: false,
     },
     {
       label: "Weighted Value", num: fmtIDR(Math.round(weighted)), sub: "prob. tertimbang",
-      abbr: "WV", accent: "var(--brand)", view: "pipeline" as ActiveView,
+      accent: "var(--brand)", view: "pipeline" as ActiveView,
+      spark: sparkDeals, warn: false,
     },
     {
       label: "Closed Won", num: fmtIDR(wonValue), sub: `${wonDeals.length} deal`,
-      abbr: "WON", accent: "var(--brand)", view: "pipeline" as ActiveView,
+      accent: "var(--brand)", view: "pipeline" as ActiveView,
+      spark: sparkWon, warn: false,
     },
     {
       label: "Win Rate", num: winRate !== null ? `${winRate}%` : "—",
       sub: closedTotal > 0 ? `dari ${closedTotal} closed` : "belum ada closed",
-      abbr: "WR", accent: "var(--brand)", view: "pipeline" as ActiveView,
+      accent: "var(--brand)", view: "pipeline" as ActiveView,
+      spark: sparkWon, warn: false,
     },
     {
       label: `Closing ${periodLabel}`, num: closingInPeriod.length,
       sub: fmtIDR(closingInPeriod.reduce((s, d) => s + d.value, 0)),
-      abbr: "CL", accent: "#8B6914", view: "pipeline" as ActiveView,
+      accent: "#8B6914", view: "pipeline" as ActiveView,
+      spark: sparkDeals, warn: false,
     },
     {
       label: `Visit ${periodLabel}`, num: periodVisits.length,
       sub: `${periodVisits.filter(v => v.status === "Done").length} selesai`,
-      abbr: "VS", accent: "var(--brand)", view: "calendar" as ActiveView,
+      accent: "var(--brand)", view: "calendar" as ActiveView,
+      spark: sparkVisits, warn: false,
     },
     {
       label: "Reschedule Pending", num: followups.length,
       sub: "butuh tindak lanjut",
-      abbr: "RS", accent: followups.length > 0 ? "var(--danger)" : "var(--brand)",
+      accent: followups.length > 0 ? "var(--danger)" : "var(--brand)",
       view: "calendar" as ActiveView,
+      spark: sparkReschedule, warn: followups.length > 0,
     },
     {
       label: `Aktivitas ${periodLabel}`, num: periodActivities.length,
       sub: "log aktivitas",
-      abbr: "AK", accent: "var(--ink-soft)", view: "clients" as ActiveView,
+      accent: "var(--brand)", view: "clients" as ActiveView,
+      spark: sparkActivities, warn: false,
     },
     {
       label: "Task Open", num: openTasks.length,
       sub: overdueTasks.length > 0 ? `${overdueTasks.length} overdue` : "semua on track",
-      abbr: "TK", accent: overdueTasks.length > 0 ? "var(--danger)" : "var(--brand)",
+      accent: overdueTasks.length > 0 ? "var(--danger)" : "var(--brand)",
       view: "tasks" as ActiveView,
+      spark: sparkTasks, warn: overdueTasks.length > 0,
     },
   ];
 
@@ -259,18 +316,14 @@ export default function Dashboard({ data, onNavigate }: Props) {
               cursor: "pointer", background: "var(--card)", border: "1px solid var(--line)",
               borderRadius: 12, padding: "16px 18px", boxShadow: "var(--shadow)",
               borderTop: `2px solid ${k.accent}`,
+              display: "flex", flexDirection: "column", gap: 0,
             }}
             onClick={() => onNavigate(k.view)}
           >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <div className="kpi-label" style={{ margin: 0 }}>{k.label}</div>
-              <div style={{
-                fontSize: 9, fontWeight: 800, letterSpacing: ".1em",
-                color: k.accent, opacity: .55, flexShrink: 0,
-              }}>{k.abbr}</div>
-            </div>
-            <div className="kpi-num" style={{ color: k.accent }}>{k.num}</div>
-            <div className="kpi-sub" style={{ marginTop: 4 }}>{k.sub}</div>
+            <div className="kpi-label" style={{ margin: "0 0 8px" }}>{k.label}</div>
+            <div className="kpi-num" style={{ color: k.accent, marginBottom: 2 }}>{k.num}</div>
+            <div className="kpi-sub" style={{ marginBottom: 10 }}>{k.sub}</div>
+            <Sparkline data={k.spark} color={k.accent} warn={k.warn} />
           </div>
         ))}
       </div>
