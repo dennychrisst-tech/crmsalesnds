@@ -12,18 +12,35 @@ interface Props {
 
 type Period = "daily" | "weekly" | "monthly";
 
-function SectionHeader({ title, action, onClick }: { title: string; action?: string; onClick?: () => void }) {
+function SectionHeader({ title, icon, accent, action, onClick }: { title: string; icon?: string; accent?: string; action?: string; onClick?: () => void }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-      <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{title}</h2>
+      <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--ink)", display: "flex", alignItems: "center", gap: 8 }}>
+        {icon && (
+          <span style={{
+            width: 26, height: 26, borderRadius: 8, background: accent ? `${accent}22` : "var(--brand-soft)",
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0,
+          }}>{icon}</span>
+        )}
+        {title}
+      </h2>
       {action && (
         <button onClick={onClick} style={{
           background: "none", border: "none", cursor: "pointer", fontSize: 12,
-          color: "var(--brand)", fontWeight: 600, padding: "2px 6px",
+          color: accent || "var(--brand)", fontWeight: 700, padding: "2px 6px",
         }}>{action} →</button>
       )}
     </div>
   );
+}
+
+const PANEL_ACCENTS = {
+  pipeline: "#2563EB", visit: "#0F766E", reschedule: "#E11D48", reschedule_ok: "#16A34A",
+  deal: "#D97706", task: "#EA580C", task_ok: "#16A34A", client: "#7C3AED", project: "#0891B2", team: "#DB2777",
+};
+
+function panelStyle(accent: string): React.CSSProperties {
+  return { borderTop: `3px solid ${accent}` };
 }
 
 function FilterBar({
@@ -191,46 +208,47 @@ export default function Dashboard({ data, onNavigate }: Props) {
   const kpis = [
     {
       label: "Pipeline Aktif", num: openDeals.length, sub: fmtIDR(pipelineValue),
-      color: "var(--brand)", view: "pipeline" as ActiveView,
+      icon: "💰", bg: "#DBEAFE", fg: "#1D4ED8", view: "pipeline" as ActiveView,
     },
     {
       label: "Weighted Value", num: fmtIDR(Math.round(weighted)), sub: "prob. tertimbang",
-      color: "var(--brand)", view: "pipeline" as ActiveView,
+      icon: "⚖️", bg: "#EDE9FE", fg: "#6D28D9", view: "pipeline" as ActiveView,
     },
     {
       label: "Closed Won", num: fmtIDR(wonValue), sub: `${wonDeals.length} deal`,
-      color: "#16a34a", view: "pipeline" as ActiveView,
+      icon: "🏆", bg: "#DCFCE7", fg: "#15803D", view: "pipeline" as ActiveView,
     },
     {
       label: "Win Rate", num: winRate !== null ? `${winRate}%` : "—",
       sub: closedTotal > 0 ? `dari ${closedTotal} closed` : "belum ada closed",
-      color: winRate !== null && winRate >= 50 ? "#16a34a" : "var(--gold)", view: "pipeline" as ActiveView,
+      icon: "🎯", bg: "#CCFBF1", fg: "#0F766E", view: "pipeline" as ActiveView,
     },
     {
       label: `Closing ${periodLabel}`, num: closingInPeriod.length,
       sub: fmtIDR(closingInPeriod.reduce((s, d) => s + d.value, 0)),
-      color: closingInPeriod.length > 0 ? "var(--gold)" : "var(--ink-soft)", view: "pipeline" as ActiveView,
+      icon: "⏳", bg: "#FEF3C7", fg: "#B45309", view: "pipeline" as ActiveView,
     },
     {
       label: `Visit ${periodLabel}`, num: periodVisits.length,
       sub: `${periodVisits.filter(v => v.status === "Done").length} selesai`,
-      color: "var(--brand)", view: "calendar" as ActiveView,
+      icon: "🚗", bg: "#CFFAFE", fg: "#0E7490", view: "calendar" as ActiveView,
     },
     {
       label: "Reschedule Pending", num: followups.length,
       sub: "butuh tindak lanjut",
-      color: followups.length > 0 ? "var(--danger)" : "#16a34a", view: "calendar" as ActiveView,
+      icon: "🔄", bg: followups.length > 0 ? "#FFE4E6" : "#DCFCE7", fg: followups.length > 0 ? "#BE123C" : "#15803D",
+      view: "calendar" as ActiveView,
     },
     {
       label: `Aktivitas ${periodLabel}`, num: periodActivities.length,
       sub: "log aktivitas",
-      color: "var(--brand)", view: "clients" as ActiveView,
+      icon: "💬", bg: "#FCE7F3", fg: "#BE185D", view: "clients" as ActiveView,
     },
     {
       label: "Task Open", num: openTasks.length,
       sub: overdueTasks.length > 0 ? `⚠ ${overdueTasks.length} overdue` : "semua on track",
-      color: overdueTasks.length > 0 ? "var(--danger)" : "#16a34a", view: "tasks" as ActiveView,
-      warn: overdueTasks.length > 0,
+      icon: "✅", bg: overdueTasks.length > 0 ? "#FFEDD5" : "#DCFCE7", fg: overdueTasks.length > 0 ? "#C2410C" : "#15803D",
+      view: "tasks" as ActiveView,
     },
   ];
 
@@ -245,35 +263,48 @@ export default function Dashboard({ data, onNavigate }: Props) {
       {/* ── KPI Strip ── */}
       <div className="kpis">
         {kpis.map((k, i) => (
-          <div key={i} className={`kpi${(k as {warn?: boolean}).warn ? " kpi-warn" : ""}`}
-            style={{ cursor: "pointer" }}
+          <div key={i} className="kpi-v2"
+            style={{
+              cursor: "pointer", background: "var(--card)", border: "1px solid var(--line)",
+              borderRadius: 14, padding: "16px 18px", boxShadow: "var(--shadow)",
+            }}
             onClick={() => onNavigate(k.view)}
             title={`Buka ${k.view}`}
           >
-            <div className="kpi-label">{k.label}</div>
-            <div className="kpi-num" style={{ color: k.color }}>{k.num}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <div style={{
+                width: 34, height: 34, borderRadius: 10, background: k.bg,
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0,
+              }}>{k.icon}</div>
+              <div className="kpi-label" style={{ margin: 0 }}>{k.label}</div>
+            </div>
+            <div className="kpi-num" style={{ color: k.fg }}>{k.num}</div>
             <div className="kpi-sub">{k.sub}</div>
           </div>
         ))}
       </div>
 
       {/* ── Pipeline Funnel ── */}
-      <div className="panel" style={{ marginBottom: 16, cursor: "pointer" }} onClick={() => onNavigate("pipeline")}>
-        <SectionHeader title="Pipeline per Stage" action="Buka Pipeline" onClick={() => onNavigate("pipeline")} />
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="panel" style={{ marginBottom: 16, cursor: "pointer", ...panelStyle(PANEL_ACCENTS.pipeline) }} onClick={() => onNavigate("pipeline")}>
+        <SectionHeader title="Pipeline per Stage" icon="📊" accent={PANEL_ACCENTS.pipeline} action="Buka Pipeline" onClick={() => onNavigate("pipeline")} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {stageData.map(s => (
             <div key={s.stage} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 90, fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", flexShrink: 0 }}>{s.stage}</div>
-              <div style={{ flex: 1, background: "var(--line)", borderRadius: 4, height: 20, overflow: "hidden" }}>
+              <div style={{
+                width: 96, fontSize: 11, fontWeight: 700, flexShrink: 0,
+                color: STAGE_COLOR[s.stage] || "var(--brand)", background: `${STAGE_COLOR[s.stage] || "var(--brand)"}1A`,
+                borderRadius: 999, padding: "3px 10px", textAlign: "center",
+              }}>{s.stage}</div>
+              <div style={{ flex: 1, background: "var(--line)", borderRadius: 999, height: 20, overflow: "hidden" }}>
                 <div style={{
                   width: `${(s.value / maxStageValue) * 100}%`,
                   background: STAGE_COLOR[s.stage] || "var(--brand)",
-                  height: "100%", borderRadius: 4,
+                  height: "100%", borderRadius: 999,
                   transition: "width .4s ease",
                   minWidth: s.count > 0 ? 4 : 0,
                 }} />
               </div>
-              <div style={{ width: 110, fontSize: 12, textAlign: "right", color: "var(--ink)", fontWeight: 600, flexShrink: 0 }}>{fmtIDR(s.value)}</div>
+              <div style={{ width: 110, fontSize: 12, textAlign: "right", color: "var(--ink)", fontWeight: 700, flexShrink: 0 }}>{fmtIDR(s.value)}</div>
               <div style={{ width: 50, fontSize: 12, textAlign: "right", color: "var(--ink-soft)", flexShrink: 0 }}>{s.count} deal</div>
             </div>
           ))}
@@ -282,8 +313,8 @@ export default function Dashboard({ data, onNavigate }: Props) {
 
       {/* ── Row 2: Visit + Follow-up ── */}
       <div className="grid2">
-        <div className="panel">
-          <SectionHeader title={`Visit Mendatang (${upcoming.length})`} action="Buka Calendar" onClick={() => onNavigate("calendar")} />
+        <div className="panel" style={panelStyle(PANEL_ACCENTS.visit)}>
+          <SectionHeader title={`Visit Mendatang (${upcoming.length})`} icon="🚗" accent={PANEL_ACCENTS.visit} action="Buka Calendar" onClick={() => onNavigate("calendar")} />
           {upcoming.length ? upcoming.map(v => (
             <div key={v.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => onNavigate("calendar")}>
               <div className="ti-date">{fmtDate(v.date)} · <b>{clientName(v.client_id)}</b></div>
@@ -293,8 +324,8 @@ export default function Dashboard({ data, onNavigate }: Props) {
           )) : <div className="empty-state">Belum ada visit terjadwal.</div>}
         </div>
 
-        <div className="panel">
-          <SectionHeader title={`Reschedule Pending (${followups.length})`} action="Buka Calendar" onClick={() => onNavigate("calendar")} />
+        <div className="panel" style={panelStyle(followups.length > 0 ? PANEL_ACCENTS.reschedule : PANEL_ACCENTS.reschedule_ok)}>
+          <SectionHeader title={`Reschedule Pending (${followups.length})`} icon="🔄" accent={followups.length > 0 ? PANEL_ACCENTS.reschedule : PANEL_ACCENTS.reschedule_ok} action="Buka Calendar" onClick={() => onNavigate("calendar")} />
           {followups.length ? followups.map(v => (
             <div key={v.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => onNavigate("calendar")}>
               <div className="ti-date"><b>{clientName(v.client_id)}</b> · {fmtDate(v.date)}</div>
@@ -307,8 +338,8 @@ export default function Dashboard({ data, onNavigate }: Props) {
 
       {/* ── Row 3: Deal Closing + Tasks ── */}
       <div className="grid2">
-        <div className="panel">
-          <SectionHeader title={`Deal Closing 30 Hari (${closingSoon.length})`} action="Buka Pipeline" onClick={() => onNavigate("pipeline")} />
+        <div className="panel" style={panelStyle(PANEL_ACCENTS.deal)}>
+          <SectionHeader title={`Deal Closing 30 Hari (${closingSoon.length})`} icon="📅" accent={PANEL_ACCENTS.deal} action="Buka Pipeline" onClick={() => onNavigate("pipeline")} />
           {closingSoon.length ? closingSoon.map(d => {
             const daysLeft = Math.ceil((new Date(d.close_date).getTime() - new Date(today).getTime()) / 86400000);
             return (
@@ -332,9 +363,10 @@ export default function Dashboard({ data, onNavigate }: Props) {
           }) : <div className="empty-state">Tidak ada deal jatuh tempo 30 hari ke depan.</div>}
         </div>
 
-        <div className="panel">
+        <div className="panel" style={panelStyle(overdueTasks.length > 0 ? PANEL_ACCENTS.task : PANEL_ACCENTS.task_ok)}>
           <SectionHeader
             title={`Task Open (${upcomingTasks.length})${overdueTasks.length > 0 ? ` · ⚠ ${overdueTasks.length} overdue` : ""}`}
+            icon="✅" accent={overdueTasks.length > 0 ? PANEL_ACCENTS.task : PANEL_ACCENTS.task_ok}
             action="Buka Tasks" onClick={() => onNavigate("tasks")}
           />
           {!upcomingTasks.length ? (
@@ -357,27 +389,30 @@ export default function Dashboard({ data, onNavigate }: Props) {
 
       {/* ── Row 4: Top Clients + Project Aktif ── */}
       <div className="grid2">
-        <div className="panel">
-          <SectionHeader title="Top Client (Pipeline Value)" action="Buka Client" onClick={() => onNavigate("clients")} />
-          {topClients.length ? topClients.map((c, i) => (
-            <div key={c.id} style={{
-              display: "flex", alignItems: "center", gap: 12, padding: "8px 0",
-              borderBottom: i < topClients.length - 1 ? "1px solid var(--line)" : "none",
-              cursor: "pointer",
-            }} onClick={() => onNavigate("clients")}>
-              <div style={{
-                width: 28, height: 28, borderRadius: "50%", background: "var(--brand)",
-                color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 12, fontWeight: 800, flexShrink: 0,
-              }}>{i + 1}</div>
-              <div style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{c.name}</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--brand)" }}>{fmtIDR(c.value)}</div>
-            </div>
-          )) : <div className="empty-state">Belum ada deal pipeline.</div>}
+        <div className="panel" style={panelStyle(PANEL_ACCENTS.client)}>
+          <SectionHeader title="Top Client (Pipeline Value)" icon="⭐" accent={PANEL_ACCENTS.client} action="Buka Client" onClick={() => onNavigate("clients")} />
+          {topClients.length ? topClients.map((c, i) => {
+            const rankColors = ["#D97706", "#94A3B8", "#B45309", "#7C3AED", "#7C3AED"];
+            return (
+              <div key={c.id} style={{
+                display: "flex", alignItems: "center", gap: 12, padding: "8px 0",
+                borderBottom: i < topClients.length - 1 ? "1px solid var(--line)" : "none",
+                cursor: "pointer",
+              }} onClick={() => onNavigate("clients")}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: "50%", background: rankColors[i] || "var(--brand)",
+                  color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 12, fontWeight: 800, flexShrink: 0,
+                }}>{i + 1}</div>
+                <div style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{c.name}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: PANEL_ACCENTS.client }}>{fmtIDR(c.value)}</div>
+              </div>
+            );
+          }) : <div className="empty-state">Belum ada deal pipeline.</div>}
         </div>
 
-        <div className="panel">
-          <SectionHeader title={`Project Aktif (${activeProjects.length})`} action="Buka Project" onClick={() => onNavigate("projects")} />
+        <div className="panel" style={panelStyle(PANEL_ACCENTS.project)}>
+          <SectionHeader title={`Project Aktif (${activeProjects.length})`} icon="🏗️" accent={PANEL_ACCENTS.project} action="Buka Project" onClick={() => onNavigate("projects")} />
           {activeProjects.length ? activeProjects.slice(0, 5).map(p => (
             <div key={p.id} style={{
               display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 0",
@@ -390,9 +425,9 @@ export default function Dashboard({ data, onNavigate }: Props) {
                 </div>
               </div>
               <span style={{
-                fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4,
-                background: p.status === "In Progress" ? "#dbeafe" : "#fef9c3",
-                color: p.status === "In Progress" ? "#1d4ed8" : "#854d0e",
+                fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999,
+                background: p.status === "In Progress" ? "#DBEAFE" : "#FEF9C3",
+                color: p.status === "In Progress" ? "#1D4ED8" : "#854D0E",
                 flexShrink: 0,
               }}>{p.status}</span>
             </div>
@@ -402,29 +437,37 @@ export default function Dashboard({ data, onNavigate }: Props) {
 
       {/* ── Row 5: Team Activity ── */}
       {salesList.length > 0 && (
-        <div className="panel">
-          <SectionHeader title={`Aktivitas Tim — ${periodLabel}`} />
+        <div className="panel" style={panelStyle(PANEL_ACCENTS.team)}>
+          <SectionHeader title={`Aktivitas Tim — ${periodLabel}`} icon="👥" accent={PANEL_ACCENTS.team} />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 12 }}>
-            {(salesFilter === "all" ? salesList : [salesFilter]).map(name => {
+            {(salesFilter === "all" ? salesList : [salesFilter]).map((name, i) => {
               const stat = teamActivity[name] || { visits: 0, tasks: 0, activities: 0 };
+              const avatarColors = ["#2563EB", "#7C3AED", "#DB2777", "#0F766E", "#D97706", "#0891B2"];
+              const avatarColor = avatarColors[i % avatarColors.length];
               return (
                 <div key={name} style={{
                   background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 10,
                   padding: "12px 14px",
                 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: "var(--ink)" }}>{name}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                    <div style={{
+                      width: 24, height: 24, borderRadius: "50%", background: `${avatarColor}22`, color: avatarColor,
+                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, flexShrink: 0,
+                    }}>{name[0]}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{name}</div>
+                  </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                     <div style={{ fontSize: 12, color: "var(--ink-soft)", display: "flex", justifyContent: "space-between" }}>
                       <span>Visit</span>
-                      <span style={{ fontWeight: 700, color: "var(--brand)" }}>{stat.visits}</span>
+                      <span style={{ fontWeight: 700, color: PANEL_ACCENTS.visit }}>{stat.visits}</span>
                     </div>
                     <div style={{ fontSize: 12, color: "var(--ink-soft)", display: "flex", justifyContent: "space-between" }}>
                       <span>Aktivitas</span>
-                      <span style={{ fontWeight: 700, color: "var(--brand)" }}>{stat.activities}</span>
+                      <span style={{ fontWeight: 700, color: PANEL_ACCENTS.team }}>{stat.activities}</span>
                     </div>
                     <div style={{ fontSize: 12, color: "var(--ink-soft)", display: "flex", justifyContent: "space-between" }}>
                       <span>Task Open</span>
-                      <span style={{ fontWeight: 700, color: stat.tasks > 0 ? "var(--gold)" : "#16a34a" }}>{stat.tasks}</span>
+                      <span style={{ fontWeight: 700, color: stat.tasks > 0 ? "#D97706" : "#16a34a" }}>{stat.tasks}</span>
                     </div>
                   </div>
                 </div>
