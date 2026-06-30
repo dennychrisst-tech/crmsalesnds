@@ -10,6 +10,7 @@ import Projects from "./Projects";
 import TasksView from "./TasksView";
 import ProductsView from "./ProductsView";
 import GlobalSearch from "./GlobalSearch";
+import SummaryView from "./SummaryView";
 
 const TABS: { id: ActiveView; label: string }[] = [
   { id: "dashboard", label: "Dashboard" },
@@ -19,6 +20,7 @@ const TABS: { id: ActiveView; label: string }[] = [
   { id: "projects", label: "Project" },
   { id: "tasks", label: "Tasks" },
   { id: "catalog", label: "Catalog" },
+  { id: "summary", label: "Summary" },
 ];
 
 export default function CRMApp() {
@@ -99,6 +101,7 @@ export default function CRMApp() {
           {view === "catalog" && (
             <ProductsView data={data} onSaveProduct={upsertProduct} onDeleteProduct={deleteProduct} />
           )}
+          {view === "summary" && <SummaryView data={data} />}
         </>
       )}
     </div>
