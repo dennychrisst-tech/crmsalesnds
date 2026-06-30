@@ -211,7 +211,7 @@ export default function Clients({ data, currentUserName, onSaveClient, onDeleteC
         );
       }) : <div className="panel"><div className="empty-state">Belum ada client.</div></div>}
 
-      <ClientModal open={clientModalOpen} client={editClient}
+      <ClientModal open={clientModalOpen} client={editClient} team={team}
         onSave={onSaveClient} onDelete={onDeleteClient} onClose={() => setClientModalOpen(false)} />
       <ContactModal open={contactModalOpen} contact={editContact} clientId={contactClientId}
         onSave={onSaveContact} onDelete={onDeleteContact} onClose={() => setContactModalOpen(false)} />

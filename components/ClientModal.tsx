@@ -2,62 +2,55 @@
 import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
-import { Client, PIC } from "@/types";
+import { Client } from "@/types";
 import { SECTORS, COMPANY_SIZES } from "@/lib/utils";
 
 interface Props {
   open: boolean;
   client: Client | null;
+  team: string[];
   onSave: (c: Client) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onClose: () => void;
 }
 
-const emptyPIC = (): PIC => ({ name: "", phone: "" });
-
 const emptyClient = (): Client => ({
-  id: uuid(), name: "", sector: "Banking", pic: [emptyPIC()], contact: "",
+  id: uuid(), name: "", sector: "Banking", pic: [], contact: "",
   status: "Prospect", notes: "", address: "", website: "", company_size: "",
 });
 
-function normalizePic(raw: unknown): PIC[] {
-  if (!raw || !Array.isArray(raw)) return [emptyPIC()];
-  return (raw as unknown[]).map(p => {
-    if (typeof p === "string") return { name: p, phone: "" };
-    if (p && typeof p === "object" && "name" in p) return p as PIC;
-    return emptyPIC();
-  });
+function getAssigned(client: Client | null): string {
+  if (!client) return "";
+  if (Array.isArray(client.pic) && client.pic.length > 0) {
+    const first = client.pic[0];
+    return typeof first === "string" ? first : (first as { name: string }).name || "";
+  }
+  return "";
 }
 
-export default function ClientModal({ open, client, onSave, onDelete, onClose }: Props) {
+export default function ClientModal({ open, client, team, onSave, onDelete, onClose }: Props) {
   const isEdit = !!client;
   const [form, setForm] = useState<Client>(emptyClient());
+  const [assigned, setAssigned] = useState("");
   const [tab, setTab] = useState<"info" | "profile">("info");
 
   useEffect(() => {
     if (client) {
-      setForm({ ...client, pic: normalizePic(client.pic) });
+      setForm(client);
+      setAssigned(getAssigned(client));
     } else {
       setForm(emptyClient());
+      setAssigned("");
     }
     setTab("info");
   }, [client, open]);
 
   const set = <K extends keyof Client>(k: K, v: Client[K]) => setForm(f => ({ ...f, [k]: v }));
 
-  function setPicField(index: number, field: keyof PIC, value: string) {
-    setForm(f => {
-      const pics = f.pic.map((p, i) => i === index ? { ...p, [field]: value } : p);
-      return { ...f, pic: pics };
-    });
-  }
-  function addPic() { setForm(f => ({ ...f, pic: [...f.pic, emptyPIC()] })); }
-  function removePic(index: number) { setForm(f => ({ ...f, pic: f.pic.filter((_, i) => i !== index) })); }
-
   async function handleSave() {
     if (!form.name.trim()) { alert("Nama client wajib diisi."); return; }
-    const cleaned = { ...form, pic: form.pic.filter(p => p.name.trim()) };
-    await onSave(cleaned);
+    const pic = assigned ? [{ name: assigned, phone: "" }] : [];
+    await onSave({ ...form, pic });
     onClose();
   }
 
@@ -92,27 +85,11 @@ export default function ClientModal({ open, client, onSave, onDelete, onClose }:
             </Field>
           </div>
 
-          <Field label="Sales yang Handle">
-            <div className="flex flex-col gap-2">
-              {form.pic.map((p, i) => (
-                <div key={i} className="flex gap-2 items-center">
-                  <input
-                    className={inputCls}
-                    value={p.name}
-                    onChange={e => setPicField(i, "name", e.target.value)}
-                    placeholder={`Nama Sales ${i + 1}`}
-                  />
-                  {form.pic.length > 1 && (
-                    <button type="button" onClick={() => removePic(i)}
-                      className="text-red-500 hover:text-red-700 text-lg leading-none px-1 flex-shrink-0"
-                      title="Hapus">×</button>
-                  )}
-                </div>
-              ))}
-              <button type="button" onClick={addPic} className="text-sm text-[#1a5c4f] hover:underline self-start">
-                + Tambah Sales
-              </button>
-            </div>
+          <Field label="Assign">
+            <select className={selectCls} value={assigned} onChange={e => setAssigned(e.target.value)}>
+              <option value="">— Pilih Sales —</option>
+              {team.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
           </Field>
 
           <Field label="Catatan">
