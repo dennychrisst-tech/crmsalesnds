@@ -83,7 +83,11 @@ export default function ClientModal({ open, client, team, onSave, onDelete, onCl
               </select>
             </Field>
             <Field label="Status">
-              <input className={inputCls} value={form.status} onChange={e => set("status", e.target.value)} placeholder="Prospect / Active / Inactive" />
+              <select className={selectCls} value={form.status} onChange={e => set("status", e.target.value)}>
+                <option value="Prospect">Prospect</option>
+                <option value="Existing Active">Existing Active</option>
+                <option value="Existing Inactive">Existing Inactive</option>
+              </select>
             </Field>
           </div>
 
