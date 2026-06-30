@@ -2,6 +2,19 @@ export const STAGES = ["Lead", "Discovery", "Proposal", "Negotiation", "Won"] as
 export const STAGE_PROB: Record<string, number> = {
   Lead: 10, Discovery: 30, Proposal: 60, Negotiation: 80, Won: 100, Lost: 0,
 };
+export const STAGE_COLOR: Record<string, string> = {
+  Lead: "#94A3B8", Discovery: "#378ADD", Proposal: "#D97706",
+  Negotiation: "#DB2777", Won: "#16A34A", Lost: "#DC2626",
+};
+export const TASK_STATUS_COLOR: Record<string, { bg: string; fg: string }> = {
+  Open: { bg: "#FEF3C7", fg: "#B45309" },
+  Done: { bg: "#DCFCE7", fg: "#15803D" },
+};
+export const CLIENT_STATUS_COLOR: Record<string, { bg: string; fg: string }> = {
+  "Prospect": { bg: "#DBEAFE", fg: "#1D4ED8" },
+  "Existing Active": { bg: "#DCFCE7", fg: "#15803D" },
+  "Existing Inactive": { bg: "#F1EFE8", fg: "#5C5440" },
+};
 export const VISIT_STATUS = ["Planned", "Done", "Cancel", "Reschedule"] as const;
 export const PROJ_STATUS = ["Initiation", "In Progress", "On Hold", "Delivered", "Closed"] as const;
 export const SECTORS = ["Banking", "Multifinance", "Insurance", "Health Care", "Industrial", "Technology", "Telekomunikasi", "Infrastruktur", "Transportasi", "Energy", "Lainnya"] as const;

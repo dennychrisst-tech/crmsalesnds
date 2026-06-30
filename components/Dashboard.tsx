@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
 import { ActiveView } from "@/types";
-import { STAGES, STAGE_PROB, fmtIDR, fmtDate, todayStr } from "@/lib/utils";
+import { STAGES, STAGE_PROB, STAGE_COLOR, fmtIDR, fmtDate, todayStr } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 
 interface Props {
@@ -199,11 +199,6 @@ export default function Dashboard({ data, onNavigate }: Props) {
   });
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
-
-  const STAGE_COLOR: Record<string, string> = {
-    Lead: "#94a3b8", Discovery: "#60a5fa", Proposal: "#f59e0b",
-    Negotiation: "#f97316", Won: "#16a34a", Lost: "#ef4444",
-  };
 
   const kpis = [
     {

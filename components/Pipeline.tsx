@@ -4,7 +4,7 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, u
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { Deal, CRMDocument, Attachment, Activity } from "@/types";
-import { STAGES, STAGE_PROB, fmtIDR, todayStr } from "@/lib/utils";
+import { STAGES, STAGE_PROB, STAGE_COLOR, fmtIDR, todayStr } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 
 function agingDays(deal: Deal): number {
@@ -41,8 +41,9 @@ function DealCard({ deal, clientName, onClick }: { deal: Deal; clientName: strin
   const style = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
   const days = agingDays(deal);
   const isClosed = deal.stage === "Won" || deal.stage === "Lost";
+  const stageColor = STAGE_COLOR[deal.stage] || "var(--brand)";
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes} style={style} className="deal" onClick={onClick}>
+    <div ref={setNodeRef} {...listeners} {...attributes} style={{ ...style, borderLeft: `3px solid ${stageColor}` }} className="deal" onClick={onClick}>
       <div className="deal-top">
         <div className="dn">{deal.name}</div>
         {!isClosed && <AgingBadge days={days} />}
@@ -57,9 +58,10 @@ function DealCard({ deal, clientName, onClick }: { deal: Deal; clientName: strin
 function Column({ stage, deals, clientName, onDealClick }: { stage: string; deals: Deal[]; clientName: (id: string) => string; onDealClick: (d: Deal) => void }) {
   const { isOver, setNodeRef } = useDroppable({ id: stage });
   const val = deals.reduce((s, d) => s + d.value, 0);
+  const stageColor = STAGE_COLOR[stage] || "var(--brand)";
   return (
-    <div ref={setNodeRef} className={`col${isOver ? " over" : ""}`} data-stage={stage}>
-      <h3>{stage}</h3>
+    <div ref={setNodeRef} className={`col${isOver ? " over" : ""}`} data-stage={stage} style={{ borderTop: `3px solid ${stageColor}` }}>
+      <h3 style={{ color: stageColor }}>{stage}</h3>
       <div className="colval">{deals.length} · {fmtIDR(val)}</div>
       {deals.map(d => <DealCard key={d.id} deal={d} clientName={clientName(d.client_id)} onClick={() => onDealClick(d)} />)}
     </div>

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { Task, Client, Deal } from "@/types";
-import { fmtDate, todayStr } from "@/lib/utils";
+import { fmtDate, todayStr, TASK_STATUS_COLOR } from "@/lib/utils";
 import TaskModal from "./TaskModal";
 
 interface Props {
@@ -14,8 +14,13 @@ interface Props {
 }
 
 function statusBadge(status: string) {
-  const cls = status === "Done" ? "badge badge-won" : "badge badge-lead";
-  return <span className={cls}>{status}</span>;
+  const c = TASK_STATUS_COLOR[status] || { bg: "#EAE6DA", fg: "#5C5440" };
+  return (
+    <span style={{
+      display: "inline-block", padding: "2px 10px", borderRadius: 999,
+      fontSize: 11, fontWeight: 700, background: c.bg, color: c.fg,
+    }}>{status}</span>
+  );
 }
 
 function urgencyClass(dueDate: string, status: string): string {

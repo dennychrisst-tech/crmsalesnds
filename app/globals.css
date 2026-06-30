@@ -389,8 +389,12 @@ tr.task-soon td { background: #fffbeb; }
   .panel > table, .panel table { min-width: 540px; }
   th, td { padding: 7px 8px; font-size: 12px; }
 
-  /* Pipeline board — single column on small phones */
-  .board { grid-template-columns: 1fr; }
+  /* Pipeline board — horizontal scroll-snap kanban on small phones */
+  .board {
+    display: flex; grid-template-columns: unset; overflow-x: auto; scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; margin: 0 -10px; padding: 0 10px 8px; gap: 10px;
+  }
+  .board .col { flex: 0 0 82%; scroll-snap-align: start; }
 
   /* Modal tabs / member grid — allow scroll/wrap without overflow */
   .modal-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
@@ -404,4 +408,7 @@ tr.task-soon td { background: #fffbeb; }
   /* Client card header */
   .ccard-head { flex-wrap: wrap; }
   .cright { margin-left: 0; }
+  .contact-grid { grid-template-columns: 1fr; gap: 6px; }
+  .vt-row { flex-wrap: wrap; font-size: 12px; padding: 6px 8px; }
+  .pic-row { flex-wrap: wrap; }
 }

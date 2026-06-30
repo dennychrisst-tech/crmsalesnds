@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { Client, Contact, Visit, PIC, Activity, ActiveView } from "@/types";
-import { fmtDate, isoWeekLabel, todayStr } from "@/lib/utils";
+import { fmtDate, isoWeekLabel, CLIENT_STATUS_COLOR } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import ClientModal from "./ClientModal";
 import ContactModal from "./ContactModal";
@@ -164,7 +164,14 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
                 {c.notes && <div className="cmeta">{c.notes}</div>}
               </div>
               <div className="cright">
-                <span className="chip">{c.status || "—"}</span>
+                {(() => {
+                  const sc = c.status ? CLIENT_STATUS_COLOR[c.status] : null;
+                  return (
+                    <span className="chip" style={sc ? { background: sc.bg, color: sc.fg } : undefined}>
+                      {c.status || "—"}
+                    </span>
+                  );
+                })()}
                 <span className="chip">{openDealsCount(c.id)} deal aktif</span>
                 {!isViewer && <button className="btn btn-ghost btn-sm" onClick={() => { setEditClient(c); setClientModalOpen(true); }}>Edit</button>}
               </div>
