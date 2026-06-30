@@ -61,12 +61,14 @@ model Contact {
 model Visit {
   id            String   @id @default(uuid()) @db.Uuid
   client_id     String   @db.Uuid
+  project_id    String?  @db.Uuid
   date          DateTime @db.Date
   purpose       String   @default("")
   approach      String   @default("")
   status        String   @default("Planned")
   pic           String   @default("")
   pic_client    String   @default("")
+  jabatan       String   @default("")
   summary       String   @default("")
   created_by_id String?  @db.Uuid
   created_at    DateTime @default(now())

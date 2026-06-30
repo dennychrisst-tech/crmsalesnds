@@ -21,7 +21,7 @@ interface Props {
 }
 
 export default function CalendarView({ data, currentUserName, isViewer, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask }: Props) {
-  const { clients, visits, events, profiles } = data;
+  const { clients, contacts, visits, events, projects, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
 
   async function handleSaveVisit(v: Visit) {
@@ -167,7 +167,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
         </table>
       </div>
 
-      <VisitModal open={visitModal} visit={editVisit} preClientId={preClientId} preDate={preDate} clients={clients} team={team} defaultPic={currentUserName}
+      <VisitModal open={visitModal} visit={editVisit} preClientId={preClientId} preDate={preDate} clients={clients} contacts={contacts} projects={projects} team={team} defaultPic={currentUserName}
         onSave={handleSaveVisit} onDelete={onDeleteVisit} onClose={() => setVisitModal(false)} />
       <EventModal open={eventModal} event={editEvent} preDate={preDate} team={team} defaultMember={currentUserName}
         onSave={onSaveEvent} onDelete={onDeleteEvent} onClose={() => setEventModal(false)} />
