@@ -18,19 +18,38 @@ function emptyEvent(date?: string): CalendarEvent {
   return { id: uuid(), title: "", date: date || todayStr(), type: "Meeting Online", description: "", created_by: "" };
 }
 
+function parseMembers(s: string): string[] {
+  return s.split(",").map(x => x.trim()).filter(Boolean);
+}
+
+function joinMembers(arr: string[]): string {
+  return arr.join(", ");
+}
+
 export default function EventModal({ open, event, preDate, onSave, onDelete, onClose }: Props) {
   const isEdit = !!event;
   const [form, setForm] = useState<CalendarEvent>(emptyEvent(preDate));
+  const [selected, setSelected] = useState<string[]>([]);
 
   useEffect(() => {
-    setForm(event || emptyEvent(preDate));
+    const base = event || emptyEvent(preDate);
+    setForm(base);
+    setSelected(parseMembers(base.created_by));
   }, [event, preDate, open]);
 
   const set = (k: keyof CalendarEvent, v: string) => setForm(f => ({ ...f, [k]: v }));
 
+  function toggleMember(name: string) {
+    setSelected(prev => {
+      const next = prev.includes(name) ? prev.filter(x => x !== name) : [...prev, name];
+      setForm(f => ({ ...f, created_by: joinMembers(next) }));
+      return next;
+    });
+  }
+
   async function handleSave() {
     if (!form.title.trim()) { alert("Judul event wajib diisi."); return; }
-    await onSave(form);
+    await onSave({ ...form, created_by: joinMembers(selected) });
     onClose();
   }
 
@@ -55,12 +74,32 @@ export default function EventModal({ open, event, preDate, onSave, onDelete, onC
           <input type="date" className={inputCls} value={form.date} onChange={e => set("date", e.target.value)} />
         </Field>
       </div>
-      <Field label="Peserta / PIC">
-        <select className={selectCls} value={form.created_by} onChange={e => set("created_by", e.target.value)}>
-          <option value="">— Pilih —</option>
-          {TEAM.map(t => <option key={t}>{t}</option>)}
-        </select>
+
+      <Field label="Peserta (Tim Sales)">
+        <div className="member-grid">
+          {(TEAM as readonly string[]).map(name => {
+            const active = selected.includes(name);
+            return (
+              <button
+                key={name}
+                type="button"
+                className={`member-chip${active ? " member-chip-active" : ""}`}
+                onClick={() => toggleMember(name)}
+              >
+                <span className="member-avatar">{name[0]}</span>
+                {name}
+                {active && <span className="member-check">✓</span>}
+              </button>
+            );
+          })}
+        </div>
+        {selected.length > 0 && (
+          <div className="member-summary">
+            Dipilih: <strong>{joinMembers(selected)}</strong>
+          </div>
+        )}
       </Field>
+
       <Field label="Keterangan">
         <textarea className={textareaCls} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Detail lokasi, link meeting, agenda, dll." />
       </Field>
