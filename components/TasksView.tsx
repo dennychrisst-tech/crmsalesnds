@@ -39,7 +39,7 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
   const clientName = (id: string | null) => id ? (clients.find(c => c.id === id)?.name || "—") : "—";
   const dealName = (id: string | null) => id ? (deals.find(d => d.id === id)?.name || "—") : "—";
 
-  const assignees = ["All", ...Array.from(new Set(tasks.map(t => t.assigned_to).filter(Boolean)))];
+  const assignees = ["All", ...team];
 
   const filtered = tasks
     .filter(t => filterStatus === "All" || t.status === filterStatus)
@@ -63,7 +63,7 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
           <option value="Done">Done</option>
         </select>
         <select className="search" style={{ flex: "none", width: "auto" }} value={filterAssignee} onChange={e => setFilterAssignee(e.target.value)}>
-          {assignees.map(a => <option key={a} value={a}>{a === "All" ? "Semua PIC" : a}</option>)}
+          {assignees.map(a => <option key={a} value={a}>{a === "All" ? "Semua Sales" : a}</option>)}
         </select>
         {!isViewer && <button className="btn" onClick={openNew}>+ Task Baru</button>}
       </div>
