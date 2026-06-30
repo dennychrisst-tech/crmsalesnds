@@ -111,6 +111,7 @@ model Project {
   value         BigInt    @default(0)
   golive        DateTime? @db.Date
   notes         String    @default("")
+  partner       String?
   created_by_id String?   @db.Uuid
   created_at    DateTime  @default(now())
 
