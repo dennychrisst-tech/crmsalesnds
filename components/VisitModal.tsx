@@ -9,6 +9,7 @@ interface Props {
   open: boolean;
   visit: Visit | null;
   preClientId?: string;
+  preDate?: string;
   clients: Client[];
   team: string[];
   defaultPic?: string;
@@ -17,9 +18,9 @@ interface Props {
   onClose: () => void;
 }
 
-function emptyVisit(clientId: string, defaultPic = ""): Visit {
+function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit {
   return {
-    id: uuid(), client_id: clientId, date: todayStr(),
+    id: uuid(), client_id: clientId, date,
     purpose: "", approach: "", status: "Planned",
     pic: defaultPic, pic_client: "", summary: "",
   };
@@ -31,7 +32,7 @@ function getPics(clients: Client[], clientId: string): PIC[] {
   return (Array.isArray(client.pic) ? client.pic : []).filter((p: PIC) => p.name?.trim());
 }
 
-export default function VisitModal({ open, visit, preClientId, clients, team, defaultPic = "", onSave, onDelete, onClose }: Props) {
+export default function VisitModal({ open, visit, preClientId, preDate, clients, team, defaultPic = "", onSave, onDelete, onClose }: Props) {
   const isEdit = !!visit;
   const [form, setForm] = useState<Visit>(emptyVisit(clients[0]?.id || "", defaultPic));
 
@@ -39,9 +40,9 @@ export default function VisitModal({ open, visit, preClientId, clients, team, de
     if (visit) {
       setForm(visit);
     } else {
-      setForm(emptyVisit(preClientId || clients[0]?.id || "", defaultPic));
+      setForm(emptyVisit(preClientId || clients[0]?.id || "", defaultPic, preDate || todayStr()));
     }
-  }, [visit, preClientId, clients, open, defaultPic]);
+  }, [visit, preClientId, preDate, clients, open, defaultPic]);
 
   const set = (k: keyof Visit, v: string) => setForm(f => ({ ...f, [k]: v }));
 
