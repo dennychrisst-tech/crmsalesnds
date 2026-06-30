@@ -66,7 +66,7 @@ export default function CalendarView({ data, onSaveVisit, onDeleteVisit }: Props
       <div className="panel">
         <h2>Semua visit <span className="count">({sorted.length})</span></h2>
         <table>
-          <thead><tr><th>Tanggal</th><th>Client</th><th>Tujuan / Approach</th><th>Status</th><th>PIC</th><th></th></tr></thead>
+          <thead><tr><th>Tanggal</th><th>Client</th><th>Tujuan / Approach</th><th>Status</th><th>PIC Client</th><th>PIC NDS</th><th></th></tr></thead>
           <tbody>
             {sorted.length ? sorted.map(v => (
               <tr key={v.id}>
@@ -74,10 +74,11 @@ export default function CalendarView({ data, onSaveVisit, onDeleteVisit }: Props
                 <td>{clientName(v.client_id)}</td>
                 <td>{v.purpose}<br /><span className="muted" style={{ fontSize: 11 }}>{v.approach}</span></td>
                 <td><VisitBadge status={v.status} /></td>
-                <td>{v.pic || "-"}</td>
+                <td style={{ fontWeight: 600 }}>{v.pic_client || <span className="muted">—</span>}</td>
+                <td>{v.pic || <span className="muted">—</span>}</td>
                 <td><button className="btn btn-ghost btn-sm" onClick={() => openEdit(v)}>Edit</button></td>
               </tr>
-            )) : <tr><td colSpan={6} className="empty-state">Belum ada visit.</td></tr>}
+            )) : <tr><td colSpan={7} className="empty-state">Belum ada visit.</td></tr>}
           </tbody>
         </table>
       </div>

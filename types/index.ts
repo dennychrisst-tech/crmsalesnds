@@ -42,6 +42,7 @@ export interface Visit {
   approach: string;
   status: VisitStatus;
   pic: string;
+  pic_client: string;
   summary: string;
   created_at?: string;
 }
