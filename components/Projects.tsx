@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { AppData } from "@/hooks/useData";
-import { Project } from "@/types";
+import { Project, PIC } from "@/types";
 import { fmtIDR, fmtDate } from "@/lib/utils";
 import ProjectModal from "./ProjectModal";
 
@@ -13,18 +13,33 @@ interface Props {
 }
 
 export default function Projects({ data, isViewer, onSaveProject, onDeleteProject }: Props) {
-  const { clients, projects } = data;
+  const { clients, projects, profiles } = data;
+  const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
+  const [salesFilter, setSalesFilter] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
-  const filtered = projects.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = projects.filter(p => {
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || clientName(p.client_id).toLowerCase().includes(search.toLowerCase());
+    const client = clients.find(c => c.id === p.client_id);
+    const matchSales = salesFilter === "all" || (Array.isArray(client?.pic) ? client!.pic : []).some((s: PIC) => s.name === salesFilter);
+    return matchSearch && matchSales;
+  });
 
   return (
     <section>
       <div className="toolbar">
-        <input className="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari project…" />
+        <input className="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari project / client…" />
+        <select
+          value={salesFilter}
+          onChange={e => setSalesFilter(e.target.value)}
+          style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)", cursor: "pointer" }}
+        >
+          <option value="all">Semua Sales</option>
+          {team.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
         {!isViewer && <button className="btn" onClick={() => { setEditProject(null); setModalOpen(true); }}>+ Project Baru</button>}
       </div>
       <div className="panel">

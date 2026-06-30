@@ -49,6 +49,7 @@ export default function Clients({ data, currentUserName, isViewer, onSaveClient,
   const { clients, contacts, visits, deals, activities, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
+  const [salesFilter, setSalesFilter] = useState("all");
 
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [editClient, setEditClient] = useState<Client | null>(null);
@@ -61,7 +62,10 @@ export default function Clients({ data, currentUserName, isViewer, onSaveClient,
   const [editVisit, setEditVisit] = useState<Visit | null>(null);
   const [preClientId, setPreClientId] = useState<string | undefined>();
 
-  const filtered = clients.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = clients.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()) &&
+    (salesFilter === "all" || (Array.isArray(c.pic) ? c.pic : []).some((p: PIC) => p.name === salesFilter))
+  );
   const openDealsCount = (id: string) => deals.filter(d => d.client_id === id && d.stage !== "Won" && d.stage !== "Lost").length;
 
   function openContactNew(clientId: string) { setEditContact(null); setContactClientId(clientId); setContactModalOpen(true); }
@@ -71,6 +75,14 @@ export default function Clients({ data, currentUserName, isViewer, onSaveClient,
     <section>
       <div className="toolbar">
         <input className="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari client…" />
+        <select
+          value={salesFilter}
+          onChange={e => setSalesFilter(e.target.value)}
+          style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)", cursor: "pointer" }}
+        >
+          <option value="all">Semua Sales</option>
+          {team.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
         <button className="btn btn-ghost btn-sm" onClick={() => exportClients(clients, openDealsCount)}>↓ Export CSV</button>
         {!isViewer && <button className="btn" onClick={() => { setEditClient(null); setClientModalOpen(true); }}>+ Client Baru</button>}
       </div>
