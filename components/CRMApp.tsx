@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useData } from "@/hooks/useData";
+import { getSupabase } from "@/lib/supabase";
 import { ActiveView } from "@/types";
 import Dashboard from "./Dashboard";
 import CalendarView from "./CalendarView";
@@ -24,7 +26,13 @@ const TABS: { id: ActiveView; label: string }[] = [
 ];
 
 export default function CRMApp() {
+  const router = useRouter();
   const [view, setView] = useState<ActiveView>("dashboard");
+
+  async function handleLogout() {
+    await getSupabase().auth.signOut();
+    router.replace("/login");
+  }
   const {
     data, loading, syncStatus,
     upsertClient, deleteClient,
@@ -58,6 +66,7 @@ export default function CRMApp() {
         </div>
         {!loading && <GlobalSearch data={data} onNavigate={setView} />}
         <div className="sync-status">{syncStatus}</div>
+        <button onClick={handleLogout} className="btn-logout">Keluar</button>
       </header>
 
       <nav className="tabs">

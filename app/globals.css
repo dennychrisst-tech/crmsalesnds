@@ -40,6 +40,12 @@ header.top {
   align-self: center;
 }
 .sync-status { margin-left: auto; font-size: 12px; color: var(--ink-soft); }
+.btn-logout {
+  border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+  padding: 6px 14px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 600;
+  transition: all .15s; white-space: nowrap;
+}
+.btn-logout:hover { border-color: var(--danger); color: var(--danger); }
 
 /* Nav */
 nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 24px; }
