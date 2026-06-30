@@ -79,17 +79,8 @@ export default function LoginPage() {
         display: "flex", flexDirection: "column", justifyContent: "center",
         padding: "48px 44px",
       }} className="login-form-panel">
-        {/* Mobile-only logo */}
-        <div className="login-mobile-logo" style={{ display: "none", marginBottom: 28, textAlign: "center" }}>
-          <svg viewBox="0 0 210 72" height="36" aria-label="NDS" xmlns="http://www.w3.org/2000/svg" style={{ display: "inline-block" }}>
-            <text x="0" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#58595B">N</text>
-            <path d="M68 6 C90 6 104 20 104 36 C104 52 90 66 68 66" stroke="#00AFA0" strokeWidth="7" fill="none" strokeLinecap="round"/>
-            <text x="108" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#58595B">S</text>
-            <text x="148" y="28" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="#58595B">NUSANTARA</text>
-            <text x="148" y="42" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="#58595B"><tspan fill="#00AFA0">D</tspan>UTA</text>
-            <text x="148" y="56" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="#58595B">SOLUSINDO</text>
-          </svg>
-        </div>
+        {/* Mobile-only header banner */}
+        <div className="login-mobile-logo" style={{ display: "none" }} />
 
         <div style={{ marginBottom: 8 }}>
           <div style={{ width: 36, height: 4, background: "#0A6E5C", borderRadius: 999, marginBottom: 20 }} />
@@ -215,9 +206,27 @@ export default function LoginPage() {
 
       <style>{`
         @media (max-width: 680px) {
-          .login-brand-panel { display: none !important; }
-          .login-form-panel { width: 100% !important; padding: 36px 28px !important; }
-          .login-mobile-logo { display: block !important; }
+          /* Stack layout: gradient header on top, form below */
+          div[style*="linear-gradient"] {
+            flex-direction: column !important;
+          }
+          .login-brand-panel {
+            flex: none !important;
+            padding: 36px 28px 32px !important;
+            min-height: auto !important;
+          }
+          .login-brand-panel svg { height: 38px !important; margin-bottom: 16px !important; }
+          .login-brand-panel h2 { font-size: 20px !important; margin-bottom: 0 !important; }
+          .login-brand-panel p,
+          .login-brand-panel > div:last-of-type { display: none !important; }
+          .login-form-panel {
+            width: 100% !important;
+            border-radius: 20px 20px 0 0 !important;
+            padding: 32px 24px 40px !important;
+            flex: 1 !important;
+            box-shadow: 0 -4px 24px rgba(0,0,0,.12) !important;
+          }
+          .login-mobile-logo { display: none !important; }
         }
       `}</style>
     </div>
