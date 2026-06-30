@@ -34,7 +34,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
 
   useEffect(() => {
     if (visit) {
-      setForm({ jabatan: "", ...visit });
+      setForm({ ...visit, jabatan: visit.jabatan ?? "" });
     } else {
       setForm(emptyVisit(preClientId || clients[0]?.id || "", defaultPic, preDate || todayStr()));
     }
