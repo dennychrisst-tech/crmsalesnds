@@ -93,10 +93,7 @@ export function useData() {
   const upsertContact = (c: Contact) => upsert("contacts", c as unknown as Record<string, unknown>);
   const deleteContact = (id: string) => remove("contacts", id);
 
-  const upsertVisit = (v: Visit) => upsert("visits", {
-    ...(v as unknown as Record<string, unknown>),
-    date: v.date ? new Date(v.date + "T00:00:00").toISOString() : v.date,
-  });
+  const upsertVisit = (v: Visit) => upsert("visits", v as unknown as Record<string, unknown>);
   const deleteVisit = (id: string) => remove("visits", id);
 
   const upsertDeal = (d: Deal) => upsert("deals", d as unknown as Record<string, unknown>);

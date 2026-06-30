@@ -48,6 +48,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
   if (body.value !== undefined) body.value = BigInt(body.value);
   if (body.file_size !== undefined) body.file_size = BigInt(body.file_size);
 
+  // Convert date strings to Date objects for Prisma DateTime @db.Date fields
+  const DATE_FIELDS: Record<string, string[]> = {
+    visits: ["date"],
+    deals: ["close_date"],
+    tasks: ["due_date"],
+    activities: ["date"],
+    events: ["date"],
+  };
+  for (const field of DATE_FIELDS[table] ?? []) {
+    if (body[field] && typeof body[field] === "string") {
+      // Accept "YYYY-MM-DD" or full ISO string
+      const d = new Date(body[field]);
+      body[field] = isNaN(d.getTime()) ? undefined : d;
+    }
+  }
+
   try {
     const result = await model.upsert({
       where: { id: body.id },
