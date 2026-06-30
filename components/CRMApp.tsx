@@ -54,7 +54,7 @@ export default function CRMApp() {
             </text>
             <text x="148" y="56" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="#58595B">SOLUSINDO</text>
           </svg>
-          <div className="header-crm-tag">CRM</div>
+          <div className="header-crm-tag">Sales CRM</div>
         </div>
         <div className="sync-status">{syncStatus}</div>
       </header>
