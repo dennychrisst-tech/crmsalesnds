@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import { Deal, Client, Product, CRMDocument, Attachment, Activity } from "@/types";
-import { STAGES, DEAL_TYPES, ACTIVITY_TYPES, fmtDate, todayStr } from "@/lib/utils";
+import { STAGES, DEAL_TYPES, ACTIVITY_TYPES, STAGE_COLOR, fmtDate, fmtIDR, todayStr } from "@/lib/utils";
 import DocumentTracker from "./DocumentTracker";
 import AttachmentSection from "./AttachmentSection";
 import SearchableSelect from "./ui/SearchableSelect";
@@ -48,7 +48,7 @@ export default function DealModal({
 }: Props) {
   const isEdit = !!deal;
   const [form, setForm] = useState<Deal>(emptyDeal("", defaultOwner));
-  const [tab, setTab] = useState<"info" | "activity" | "docs" | "files">("info");
+  const [tab, setTab] = useState<"detail" | "info" | "activity" | "docs" | "files">("info");
   const [actForm, setActForm] = useState(emptyActivity(deal?.id || ""));
   const [saving, setSaving] = useState(false);
 
@@ -56,8 +56,10 @@ export default function DealModal({
     const d = deal || emptyDeal("", defaultOwner);
     setForm(d);
     setActForm(emptyActivity(d.id));
-    setTab("info");
+    setTab(deal ? "detail" : "info");
   }, [deal, clients, open]);
+
+  const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
   const set = <K extends keyof Deal>(k: K, v: Deal[K]) => setForm(f => ({ ...f, [k]: v }));
 
@@ -91,10 +93,11 @@ export default function DealModal({
   const showWinLoss = form.stage === "Won" || form.stage === "Lost";
 
   return (
-    <Modal open={open} onClose={onClose} title={`${isEdit ? "Edit" : "Tambah"} Project`}>
+    <Modal open={open} onClose={onClose} title={isEdit ? (tab === "detail" ? "Detail Project" : "Edit Project") : "Tambah Project"}>
       {isEdit && (
         <div className="modal-tabs">
-          <button className={tabCls("info")} onClick={() => setTab("info")}>Info</button>
+          <button className={tabCls("detail")} onClick={() => setTab("detail")}>Detail</button>
+          <button className={tabCls("info")} onClick={() => setTab("info")}>Edit</button>
           <button className={tabCls("activity")} onClick={() => setTab("activity")}>
             Aktivitas {activities.length > 0 && <span className="tab-badge">{activities.length}</span>}
           </button>
@@ -105,6 +108,42 @@ export default function DealModal({
             File {attachments.length > 0 && <span className="tab-badge">{attachments.length}</span>}
           </button>
         </div>
+      )}
+
+      {tab === "detail" && isEdit && (
+        <>
+          <div className="dd-title-row">
+            <div>
+              <div className="dd-name">{form.name}</div>
+              <div className="dd-client">{clientName(form.client_id)}</div>
+            </div>
+            <span className="badge" style={{ background: `${STAGE_COLOR[form.stage] || "var(--brand)"}22`, color: STAGE_COLOR[form.stage] || "var(--brand)" }}>
+              {form.stage}
+            </span>
+          </div>
+          <div className="dd-grid">
+            <div className="dd-item"><div className="dd-label">Tipe Project</div><div className="dd-value">{form.deal_type || "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Owner (Sales)</div><div className="dd-value">{form.owner || "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Target Closing</div><div className="dd-value">{form.close_date ? fmtDate(form.close_date) : "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Nilai</div><div className="dd-value dd-value-brand">{fmtIDR(form.value)}</div></div>
+            <div className="dd-item"><div className="dd-label">Produk / Solusi</div><div className="dd-value">{form.product || "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Kompetitor</div><div className="dd-value">{form.competitor || "—"}</div></div>
+          </div>
+          {showWinLoss && form.win_loss_reason && (
+            <div className="dd-block">
+              <div className="dd-label">Alasan {form.stage}</div>
+              <div className="dd-text">{form.win_loss_reason}</div>
+            </div>
+          )}
+          <div className="dd-block">
+            <div className="dd-label">Catatan</div>
+            <div className="dd-text">{form.notes || "—"}</div>
+          </div>
+          <ModalActions>
+            <button className="btn btn-ghost" onClick={onClose}>Tutup</button>
+            <button className="btn" onClick={() => setTab("info")}>✏️ Edit</button>
+          </ModalActions>
+        </>
       )}
 
       {tab === "info" && (
