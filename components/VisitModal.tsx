@@ -44,6 +44,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   const [task, setTask] = useState<TaskDraft>({ title: "", due_date: "", assigned_to: "", notes: "" });
   const [pic1, setPic1] = useState(defaultPic);
   const [pic2, setPic2] = useState("");
+  const [manualPic, setManualPic] = useState(false);
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "";
 
@@ -68,11 +69,14 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       setForm(restored);
       const [a = "", b = ""] = picList(visit.pic);
       setPic1(a); setPic2(b);
+      const hasMatchingContact = contacts.some(c => c.client_id === visit.client_id && c.name === visit.pic_client);
+      setManualPic(!!visit.pic_client && !hasMatchingContact);
       if (visit.status === "Done") setTask(buildDefaultTask(restored));
     } else {
       const f = emptyVisit(preClientId || "", defaultPic, preDate || todayStr());
       setForm(f);
       setPic1(defaultPic); setPic2("");
+      setManualPic(false);
       setTask({ title: "", due_date: "", assigned_to: "", notes: "" });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,6 +96,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
 
   function handleClientChange(clientId: string) {
     setForm(f => ({ ...f, client_id: clientId, pic_client: "", jabatan: "", project: null }));
+    setManualPic(false);
   }
 
   function handleContactChange(name: string) {
@@ -180,7 +185,19 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       <div className="grid grid-cols-2 gap-3">
         <Field label="PIC Client yang dikunjungi">
           {clientContacts.length > 0 ? (
-            <select className={selectCls} value={form.pic_client} onChange={e => handleContactChange(e.target.value)}>
+            <select
+              className={selectCls}
+              value={manualPic ? "__other__" : form.pic_client}
+              onChange={e => {
+                if (e.target.value === "__other__") {
+                  setManualPic(true);
+                  set("pic_client", "");
+                } else {
+                  setManualPic(false);
+                  handleContactChange(e.target.value);
+                }
+              }}
+            >
               <option value="">— Pilih kontak —</option>
               {clientContacts.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
               <option value="__other__">Lainnya (isi manual)</option>
@@ -188,8 +205,8 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
           ) : (
             <input className={inputCls} value={form.pic_client} onChange={e => set("pic_client", e.target.value)} placeholder="Nama kontak di client" />
           )}
-          {clientContacts.length > 0 && form.pic_client === "__other__" && (
-            <input className={inputCls} style={{ marginTop: 6 }} onChange={e => set("pic_client", e.target.value)} placeholder="Nama kontak (manual)" />
+          {clientContacts.length > 0 && manualPic && (
+            <input className={inputCls} style={{ marginTop: 6 }} value={form.pic_client} onChange={e => set("pic_client", e.target.value)} placeholder="Nama kontak (manual)" />
           )}
         </Field>
         <Field label="Jabatan">
