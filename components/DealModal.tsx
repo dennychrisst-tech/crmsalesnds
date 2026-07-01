@@ -141,7 +141,6 @@ export default function DealModal({
           </div>
           <ModalActions>
             <button className="btn btn-ghost" onClick={onClose}>Tutup</button>
-            <button className="btn" onClick={() => setTab("info")}>✏️ Edit</button>
           </ModalActions>
         </>
       )}
