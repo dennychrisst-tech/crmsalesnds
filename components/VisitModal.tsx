@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import SearchableSelect from "./ui/SearchableSelect";
-import { Visit, Client, Contact, Project, Task } from "@/types";
+import { Visit, Client, Contact, Deal, Task } from "@/types";
 import { VISIT_STATUS, todayStr, picList, addDaysStr } from "@/lib/utils";
 
 interface Props {
@@ -13,12 +13,13 @@ interface Props {
   preDate?: string;
   clients: Client[];
   contacts: Contact[];
-  projects: Project[];
+  deals: Deal[];
   team: string[];
   defaultPic?: string;
   onSave: (v: Visit) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onCreateTask?: (t: Task) => Promise<void>;
+  onCreateDeal?: (d: Deal) => Promise<void>;
   onClose: () => void;
 }
 
@@ -31,26 +32,29 @@ interface TaskDraft {
 
 function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit {
   return {
-    id: uuid(), client_id: clientId, project: null, date,
+    id: uuid(), client_id: clientId, deal_id: null, project: null, date,
     purpose: "", approach: "", status: "Planned",
     pic: defaultPic, pic_client: "", jabatan: "",
     followup_date: null, summary: "",
   };
 }
 
-export default function VisitModal({ open, visit, preClientId, preDate, clients, contacts, projects, team, defaultPic = "", onSave, onDelete, onCreateTask, onClose }: Props) {
+export default function VisitModal({ open, visit, preClientId, preDate, clients, contacts, deals, team, defaultPic = "", onSave, onDelete, onCreateTask, onCreateDeal, onClose }: Props) {
   const isEdit = !!visit;
   const [form, setForm] = useState<Visit>(emptyVisit("", defaultPic));
   const [task, setTask] = useState<TaskDraft>({ title: "", due_date: "", assigned_to: "", notes: "" });
   const [pic1, setPic1] = useState(defaultPic);
   const [pic2, setPic2] = useState("");
   const [manualPic, setManualPic] = useState(false);
+  const [addingDeal, setAddingDeal] = useState(false);
+  const [newDealName, setNewDealName] = useState("");
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "";
+  const dealName = (id: string | null | undefined) => deals.find(d => d.id === id)?.name || "";
 
   function buildDefaultTask(f: Visit): TaskDraft {
     return {
-      title: `Follow-up: ${clientName(f.client_id)}${f.project ? ` · ${f.project}` : ""}`,
+      title: `Follow-up: ${clientName(f.client_id)}${f.deal_id ? ` · ${dealName(f.deal_id)}` : ""}`,
       due_date: f.followup_date || "",
       assigned_to: picList(f.pic)[0] || "",
       notes: f.pic_client ? `PIC Client: ${f.pic_client}${f.jabatan ? ` (${f.jabatan})` : ""}` : "",
@@ -63,6 +67,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       const restored: Visit = {
         ...visit,
         jabatan: visit.jabatan ?? "",
+        deal_id: visit.deal_id ?? null,
         project: visit.project ?? null,
         followup_date: visit.followup_date ?? null,
       };
@@ -71,12 +76,14 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       setPic1(a); setPic2(b);
       const hasMatchingContact = contacts.some(c => c.client_id === visit.client_id && c.name === visit.pic_client);
       setManualPic(!!visit.pic_client && !hasMatchingContact);
+      setAddingDeal(false); setNewDealName("");
       if (visit.status === "Done") setTask(buildDefaultTask(restored));
     } else {
       const f = emptyVisit(preClientId || "", defaultPic, preDate || todayStr());
       setForm(f);
       setPic1(defaultPic); setPic2("");
       setManualPic(false);
+      setAddingDeal(false); setNewDealName("");
       setTask({ title: "", due_date: "", assigned_to: "", notes: "" });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -91,12 +98,27 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   }
 
   const clientContacts = contacts.filter(c => c.client_id === form.client_id);
-  const clientProjects = projects.filter(p => p.client_id === form.client_id);
+  const clientDeals = deals.filter(d => d.client_id === form.client_id);
   const isDone = form.status === "Done";
 
   function handleClientChange(clientId: string) {
-    setForm(f => ({ ...f, client_id: clientId, pic_client: "", jabatan: "", project: null }));
+    setForm(f => ({ ...f, client_id: clientId, pic_client: "", jabatan: "", deal_id: null, project: null }));
     setManualPic(false);
+    setAddingDeal(false); setNewDealName("");
+  }
+
+  async function handleCreateDeal() {
+    if (!newDealName.trim() || !onCreateDeal || !form.client_id) return;
+    const id = uuid();
+    await onCreateDeal({
+      id, name: newDealName.trim(), client_id: form.client_id, value: 0,
+      stage: "Cold Call", deal_type: "", product: "", close_date: "",
+      notes: "", owner: picList(form.pic)[0] || "", win_loss_reason: "", competitor: "",
+      stage_updated_at: new Date().toISOString(),
+    });
+    set("deal_id", id);
+    setAddingDeal(false);
+    setNewDealName("");
   }
 
   function handleContactChange(name: string) {
@@ -153,14 +175,34 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         />
       </Field>
 
-      <Field label="Project (opsional)">
-        {clientProjects.length > 0 ? (
-          <select className={selectCls} value={form.project || ""} onChange={e => set("project", e.target.value || null)}>
-            <option value="">— Tidak terkait project —</option>
-            {clientProjects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
-          </select>
+      <Field label="Deal / Project (opsional)">
+        {!addingDeal ? (
+          <>
+            <SearchableSelect
+              options={clientDeals.map(d => ({ value: d.id, label: d.name }))}
+              value={form.deal_id || ""}
+              onChange={v => set("deal_id", v || null)}
+              placeholder="Cari deal…"
+              clearLabel="— Tidak terkait deal —"
+            />
+            {onCreateDeal && form.client_id && (
+              <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 6 }} onClick={() => setAddingDeal(true)}>
+                + Deal Baru
+              </button>
+            )}
+          </>
         ) : (
-          <input className={inputCls} value={form.project || ""} onChange={e => set("project", e.target.value || null)} placeholder="Nama project (opsional)" />
+          <div style={{ display: "flex", gap: 6 }}>
+            <input
+              className={inputCls}
+              value={newDealName}
+              onChange={e => setNewDealName(e.target.value)}
+              placeholder="Nama deal baru"
+              autoFocus
+            />
+            <button type="button" className="btn btn-sm" onClick={handleCreateDeal}>Buat</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setAddingDeal(false); setNewDealName(""); }}>Batal</button>
+          </div>
         )}
       </Field>
 

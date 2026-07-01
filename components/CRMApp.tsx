@@ -106,13 +106,13 @@ export default function CRMApp() {
                   <CalendarView data={data} currentUserName={currentUserName} isViewer={isViewer}
                     onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)}
                     onSaveEvent={ro(upsertEvent)} onDeleteEvent={ro(deleteEvent)}
-                    onCreateTask={ro(upsertTask)} />
+                    onCreateTask={ro(upsertTask)} onCreateDeal={ro(upsertDeal)} />
                 )}
                 {view === "clients" && (
                   <Clients data={data} currentUserName={currentUserName} isViewer={isViewer} onNavigate={setView}
                     onSaveClient={ro(upsertClient)} onDeleteClient={ro(deleteClient)}
                     onSaveContact={ro(upsertContact)} onDeleteContact={ro(deleteContact)}
-                    onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)} />
+                    onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)} onCreateDeal={ro(upsertDeal)} />
                 )}
                 {view === "pipeline" && (
                   <Pipeline data={data} currentUserName={currentUserName} isViewer={isViewer}

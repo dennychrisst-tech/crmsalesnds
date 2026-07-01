@@ -60,24 +60,27 @@ model Contact {
 }
 
 model Visit {
-  id            String   @id @default(uuid()) @db.Uuid
-  client_id     String   @db.Uuid
+  id            String    @id @default(uuid()) @db.Uuid
+  client_id     String    @db.Uuid
+  deal_id       String?   @db.Uuid
   project       String?
-  date          DateTime @db.Date
-  purpose       String   @default("")
-  approach      String   @default("")
-  status        String   @default("Planned")
-  pic           String   @default("")
-  pic_client    String   @default("")
-  jabatan       String   @default("")
+  date          DateTime  @db.Date
+  purpose       String    @default("")
+  approach      String    @default("")
+  status        String    @default("Planned")
+  pic           String    @default("")
+  pic_client    String    @default("")
+  jabatan       String    @default("")
   followup_date DateTime? @db.Date
-  summary       String   @default("")
-  created_by_id String?  @db.Uuid
-  created_at    DateTime @default(now())
+  summary       String    @default("")
+  created_by_id String?   @db.Uuid
+  created_at    DateTime  @default(now())
 
   client Client @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  deal   Deal?  @relation(fields: [deal_id], references: [id], onDelete: SetNull)
 
   @@index([client_id])
+  @@index([deal_id])
   @@index([status])
   @@index([date])
   @@map("visits")
@@ -105,6 +108,7 @@ model Deal {
   attachments Attachment[]
   activities  Activity[]
   tasks       Task[]
+  visits      Visit[]
 
   @@index([client_id])
   @@index([stage])

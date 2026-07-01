@@ -179,30 +179,40 @@ export function useData() {
 
   async function upsertVisit(v: Visit) {
     await upsert("visits", v as unknown as Record<string, unknown>);
-    if (v.approach === "First Meeting") {
-      const fresh = dataRef.current;
-      const dealName = (v.project && v.project.trim()) || fresh.clients.find(c => c.id === v.client_id)?.name || "";
-      if (dealName) {
-        const existing = fresh.deals.find(d => d.client_id === v.client_id && d.name.trim().toLowerCase() === dealName.trim().toLowerCase());
-        if (!existing) {
-          const owner = (v.pic || "").split(",")[0]?.trim() || "";
-          await upsert("deals", {
-            id: uuid(), name: dealName, client_id: v.client_id, value: 0,
-            stage: "First Meeting", deal_type: "", product: "", close_date: "",
-            notes: "", owner, win_loss_reason: "", competitor: "",
-            stage_updated_at: new Date().toISOString(),
-          });
-        } else {
-          const stageOrder = STAGES.indexOf(existing.stage as typeof STAGES[number]);
-          const firstMeetingOrder = STAGES.indexOf("First Meeting");
-          if (stageOrder !== -1 && stageOrder < firstMeetingOrder) {
-            await patch("deals", existing.id, { stage: "First Meeting", stage_updated_at: new Date().toISOString() });
-          }
+
+    // Advance the linked deal to First Meeting if it's still earlier in the pipeline.
+    if (v.approach === "First Meeting" && v.deal_id) {
+      const deal = dataRef.current.deals.find(d => d.id === v.deal_id);
+      if (deal) {
+        const stageOrder = STAGES.indexOf(deal.stage as typeof STAGES[number]);
+        const firstMeetingOrder = STAGES.indexOf("First Meeting");
+        if (stageOrder !== -1 && stageOrder < firstMeetingOrder) {
+          await patch("deals", deal.id, { stage: "First Meeting", stage_updated_at: new Date().toISOString() });
         }
       }
     }
+
+    // Keep an auto-generated Activity in sync with this visit's outcome, reusing
+    // the visit's own id so re-saving always updates the same activity instead
+    // of creating duplicates.
+    const shouldHaveActivity = v.status === "Done" && v.summary.trim() && v.deal_id;
+    if (shouldHaveActivity) {
+      await upsert("activities", {
+        id: v.id, deal_id: v.deal_id, client_id: null, type: "Visit",
+        description: v.summary.trim(), date: v.date,
+        created_by: (v.pic || "").split(",")[0]?.trim() || "",
+      });
+    } else if (dataRef.current.activities.some(a => a.id === v.id)) {
+      await remove("activities", v.id);
+    }
   }
-  const deleteVisit = makeRemove("visits");
+
+  async function deleteVisit(id: string) {
+    await remove("visits", id);
+    if (dataRef.current.activities.some(a => a.id === id)) {
+      await remove("activities", id);
+    }
+  }
 
   const upsertDeal = makeUpsert<Deal>("deals");
   const deleteDeal = makeRemove("deals");

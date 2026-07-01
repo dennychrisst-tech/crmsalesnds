@@ -22,7 +22,7 @@ export const DOC_STATUSES = ["Draft", "Sent", "Received", "Approved", "Rejected"
 export const PRODUCT_CATEGORIES = ["ECM / BPM", "AI / Analytics", "Security", "Cloud", "Managed Service", "Outsourcing", "Lainnya"] as const;
 export const EVENT_TYPES = ["Training Internal", "Training Eksternal", "Meeting Online", "Internal Meeting", "Demo / Presentasi", "Webinar", "Pameran / Conference", "Lainnya"] as const;
 export const DEAL_TYPES = ["New Business", "Renewal", "Upsell", "Cross-sell", "Lainnya"] as const;
-export const ACTIVITY_TYPES = ["Note", "Call", "Meeting", "Email", "Demo", "Follow-up", "Proposal Sent", "Lainnya"] as const;
+export const ACTIVITY_TYPES = ["Note", "Call", "Meeting", "Email", "Demo", "Follow-up", "Proposal Sent", "Visit", "Lainnya"] as const;
 export const COMPANY_SIZES = ["< 50 karyawan", "50–200 karyawan", "200–1000 karyawan", "> 1000 karyawan", "> 10.000 karyawan", "> 100.000 karyawan"] as const;
 
 export function picList(pic: string | null | undefined): string[] {

@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { AppData } from "@/hooks/useData";
-import { Client, Contact, Visit, PIC, Activity, ActiveView } from "@/types";
+import { Client, Contact, Visit, Deal, PIC, Activity, ActiveView } from "@/types";
 import { fmtDate, fmtIDR, isoWeekLabel, CLIENT_STATUS_COLOR, SECTORS } from "@/lib/utils";
 import EmptyState from "./ui/EmptyState";
 import { VisitBadge } from "./ui/Badge";
@@ -21,6 +21,7 @@ interface Props {
   onDeleteContact: (id: string) => Promise<void>;
   onSaveVisit: (v: Visit) => Promise<void>;
   onDeleteVisit: (id: string) => Promise<void>;
+  onCreateDeal: (d: Deal) => Promise<void>;
 }
 
 const CLIENT_STATUSES = Object.keys(CLIENT_STATUS_COLOR);
@@ -51,7 +52,7 @@ function lastContactDate(clientId: string, visits: Visit[], activities: Activity
   return dates.length ? dates[dates.length - 1] : null;
 }
 
-export default function Clients({ data, currentUserName, isViewer, onNavigate, onSaveClient, onDeleteClient, onSaveContact, onDeleteContact, onSaveVisit, onDeleteVisit }: Props) {
+export default function Clients({ data, currentUserName, isViewer, onNavigate, onSaveClient, onDeleteClient, onSaveContact, onDeleteContact, onSaveVisit, onDeleteVisit, onCreateDeal }: Props) {
   const { clients, contacts, visits, deals, activities, profiles, projects } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
@@ -374,8 +375,8 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
         onSave={onSaveClient} onDelete={onDeleteClient} onClose={() => setClientModalOpen(false)} />
       <ContactModal open={contactModalOpen} contact={editContact} clientId={contactClientId}
         onSave={onSaveContact} onDelete={onDeleteContact} onClose={() => setContactModalOpen(false)} />
-      <VisitModal open={visitModalOpen} visit={editVisit} preClientId={preClientId} clients={clients} contacts={contacts} projects={data.projects} team={team} defaultPic={currentUserName}
-        onSave={onSaveVisit} onDelete={onDeleteVisit} onClose={() => setVisitModalOpen(false)} />
+      <VisitModal open={visitModalOpen} visit={editVisit} preClientId={preClientId} clients={clients} contacts={contacts} deals={deals} team={team} defaultPic={currentUserName}
+        onSave={onSaveVisit} onDelete={onDeleteVisit} onCreateDeal={onCreateDeal} onClose={() => setVisitModalOpen(false)} />
     </section>
   );
 }
