@@ -124,9 +124,11 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
             </select>
           )}
         </Field>
-        <Field label="Target go-live">
-          <input type="date" className={inputCls} value={form.golive} onChange={e => set("golive", e.target.value)} />
-        </Field>
+        {form.status !== "Delivered" && (
+          <Field label="Target go-live">
+            <input type="date" className={inputCls} value={form.golive} onChange={e => set("golive", e.target.value)} />
+          </Field>
+        )}
       </div>
       <Field label="Partner (opsional)">
         <SearchableSelect
