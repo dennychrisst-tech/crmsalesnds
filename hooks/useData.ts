@@ -102,7 +102,24 @@ export function useData() {
   const upsertContact = (c: Contact) => upsert("contacts", c as unknown as Record<string, unknown>);
   const deleteContact = (id: string) => remove("contacts", id);
 
-  const upsertVisit = (v: Visit) => upsert("visits", v as unknown as Record<string, unknown>);
+  async function upsertVisit(v: Visit) {
+    await upsert("visits", v as unknown as Record<string, unknown>);
+    if (v.approach === "First Meeting") {
+      const dealName = (v.project && v.project.trim()) || data.clients.find(c => c.id === v.client_id)?.name || "";
+      if (dealName) {
+        const exists = data.deals.some(d => d.client_id === v.client_id && d.name.trim().toLowerCase() === dealName.trim().toLowerCase());
+        if (!exists) {
+          const owner = (v.pic || "").split(",")[0]?.trim() || "";
+          await upsert("deals", {
+            id: uuid(), name: dealName, client_id: v.client_id, value: 0,
+            stage: "First Meeting", deal_type: "", product: "", close_date: "",
+            notes: "", owner, win_loss_reason: "", competitor: "",
+            stage_updated_at: new Date().toISOString(),
+          });
+        }
+      }
+    }
+  }
   const deleteVisit = (id: string) => remove("visits", id);
 
   const upsertDeal = (d: Deal) => upsert("deals", d as unknown as Record<string, unknown>);
