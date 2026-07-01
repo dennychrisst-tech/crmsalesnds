@@ -46,7 +46,7 @@ function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit
 
 export default function VisitModal({ open, visit, preClientId, preDate, clients, contacts, projects, team, defaultPic = "", onSave, onDelete, onCreateTask, onClose }: Props) {
   const isEdit = !!visit;
-  const [form, setForm] = useState<Visit>(emptyVisit(clients[0]?.id || "", defaultPic));
+  const [form, setForm] = useState<Visit>(emptyVisit("", defaultPic));
   const [task, setTask] = useState<TaskDraft>({ title: "", due_date: "", assigned_to: "", notes: "" });
   const [pic1, setPic1] = useState(defaultPic);
   const [pic2, setPic2] = useState("");
@@ -76,7 +76,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       setPic1(a); setPic2(b);
       if (visit.status === "Done") setTask(buildDefaultTask(restored));
     } else {
-      const f = emptyVisit(preClientId || clients[0]?.id || "", defaultPic, preDate || todayStr());
+      const f = emptyVisit(preClientId || "", defaultPic, preDate || todayStr());
       setForm(f);
       setPic1(defaultPic); setPic2("");
       setTask({ title: "", due_date: "", assigned_to: "", notes: "" });
@@ -114,6 +114,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   }
 
   async function handleSave() {
+    if (!form.client_id) { alert("Client wajib dipilih."); return; }
     if (!form.date) { alert("Tanggal approach wajib diisi."); return; }
     await onSave(form);
     if (isDone && onCreateTask && task.title.trim()) {

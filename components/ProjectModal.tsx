@@ -39,7 +39,7 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
   const [ibmSub, setIbmSub] = useState("");
 
   useEffect(() => {
-    const base = project || { id: uuid(), name: "", client_id: clients[0]?.id || "", product: "", status: "Initiation", value: 0, golive: "", notes: "", partner: "" };
+    const base = project || { id: uuid(), name: "", client_id: "", product: "", status: "Initiation", value: 0, golive: "", notes: "", partner: "" };
     setForm(base);
     setValueDisplay(fmtIDR(base.value || 0));
     const { category, sub } = parseProduct(base.product || "");
@@ -62,6 +62,7 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
 
   async function handleSave() {
     if (!form.name.trim()) { alert("Nama project wajib diisi."); return; }
+    if (!form.client_id) { alert("Client wajib dipilih."); return; }
     await onSave(form);
     onClose();
   }

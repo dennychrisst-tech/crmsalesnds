@@ -47,13 +47,13 @@ export default function DealModal({
   onClose,
 }: Props) {
   const isEdit = !!deal;
-  const [form, setForm] = useState<Deal>(emptyDeal(clients[0]?.id || "", defaultOwner));
+  const [form, setForm] = useState<Deal>(emptyDeal("", defaultOwner));
   const [tab, setTab] = useState<"info" | "activity" | "docs" | "files">("info");
   const [actForm, setActForm] = useState(emptyActivity(deal?.id || ""));
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const d = deal || emptyDeal(clients[0]?.id || "", defaultOwner);
+    const d = deal || emptyDeal("", defaultOwner);
     setForm(d);
     setActForm(emptyActivity(d.id));
     setTab("info");
@@ -63,6 +63,7 @@ export default function DealModal({
 
   async function handleSave() {
     if (!form.name.trim()) { alert("Nama project wajib diisi."); return; }
+    if (!form.client_id) { alert("Client wajib dipilih."); return; }
     await onSave(form);
     onClose();
   }
