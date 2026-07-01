@@ -15,6 +15,7 @@ import GlobalSearch from "./GlobalSearch";
 import RemindersBell from "./RemindersBell";
 import SummaryView from "./SummaryView";
 import VisitReport from "./VisitReport";
+import WeeklyReport from "./WeeklyReport";
 import LiveClock from "./ui/LiveClock";
 
 const TABS: { id: ActiveView; label: string; icon: string }[] = [
@@ -26,6 +27,7 @@ const TABS: { id: ActiveView; label: string; icon: string }[] = [
   { id: "tasks",       label: "Tasks",              icon: "✅" },
   { id: "summary",     label: "Summary Activity",   icon: "📈" },
   { id: "visit-report",label: "Laporan Visit",      icon: "📋" },
+  { id: "weekly-report",label: "Laporan Mingguan",  icon: "🗓️" },
 ];
 
 export default function CRMApp() {
@@ -132,6 +134,7 @@ export default function CRMApp() {
                 )}
                 {view === "summary" && <SummaryView data={data} />}
                 {view === "visit-report" && <VisitReport data={data} />}
+                {view === "weekly-report" && <WeeklyReport data={data} />}
               </>
             );
           })()}

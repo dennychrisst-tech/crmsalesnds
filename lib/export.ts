@@ -57,4 +57,24 @@ export function exportVisitReport(visits: Visit[], clientName: (id: string) => s
   download(`visit_report_${today()}.csv`, csv([header, ...rows]));
 }
 
+export function exportWeeklyReport(
+  salesData: { name: string; visits: Visit[] }[],
+  clientName: (id: string) => string,
+  relatedDeal: (v: Visit) => Deal | null,
+  label: string
+) {
+  const header = ["Sales", "Tanggal", "Client", "Jenis Approach", "Hasil Visit", "Deal Terkait", "Stage"];
+  const rows: (string | number)[][] = [];
+  salesData.forEach(s => {
+    s.visits.forEach(v => {
+      const deal = relatedDeal(v);
+      rows.push([
+        s.name, v.date, clientName(v.client_id), v.approach || "",
+        v.summary || "", deal?.name || "", deal?.stage || "",
+      ]);
+    });
+  });
+  download(`laporan_mingguan_${label.replace(/[^\w]+/g, "_")}.csv`, csv([header, ...rows]));
+}
+
 const today = todayStr;
