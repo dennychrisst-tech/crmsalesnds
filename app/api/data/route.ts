@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
@@ -15,28 +15,39 @@ function serializeDates(obj: unknown): unknown {
   return obj;
 }
 
-export async function GET() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const QUERIES: Record<string, () => Promise<any>> = {
+  clients: () => prisma.client.findMany({ orderBy: { created_at: "asc" } }),
+  contacts: () => prisma.contact.findMany({ orderBy: { created_at: "asc" } }),
+  visits: () => prisma.visit.findMany({ orderBy: { date: "asc" } }),
+  deals: () => prisma.deal.findMany({ orderBy: { created_at: "asc" } }),
+  projects: () => prisma.project.findMany({ orderBy: { created_at: "asc" } }),
+  tasks: () => prisma.task.findMany({ orderBy: { due_date: "asc" } }),
+  products: () => prisma.product.findMany({ orderBy: { name: "asc" } }),
+  documents: () => prisma.document.findMany({ orderBy: { created_at: "asc" } }),
+  attachments: () => prisma.attachment.findMany({ orderBy: { uploaded_at: "asc" } }),
+  activities: () => prisma.activity.findMany({ orderBy: { created_at: "desc" } }),
+  events: () => prisma.event.findMany({ orderBy: { date: "asc" } }),
+};
+
+const ALL_TABLES = Object.keys(QUERIES);
+
+export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const [clients, contacts, visits, deals, projects, tasks, products, documents, attachments, activities, events, users] = await Promise.all([
-    prisma.client.findMany({ orderBy: { created_at: "asc" } }),
-    prisma.contact.findMany({ orderBy: { created_at: "asc" } }),
-    prisma.visit.findMany({ orderBy: { date: "asc" } }),
-    prisma.deal.findMany({ orderBy: { created_at: "asc" } }),
-    prisma.project.findMany({ orderBy: { created_at: "asc" } }),
-    prisma.task.findMany({ orderBy: { due_date: "asc" } }),
-    prisma.product.findMany({ orderBy: { name: "asc" } }),
-    prisma.document.findMany({ orderBy: { created_at: "asc" } }),
-    prisma.attachment.findMany({ orderBy: { uploaded_at: "asc" } }),
-    prisma.activity.findMany({ orderBy: { created_at: "desc" } }),
-    prisma.event.findMany({ orderBy: { date: "asc" } }),
+  const param = req.nextUrl.searchParams.get("tables");
+  const requested = param
+    ? param.split(",").map(t => t.trim()).filter(t => t in QUERIES)
+    : ALL_TABLES;
+
+  const [entries, users] = await Promise.all([
+    Promise.all(requested.map(async table => [table, await QUERIES[table]()] as const)),
     prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, email: true, role: true, created_at: true } }),
   ]);
 
   return NextResponse.json(serializeDates({
-    clients, contacts, visits, deals, projects, tasks,
-    products, documents, attachments, activities, events,
+    ...Object.fromEntries(entries),
     profiles: users,
     currentUser: { id: session.id, name: session.name, email: session.email, role: session.role },
   }));

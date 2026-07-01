@@ -21,6 +21,14 @@ export interface AppData {
 
 type TableKey = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events";
 
+// Fetched immediately on mount — needed by the header (search/reminders) and/or
+// most views, so the app can't usefully render without them.
+const CORE_TABLES: TableKey[] = ["clients", "contacts", "deals", "tasks", "visits", "projects"];
+// Fetched right after CORE resolves, in the background — mostly deal-detail-modal
+// and Calendar/catalog specific, not needed for the app's first paint.
+const LAZY_TABLES: TableKey[] = ["products", "documents", "attachments", "activities", "events"];
+const ALL_TABLES: TableKey[] = [...CORE_TABLES, ...LAZY_TABLES];
+
 // Prisma returns full ISO timestamps, but <input type="date"> and date logic
 // throughout the app expect plain "YYYY-MM-DD" for these date-only columns.
 const DATE_FIELDS: Partial<Record<TableKey, string[]>> = {
@@ -90,29 +98,27 @@ export function useData() {
     });
   }, []);
 
-  const load = useCallback(async (): Promise<AppData | null> => {
+  // Fetches only `tables` (defaults to everything) and merges the result into
+  // local state, leaving any table not included in this call untouched.
+  const load = useCallback(async (tables?: TableKey[]): Promise<AppData | null> => {
+    const requested = tables ?? ALL_TABLES;
     try {
-      const json = await api("/api/data");
-      const fresh: AppData = {
-        clients: json.clients ?? [],
-        contacts: json.contacts ?? [],
-        visits: (json.visits ?? []).map((v: Visit) => normalizeRow("visits", v)),
-        deals: (json.deals ?? []).map((v: Deal) => normalizeRow("deals", v)),
-        projects: (json.projects ?? []).map((v: Project) => normalizeRow("projects", v)),
-        tasks: (json.tasks ?? []).map((v: Task) => normalizeRow("tasks", v)),
-        products: (json.products ?? []) as Product[],
-        documents: (json.documents ?? []) as CRMDocument[],
-        attachments: (json.attachments ?? []) as Attachment[],
-        activities: (json.activities ?? []).map((v: Activity) => normalizeRow("activities", v)),
-        events: (json.events ?? []).map((v: CalendarEvent) => normalizeRow("events", v)),
-        profiles: json.profiles ?? [],
-      };
-      commit(() => fresh);
+      const json = await api(`/api/data?tables=${requested.join(",")}`);
+      let result: AppData = dataRef.current;
+      commit(prev => {
+        const next = { ...prev };
+        for (const t of requested) {
+          next[t] = (json[t] ?? []).map((row: unknown) => normalizeRow(t, row));
+        }
+        next.profiles = json.profiles ?? prev.profiles;
+        result = next;
+        return next;
+      });
       if (json.currentUser) {
         setCurrentProfile({ id: json.currentUser.id, name: json.currentUser.name, email: json.currentUser.email, role: json.currentUser.role });
       }
       setSyncStatus("Tersimpan otomatis");
-      return fresh;
+      return result;
     } catch (e) {
       setSyncStatus(e instanceof Error ? e.message : "Gagal memuat data");
       return null;
@@ -121,10 +127,14 @@ export function useData() {
     }
   }, [commit]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    // Core tables unblock the UI first; secondary tables (mostly deal-detail-modal
+    // and calendar/catalog specific) fill in a moment later in the background.
+    load(CORE_TABLES).then(() => load(LAZY_TABLES));
+  }, [load]);
 
-  // Poll every 30s so idle tabs pick up changes made elsewhere without a manual refresh.
-  // Skips while the tab is hidden/backgrounded to avoid wasted requests.
+  // Poll everything every 30s so idle tabs pick up changes made elsewhere without
+  // a manual refresh. Skips while the tab is hidden/backgrounded to avoid waste.
   useEffect(() => {
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") load();
@@ -133,7 +143,7 @@ export function useData() {
   }, [load]);
 
   // Mutations update local state directly from the server's response instead of
-  // re-fetching all 12 tables — that used to happen after every single save/delete.
+  // re-fetching all tables — that used to happen after every single save/delete.
   async function upsert(table: TableKey, record: Record<string, unknown>) {
     if (!record.id) record.id = uuid();
     const result = await api(`/api/data/${table}`, "POST", record);
@@ -154,11 +164,18 @@ export function useData() {
     return normalized;
   }
 
-  const upsertClient = (c: Client) => upsert("clients", c as unknown as Record<string, unknown>);
-  const deleteClient = (id: string) => remove("clients", id);
+  function makeUpsert<T extends { id: string }>(table: TableKey) {
+    return (record: T) => upsert(table, record as unknown as Record<string, unknown>);
+  }
+  function makeRemove(table: TableKey) {
+    return (id: string) => remove(table, id);
+  }
 
-  const upsertContact = (c: Contact) => upsert("contacts", c as unknown as Record<string, unknown>);
-  const deleteContact = (id: string) => remove("contacts", id);
+  const upsertClient = makeUpsert<Client>("clients");
+  const deleteClient = makeRemove("clients");
+
+  const upsertContact = makeUpsert<Contact>("contacts");
+  const deleteContact = makeRemove("contacts");
 
   async function upsertVisit(v: Visit) {
     await upsert("visits", v as unknown as Record<string, unknown>);
@@ -185,30 +202,30 @@ export function useData() {
       }
     }
   }
-  const deleteVisit = (id: string) => remove("visits", id);
+  const deleteVisit = makeRemove("visits");
 
-  const upsertDeal = (d: Deal) => upsert("deals", d as unknown as Record<string, unknown>);
-  const deleteDeal = (id: string) => remove("deals", id);
+  const upsertDeal = makeUpsert<Deal>("deals");
+  const deleteDeal = makeRemove("deals");
   const updateDealStage = (id: string, stage: string) =>
     patch("deals", id, { stage, stage_updated_at: new Date().toISOString() });
 
-  const upsertProject = (p: Project) => upsert("projects", p as unknown as Record<string, unknown>);
-  const deleteProject = (id: string) => remove("projects", id);
+  const upsertProject = makeUpsert<Project>("projects");
+  const deleteProject = makeRemove("projects");
 
-  const upsertTask = (t: Task) => upsert("tasks", t as unknown as Record<string, unknown>);
-  const deleteTask = (id: string) => remove("tasks", id);
+  const upsertTask = makeUpsert<Task>("tasks");
+  const deleteTask = makeRemove("tasks");
 
-  const upsertProduct = (p: Product) => upsert("products", p as unknown as Record<string, unknown>);
-  const deleteProduct = (id: string) => remove("products", id);
+  const upsertProduct = makeUpsert<Product>("products");
+  const deleteProduct = makeRemove("products");
 
-  const upsertDocument = (d: CRMDocument) => upsert("documents", d as unknown as Record<string, unknown>);
-  const deleteDocument = (id: string) => remove("documents", id);
+  const upsertDocument = makeUpsert<CRMDocument>("documents");
+  const deleteDocument = makeRemove("documents");
 
-  const upsertEvent = (e: CalendarEvent) => upsert("events", e as unknown as Record<string, unknown>);
-  const deleteEvent = (id: string) => remove("events", id);
+  const upsertEvent = makeUpsert<CalendarEvent>("events");
+  const deleteEvent = makeRemove("events");
 
-  const upsertActivity = (a: Activity) => upsert("activities", a as unknown as Record<string, unknown>);
-  const deleteActivity = (id: string) => remove("activities", id);
+  const upsertActivity = makeUpsert<Activity>("activities");
+  const deleteActivity = makeRemove("activities");
 
   async function uploadAttachment(file: File, dealId?: string, clientId?: string) {
     const formData = new FormData();
