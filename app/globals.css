@@ -163,6 +163,7 @@ tr:hover td { background: var(--paper); }
 .badge-discovery { background: #E2EAF0; color: #2A526E; }
 .badge-proposal { background: #EDE4FB; color: #6D28D9; }
 .badge-negotiation { background: #F6E4D6; color: #9A4E1E; }
+.badge-pengumuman-pemenang { background: #CCFBF1; color: #0F766E; }
 .badge-contract { background: #FBF0DA; color: #9A6E12; }
 .badge-po { background: #FBF3D6; color: #92730C; }
 .badge-won { background: var(--brand-soft); color: var(--brand); }
