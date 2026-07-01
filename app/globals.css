@@ -95,6 +95,9 @@ nav.tabs button.active::after {
 
 /* Pipeline stage-move (mobile alternative to drag) */
 .stage-move-wrap { display: none; }
+.pipeline-stage-tabs { display: none; }
+.pipeline-mobile-list { display: none; }
+.desktop-only { }
 
 /* Calendar agenda list — mobile-only, replaces the month grid */
 .cal-agenda { display: none; }
@@ -596,12 +599,29 @@ tr.task-soon td { background: #fffbeb; }
   .mcard-row b { color: var(--ink); font-weight: 600; }
   .mcard-actions { display: flex; gap: 8px; margin-top: 4px; justify-content: flex-end; }
 
-  /* Pipeline board — horizontal scroll-snap kanban on small phones */
-  .board {
-    display: flex; grid-template-columns: unset; overflow-x: auto; scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch; margin: 0 -10px; padding: 0 10px 8px; gap: 10px;
+  /* Pipeline — the multi-column board (one column per screen, easy to lose
+     track of while swiping) is replaced by a stage-tab bar + a single
+     vertical list of full-width cards for that stage. */
+  .desktop-only { display: none; }
+  .board { display: none; }
+  .pipeline-stage-tabs {
+    display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    margin: 0 -10px 12px; padding: 0 10px 4px; scrollbar-width: none;
   }
-  .board .col { flex: 0 0 82%; scroll-snap-align: start; }
+  .pipeline-stage-tabs::-webkit-scrollbar { display: none; }
+  .pipeline-stage-tab {
+    flex-shrink: 0; display: flex; align-items: center; gap: 5px;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--ink-soft);
+    padding: 7px 12px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 700;
+    font-family: inherit; white-space: nowrap;
+  }
+  .pipeline-stage-tab.active { color: #fff; }
+  .pipeline-stage-tab-count {
+    background: rgba(0,0,0,.12); border-radius: 999px; padding: 1px 6px; font-size: 10.5px;
+  }
+  .pipeline-stage-tab.active .pipeline-stage-tab-count { background: rgba(255,255,255,.25); }
+  .pipeline-mobile-list { display: flex; flex-direction: column; gap: 10px; }
+  .pipeline-mobile-list .deal { width: 100%; }
 
   /* Modal — full-width on phones, collapse 2-col grids to 1-col */
   .modal-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }

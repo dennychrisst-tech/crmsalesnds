@@ -171,6 +171,18 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
     return () => window.removeEventListener("resize", measure);
   }, [showPanel]);
 
+  // Mobile swaps the multi-column board (one huge card-column per screen, easy
+  // to overshoot while swiping) for a stage-tab bar + a single vertical list.
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileStage, setMobileStage] = useState<string>(STAGES[0]);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const apply = () => setIsMobile(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
   const usedProjectKeys = new Set(deals.map(d => projectKey(d.name, d.client_id)));
@@ -237,7 +249,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   return (
     <section>
       <div className="toolbar">
-        <span className="muted">Tarik proyek atau kartu antar kolom untuk ubah stage.</span>
+        <span className="muted desktop-only">Tarik proyek atau kartu antar kolom untuk ubah stage.</span>
         <button className="btn btn-ghost btn-sm" onClick={() => exportDeals(deals, clientName)}>↓ Export CSV</button>
         {!isViewer && (
           <button className="btn add-btn-desktop" onClick={() => setShowPanel(s => !s)}>
@@ -247,17 +259,47 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
       </div>
 
       {!isViewer && <button className="fab" onClick={() => setShowPanel(s => !s)} aria-label="Tambah dari Proyek">+</button>}
+
+      {isMobile && (
+        <div className="pipeline-stage-tabs">
+          {STAGES.map(stage => {
+            const count = deals.filter(d => d.stage === stage).length;
+            const stageColor = STAGE_COLOR[stage] || "var(--brand)";
+            return (
+              <button key={stage} type="button"
+                className={`pipeline-stage-tab${mobileStage === stage ? " active" : ""}`}
+                style={mobileStage === stage ? { background: stageColor, borderColor: stageColor } : { borderColor: stageColor, color: stageColor }}
+                onClick={() => setMobileStage(stage)}>
+                {stage} <span className="pipeline-stage-tab-count">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         {showPanel && !isViewer && (
           <ProjectPanel projects={availableProjects} clientName={clientName} search={projectSearch} onSearchChange={setProjectSearch} />
         )}
-        <div ref={boardRef} className="board" style={boardHeight ? { height: boardHeight } : undefined}>
-          {STAGES.map(stage => (
-            <Column key={stage} stage={stage} deals={deals.filter(d => d.stage === stage)}
-              clientName={clientName} onDealClick={d => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}
-              onMoveStage={(dealId, s) => onUpdateStage(dealId, s)} isViewer={isViewer} />
-          ))}
-        </div>
+        {isMobile ? (
+          <div className="pipeline-mobile-list">
+            {deals.filter(d => d.stage === mobileStage).length === 0 ? (
+              <div className="empty-state">Belum ada deal di stage ini.</div>
+            ) : deals.filter(d => d.stage === mobileStage).map(d => (
+              <DealCard key={d.id} deal={d} clientName={clientName(d.client_id)}
+                onClick={() => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}
+                onMoveStage={s => onUpdateStage(d.id, s)} isViewer={isViewer} />
+            ))}
+          </div>
+        ) : (
+          <div ref={boardRef} className="board" style={boardHeight ? { height: boardHeight } : undefined}>
+            {STAGES.map(stage => (
+              <Column key={stage} stage={stage} deals={deals.filter(d => d.stage === stage)}
+                clientName={clientName} onDealClick={d => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}
+                onMoveStage={(dealId, s) => onUpdateStage(dealId, s)} isViewer={isViewer} />
+            ))}
+          </div>
+        )}
         <DragOverlay>
           {activeDeal && (
             <div className="deal" style={{ opacity: 0.9, cursor: "grabbing" }}>
