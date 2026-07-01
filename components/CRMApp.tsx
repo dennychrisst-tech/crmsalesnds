@@ -12,6 +12,7 @@ import Projects from "./Projects";
 import TasksView from "./TasksView";
 import ProductsView from "./ProductsView";
 import GlobalSearch from "./GlobalSearch";
+import RemindersBell from "./RemindersBell";
 import SummaryView from "./SummaryView";
 import VisitReport from "./VisitReport";
 
@@ -50,6 +51,7 @@ export default function CRMApp() {
   } = useData();
 
   const isViewer = currentProfile?.role === "viewer";
+  const isAdmin = !!currentProfile && ["super_admin", "admin"].includes(currentProfile.role);
   const warnViewer = () => { alert("Anda hanya memiliki akses lihat (view only)."); return Promise.resolve(); };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ro = (fn: any) => isViewer ? (() => warnViewer()) : fn;
@@ -71,6 +73,9 @@ export default function CRMApp() {
           <div className="header-crm-tag">Sales CRM</div>
         </div>
         {!loading && <GlobalSearch data={data} onNavigate={setView} />}
+        {!loading && (
+          <RemindersBell data={data} currentUserName={currentProfile?.name ?? ""} isAdmin={isAdmin} onNavigate={setView} />
+        )}
         <div className="sync-status">{syncStatus}</div>
         {currentProfile && ["super_admin", "admin"].includes(currentProfile.role) && (
           <a href="/admin/users" className="btn-admin">Admin</a>
