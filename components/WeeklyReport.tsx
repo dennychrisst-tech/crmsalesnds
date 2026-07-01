@@ -1,8 +1,10 @@
 "use client";
 import { useState } from "react";
 import { AppData } from "@/hooks/useData";
+import { Project } from "@/types";
 import { fmtIDR, fmtDate, fmtDateStr, picMatches, STAGE_COLOR } from "@/lib/utils";
 import { exportWeeklyReport } from "@/lib/export";
+import Modal, { ModalActions } from "./ui/Modal";
 
 function getWeekRange(offset: number) {
   const now = new Date();
@@ -19,12 +21,13 @@ function inRange(dateStr: string | null | undefined, start: string, end: string)
   return d >= start && d <= end;
 }
 
-interface Props { data: AppData; onOpenProject: (projectId: string) => void; onOpenDeal: (dealId: string) => void; }
+interface Props { data: AppData; onOpenDeal: (dealId: string) => void; }
 
-export default function WeeklyReport({ data, onOpenProject, onOpenDeal }: Props) {
+export default function WeeklyReport({ data, onOpenDeal }: Props) {
   const { clients, visits, deals, projects, profiles } = data;
   const team = profiles.filter(p => !["super_admin", "admin", "viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [offset, setOffset] = useState(0);
+  const [detailProject, setDetailProject] = useState<Project | null>(null);
   const { start, end, label } = getWeekRange(offset);
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
@@ -136,8 +139,8 @@ export default function WeeklyReport({ data, onOpenProject, onOpenDeal }: Props)
                           <span
                             key={p.id}
                             className="wr-update-chip wr-update-chip-clickable"
-                            onClick={() => onOpenProject(p.id)}
-                            title="Buka detail project"
+                            onClick={() => setDetailProject(p)}
+                            title="Lihat detail project"
                           >
                             🏗️ {p.name} · {p.status}
                           </span>
@@ -151,6 +154,33 @@ export default function WeeklyReport({ data, onOpenProject, onOpenDeal }: Props)
           )}
         </div>
       ))}
+
+      <Modal open={!!detailProject} onClose={() => setDetailProject(null)} title="Detail Project">
+        {detailProject && (
+          <>
+            <div className="dd-title-row">
+              <div>
+                <div className="dd-name">{detailProject.name}</div>
+                <div className="dd-client">{clientName(detailProject.client_id)}</div>
+              </div>
+              <span className="badge">{detailProject.status}</span>
+            </div>
+            <div className="dd-grid">
+              <div className="dd-item"><div className="dd-label">Produk / Solusi</div><div className="dd-value">{detailProject.product || "—"}</div></div>
+              <div className="dd-item"><div className="dd-label">Partner</div><div className="dd-value">{detailProject.partner || "—"}</div></div>
+              <div className="dd-item"><div className="dd-label">Target Go-Live</div><div className="dd-value">{detailProject.golive ? fmtDate(detailProject.golive) : "—"}</div></div>
+              <div className="dd-item"><div className="dd-label">Nilai</div><div className="dd-value dd-value-brand">{fmtIDR(detailProject.value)}</div></div>
+            </div>
+            <div className="dd-block">
+              <div className="dd-label">Catatan</div>
+              <div className="dd-text">{detailProject.notes || "—"}</div>
+            </div>
+            <ModalActions>
+              <button className="btn btn-ghost" onClick={() => setDetailProject(null)}>Tutup</button>
+            </ModalActions>
+          </>
+        )}
+      </Modal>
     </section>
   );
 }
