@@ -39,9 +39,6 @@ header.top {
   color: #fff; background: var(--brand); padding: 3px 9px; border-radius: 6px;
   align-self: center;
 }
-.live-clock { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.3; margin-left: auto; }
-.live-clock-time { font-size: 13px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
-.live-clock-date { font-size: 11px; color: var(--ink-soft); white-space: nowrap; }
 .btn-logout {
   position: absolute; top: 26px; right: 0;
   border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
@@ -516,11 +513,6 @@ tr.task-soon td { background: #fffbeb; }
   .header-search-row .gs-input-wrap { min-width: 0; }
   .header-search-row .gs-input { min-width: 0; }
   .header-search-row .rb-wrap { flex: 0 0 auto; }
-  .header-search-row .live-clock {
-    flex: 0 0 auto; margin-left: 0; align-items: center; line-height: 1.1; white-space: nowrap;
-  }
-  .header-search-row .live-clock-time { font-size: 10.5px; }
-  .header-search-row .live-clock-date { display: none; }
   .btn-admin { order: 5; padding: 5px 10px; font-size: 11px; }
   .btn-logout { top: 14px; padding: 5px 10px; font-size: 11px; }
 
