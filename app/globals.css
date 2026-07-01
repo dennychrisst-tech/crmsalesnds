@@ -100,6 +100,9 @@ nav.tabs button.active::after {
 .cal-agenda { display: none; }
 .cal-grid-view { }
 
+/* WFO quick form — mobile-only alternative to the desktop drag panel */
+.wfo-quick-form-wrap { display: none; }
+
 /* KPIs */
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 14px; margin-bottom: 24px; }
 .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
@@ -673,5 +676,17 @@ tr.task-soon td { background: #fffbeb; }
   .agenda-item-title { font-weight: 600; }
   .agenda-item-sub { color: var(--ink-soft); font-size: 11px; }
   .agenda-empty { text-align: center; padding: 24px 0; color: var(--ink-soft); font-size: 12.5px; }
-  .agenda-wfo-pick { font-size: 11px; padding: 4px 8px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); border: none; cursor: pointer; font-family: inherit; font-weight: 700; }
+
+  /* WFO quick form — plain date+name picker, replaces drag-and-drop on mobile */
+  .wfo-quick-form-wrap { display: block; margin-bottom: 14px; }
+  .wfo-quick-form {
+    display: flex; flex-direction: column; gap: 8px; background: var(--card);
+    border: 1px solid var(--line); border-radius: 12px; padding: 12px;
+  }
+  .wfo-quick-row { display: flex; gap: 8px; }
+  .wfo-quick-row input, .wfo-quick-row select {
+    flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px;
+    background: var(--paper); color: var(--ink); font-size: 12.5px; font-family: inherit;
+  }
+  .wfo-quick-form .btn { width: 100%; justify-content: center; }
 }

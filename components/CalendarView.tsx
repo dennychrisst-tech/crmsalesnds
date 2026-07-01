@@ -57,21 +57,46 @@ function WfoChip({ name }: { name: string }) {
   );
 }
 
+// Mobile alternative to dragging a WfoChip onto the grid: a plain date + name
+// form. Works the same on any screen size, so it doesn't rely on touch-drag.
+function WfoQuickForm({ team, onMark }: { team: string[]; onMark: (name: string, ds: string) => Promise<void> }) {
+  const [date, setDate] = useState(todayStr());
+  const [name, setName] = useState(team[0] || "");
+  const [saving, setSaving] = useState(false);
+
+  async function submit() {
+    if (!name || !date || saving) return;
+    setSaving(true);
+    try { await onMark(name, date); } finally { setSaving(false); }
+  }
+
+  return (
+    <div className="wfo-quick-form">
+      <div className="wfo-quick-row">
+        <input type="date" value={date} onChange={e => setDate(e.target.value)} />
+        <select value={name} onChange={e => setName(e.target.value)}>
+          {team.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+      </div>
+      <button type="button" className="btn" disabled={!name || !date || saving} onClick={submit}>
+        {saving ? "Menandai…" : "🏠 Tandai WFO"}
+      </button>
+    </div>
+  );
+}
+
 function AgendaDayCard({
-  ds, day, y, m, today, dayVisits, dayEvents, clientName, isViewer, pickWfoName, onMarkWfo, onEditVisit, onEditEvent,
+  ds, day, y, m, today, dayVisits, dayEvents, clientName, isViewer, onEditVisit, onEditEvent,
 }: {
   ds: string; day: number; y: number; m: number; today: string; dayVisits: Visit[]; dayEvents: CalendarEvent[];
-  clientName: (id: string) => string; isViewer?: boolean; pickWfoName: string | null;
-  onMarkWfo: (ds: string) => void; onEditVisit: (v: Visit) => void; onEditEvent: (e: CalendarEvent) => void;
+  clientName: (id: string) => string; isViewer?: boolean;
+  onEditVisit: (v: Visit) => void; onEditEvent: (e: CalendarEvent) => void;
 }) {
   const label = new Date(y, m, day).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" });
   return (
     <div className="agenda-day">
       <div className={`agenda-date${ds === today ? " is-today" : ""}`}>
         <span>{label}</span>
-        {pickWfoName && (
-          <button type="button" className="agenda-wfo-pick" onClick={() => onMarkWfo(ds)}>🏠 Tandai di sini</button>
-        )}
       </div>
       <div className="agenda-items">
         {dayVisits.map(v => {
@@ -169,8 +194,6 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
   const [showWfoPanel, setShowWfoPanel] = useState(false);
   const [activeWfoName, setActiveWfoName] = useState<string | null>(null);
   const [pendingWfo, setPendingWfo] = useState<Set<string>>(new Set());
-  // Tap-to-mark WFO — the mobile alternative to dragging a WfoChip onto a grid cell.
-  const [pickWfoName, setPickWfoName] = useState<string | null>(null);
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
   const y = cursor.getFullYear(), m = cursor.getMonth();
@@ -232,9 +255,8 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
     const ds = `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     return { ds, day, dayVisits: visits.filter(v => v.date === ds), dayEvents: events.filter(e => e.date === ds) };
   });
-  // Agenda mode shows only days with something scheduled, unless the user is
-  // actively picking a WFO name — then every day needs to stay tappable.
-  const agendaDays = pickWfoName ? monthDays : monthDays.filter(d => d.dayVisits.length || d.dayEvents.length);
+  // Agenda mode only lists days with something scheduled, Google-Calendar-mobile style.
+  const agendaDays = monthDays.filter(d => d.dayVisits.length || d.dayEvents.length);
 
   return (
     <section>
@@ -273,6 +295,13 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
         <span className="cal-legend-item"><span className="cal-dot cal-dot-wfo" />WFO (tidak visit)</span>
       </div>
 
+      {/* Mobile-only WFO form — plain date + name picker, no drag needed */}
+      {showWfoPanel && !isViewer && (
+        <div className="wfo-quick-form-wrap">
+          <WfoQuickForm team={team} onMark={markWfo} />
+        </div>
+      )}
+
       <div className="cal-grid-view">
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           {showWfoPanel && !isViewer && (
@@ -306,29 +335,12 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
 
       {/* Agenda list — mobile only, replaces the month grid above */}
       <div className="cal-agenda">
-        {showWfoPanel && !isViewer && (
-          <div className="agenda-day" style={{ background: "var(--brand-soft)" }}>
-            <div className="agenda-date">
-              <span>🏠 Tandai WFO — pilih nama</span>
-              {pickWfoName && <button type="button" className="agenda-wfo-pick" onClick={() => setPickWfoName(null)}>Batal</button>}
-            </div>
-            <div className="agenda-items" style={{ flexDirection: "row", flexWrap: "wrap" }}>
-              {team.map(name => (
-                <button key={name} type="button" className="agenda-wfo-pick"
-                  style={{ background: pickWfoName === name ? "var(--brand)" : "var(--card)", color: pickWfoName === name ? "#fff" : "var(--brand)" }}
-                  onClick={() => setPickWfoName(p => p === name ? null : name)}>
-                  {name}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
         {agendaDays.length === 0 ? (
           <div className="agenda-empty">Tidak ada visit atau event bulan ini.</div>
         ) : agendaDays.map(({ ds, day, dayVisits, dayEvents }) => (
           <AgendaDayCard key={ds} ds={ds} day={day} y={y} m={m} today={today} dayVisits={dayVisits} dayEvents={dayEvents}
-            clientName={clientName} isViewer={isViewer} pickWfoName={pickWfoName}
-            onMarkWfo={dsArg => markWfo(pickWfoName!, dsArg)} onEditVisit={openEditVisit} onEditEvent={openEditEvent} />
+            clientName={clientName} isViewer={isViewer}
+            onEditVisit={openEditVisit} onEditEvent={openEditEvent} />
         ))}
       </div>
 
