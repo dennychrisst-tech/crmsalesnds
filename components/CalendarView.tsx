@@ -89,7 +89,8 @@ function DayCell({
         const isWfo = ev.type === "WFO";
         return (
           <div key={ev.id} className={`vpill ${isWfo ? "vpill-wfo" : "vpill-event"}`}
-            onClick={e => { e.stopPropagation(); if (!isViewer) onEditEvent(ev); }}
+            style={isWfo ? { cursor: "default" } : undefined}
+            onClick={isWfo ? undefined : e => { e.stopPropagation(); if (!isViewer) onEditEvent(ev); }}
             title={isWfo ? `WFO: ${ev.created_by || "—"}` : ev.title}>
             {isWfo ? `🏠 ${ev.created_by || "WFO"}` : ev.title}
           </div>
