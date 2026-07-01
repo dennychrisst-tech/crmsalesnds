@@ -80,7 +80,7 @@ export default function AdminDashboard() {
 
         {/* Deals by stage */}
         <div style={card}>
-          <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: "var(--ink-soft)", marginBottom: "12px" }}>Deal per Stage</div>
+          <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: "var(--ink-soft)", marginBottom: "12px" }}>Project per Stage</div>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {STAGE_ORDER.filter(s => stageMap[s]).map(stage => (
               <div key={stage} style={{ display: "flex", alignItems: "center", gap: "10px" }}>

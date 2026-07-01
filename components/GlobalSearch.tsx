@@ -9,7 +9,7 @@ interface Props {
 }
 
 interface Result {
-  type: "Client" | "Deal" | "Task";
+  type: "Client" | "Project" | "Task";
   label: string;
   sub: string;
   view: ActiveView;
@@ -42,7 +42,7 @@ export default function GlobalSearch({ data, onNavigate }: Props) {
       .slice(0, 4)
       .forEach(d => {
         const cn = data.clients.find(c => c.id === d.client_id)?.name || "—";
-        results.push({ type: "Deal", label: d.name, sub: `${cn} · ${d.stage}`, view: "pipeline" });
+        results.push({ type: "Project", label: d.name, sub: `${cn} · ${d.stage}`, view: "pipeline" });
       });
 
     data.tasks
@@ -57,7 +57,7 @@ export default function GlobalSearch({ data, onNavigate }: Props) {
     setOpen(false);
   }
 
-  const typeCls: Record<string, string> = { Client: "gs-type-client", Deal: "gs-type-deal", Task: "gs-type-task" };
+  const typeCls: Record<string, string> = { Client: "gs-type-client", Project: "gs-type-deal", Task: "gs-type-task" };
 
   return (
     <div ref={ref} className="gs-wrap">
@@ -66,7 +66,7 @@ export default function GlobalSearch({ data, onNavigate }: Props) {
         <input
           className="gs-input"
           value={q}
-          placeholder="Cari client, deal, task…"
+          placeholder="Cari client, project, task…"
           onChange={e => { setQ(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
         />

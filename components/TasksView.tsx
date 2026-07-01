@@ -92,7 +92,7 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
                 <th>Deadline</th>
                 <th>Assigned To</th>
                 <th>Client</th>
-                <th>Deal</th>
+                <th>Project</th>
                 <th>Status</th>
                 <th></th>
               </tr>

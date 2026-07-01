@@ -134,7 +134,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
           <option value="name">Urutkan: Nama (A-Z)</option>
           <option value="contact_oldest">Urutkan: Kontak Terlama</option>
           <option value="contact_newest">Urutkan: Kontak Terbaru</option>
-          <option value="deal_value">Urutkan: Nilai Deal Tertinggi</option>
+          <option value="deal_value">Urutkan: Nilai Project Tertinggi</option>
         </select>
         <div className="view-toggle">
           <button className={viewMode === "detail" ? "active" : ""} onClick={() => setViewMode("detail")} title="Tampilan detail">☰ Detail</button>
@@ -168,7 +168,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
           <table>
             <thead>
               <tr>
-                <th>Nama</th><th>Sektor</th><th>Status</th><th>PIC</th><th>Kontak Terakhir</th><th>Deal Aktif</th><th></th>
+                <th>Nama</th><th>Sektor</th><th>Status</th><th>PIC</th><th>Kontak Terakhir</th><th>Project Aktif</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -273,7 +273,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
                     </span>
                   );
                 })()}
-                <span className="chip">{dealCount} deal aktif</span>
+                <span className="chip">{dealCount} project aktif</span>
                 {dealCount > 0 && <span className="chip chip-value">{fmtIDR(dealValue)}</span>}
                 {!isViewer && <button className="btn btn-ghost btn-sm" onClick={() => { setEditClient(c); setClientModalOpen(true); }}>Edit</button>}
               </div>

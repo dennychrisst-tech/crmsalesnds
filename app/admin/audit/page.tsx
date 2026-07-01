@@ -57,7 +57,7 @@ export default function AdminAudit() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--line)" }}>
-                  {["Waktu", "Tipe", "Deskripsi", "Oleh", "Client / Deal"].map(h => (
+                  {["Waktu", "Tipe", "Deskripsi", "Oleh", "Client / Project"].map(h => (
                     <th key={h} style={th}>{h}</th>
                   ))}
                 </tr>

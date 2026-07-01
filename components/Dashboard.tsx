@@ -256,7 +256,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
       spark: sparkDeals, warn: false,
     },
     {
-      label: "Closed Won", num: fmtIDR(wonValue), sub: `${wonDeals.length} deal`,
+      label: "Closed Won", num: fmtIDR(wonValue), sub: `${wonDeals.length} project`,
       accent: "var(--brand)", view: "pipeline" as ActiveView,
       spark: sparkWon, warn: false,
     },
@@ -349,7 +349,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
                 }} />
               </div>
               <div style={{ width: 110, fontSize: 12, textAlign: "right", color: "var(--ink)", fontWeight: 700, flexShrink: 0 }}>{fmtIDR(s.value)}</div>
-              <div style={{ width: 50, fontSize: 12, textAlign: "right", color: "var(--ink-soft)", flexShrink: 0 }}>{s.count} deal</div>
+              <div style={{ width: 50, fontSize: 12, textAlign: "right", color: "var(--ink-soft)", flexShrink: 0 }}>{s.count} project</div>
             </div>
           ))}
         </div>
@@ -383,7 +383,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
       {/* ── Row 3: Deal Closing + Tasks ── */}
       <div className="grid2">
         <div className="panel" style={panelStyle(PANEL_ACCENTS.deal)}>
-          <SectionHeader title={`Deal Closing 30 Hari (${closingSoon.length})`} icon="📅" accent={PANEL_ACCENTS.deal} action="Buka Pipeline" onClick={() => onNavigate("pipeline")} />
+          <SectionHeader title={`Project Closing 30 Hari (${closingSoon.length})`} icon="📅" accent={PANEL_ACCENTS.deal} action="Buka Pipeline" onClick={() => onNavigate("pipeline")} />
           {closingSoon.length ? closingSoon.map(d => {
             const daysLeft = Math.ceil((new Date(d.close_date).getTime() - new Date(today).getTime()) / 86400000);
             return (
@@ -404,7 +404,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
                 <div className="muted" style={{ fontSize: 11 }}>Stage: {d.stage} · PIC: {d.owner || "—"}</div>
               </div>
             );
-          }) : <EmptyState icon="📭" label="Tidak ada deal closing 30 hari ke depan" />}
+          }) : <EmptyState icon="📭" label="Tidak ada project closing 30 hari ke depan" />}
         </div>
 
         <div className="panel" style={panelStyle(overdueTasks.length > 0 ? PANEL_ACCENTS.task : PANEL_ACCENTS.task_ok)}>
@@ -452,7 +452,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
                 <div style={{ fontSize: 13, fontWeight: 700, color: PANEL_ACCENTS.client }}>{fmtIDR(c.value)}</div>
               </div>
             );
-          }) : <EmptyState icon="💰" label="Belum ada deal pipeline" sub="Tambah deal dari tab Pipeline" />}
+          }) : <EmptyState icon="💰" label="Belum ada project pipeline" sub="Tambah project dari tab Pipeline" />}
         </div>
 
         <div className="panel" style={panelStyle(PANEL_ACCENTS.project)}>

@@ -49,7 +49,7 @@ export default function AdminTeam() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--line)" }}>
-                {["Nama", "Role", "Client", "Deal", "Nilai Deal", "Kunjungan", "Aktivitas", "Bergabung"].map(h => (
+                {["Nama", "Role", "Client", "Project", "Nilai Project", "Kunjungan", "Aktivitas", "Bergabung"].map(h => (
                   <th key={h} style={th}>{h}</th>
                 ))}
               </tr>

@@ -16,7 +16,7 @@ const NDS_LOGO = (
 );
 
 const FEATURES = [
-  { icon: "💼", title: "Pipeline Deal", desc: "Kelola dan pantau progress setiap deal dalam satu papan kanban." },
+  { icon: "💼", title: "Pipeline Project", desc: "Kelola dan pantau progress setiap project dalam satu papan kanban." },
   { icon: "📅", title: "Tracking Kunjungan", desc: "Catat setiap visit dan reschedule otomatis ke kalender tim." },
   { icon: "📊", title: "Laporan Aktivitas", desc: "Ringkasan performa sales per periode dengan data real-time." },
 ];

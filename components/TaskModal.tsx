@@ -75,7 +75,7 @@ export default function TaskModal({ open, task, clients, deals, team, defaultAss
             {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </Field>
-        <Field label="Deal (opsional)">
+        <Field label="Project (opsional)">
           <select className={selectCls} value={form.deal_id || ""} onChange={e => set("deal_id", e.target.value || null)}>
             <option value="">— Tidak ada —</option>
             {clientDeals.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}

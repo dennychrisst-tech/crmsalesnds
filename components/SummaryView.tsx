@@ -91,7 +91,7 @@ export default function SummaryView({ data }: Props) {
     periodActivities.forEach(a => items.push({
       date: (a.created_at || "").slice(0, 10), icon: "💬", type: "activity",
       label: `${a.type}: ${a.description.slice(0, 60)}${a.description.length > 60 ? "…" : ""}`,
-      sub: a.deal_id ? `Deal · ${deals.find(d => d.id === a.deal_id)?.name || "—"}` : "Aktivitas",
+      sub: a.deal_id ? `Project · ${deals.find(d => d.id === a.deal_id)?.name || "—"}` : "Aktivitas",
       who: a.created_by || "—",
     }));
 
@@ -104,7 +104,7 @@ export default function SummaryView({ data }: Props) {
 
     periodDeals.forEach(d => items.push({
       date: (d.created_at || "").slice(0, 10), icon: "💼", type: "deal",
-      label: `Deal baru: ${d.name}`,
+      label: `Project baru: ${d.name}`,
       sub: `${clientName(d.client_id)} · ${d.stage}`,
       who: d.owner || "—",
     }));
@@ -139,7 +139,7 @@ export default function SummaryView({ data }: Props) {
     activity: "feed-type-activity", event: "feed-type-event", deal: "feed-type-deal",
   };
   const typeLabel: Record<string, string> = {
-    visit: "Visit", task: "Task", activity: "Aktivitas", event: "Event", deal: "Deal",
+    visit: "Visit", task: "Task", activity: "Aktivitas", event: "Event", deal: "Project",
   };
 
   return (
@@ -179,17 +179,17 @@ export default function SummaryView({ data }: Props) {
           <div className="kpi-sub">dari {periodTasks.length} task</div>
         </div>
         <div className="kpi">
-          <div className="kpi-label">Deal baru</div>
+          <div className="kpi-label">Project baru</div>
           <div className="kpi-num">{periodDeals.length}</div>
           <div className="kpi-sub">{fmtIDR(newPipeline)}</div>
         </div>
         <div className="kpi" style={{ borderColor: wonDeals.length ? "var(--brand)" : "" }}>
-          <div className="kpi-label">Deal Won</div>
+          <div className="kpi-label">Project Won</div>
           <div className="kpi-num" style={{ color: wonDeals.length ? "var(--brand)" : "" }}>{wonDeals.length}</div>
           <div className="kpi-sub">{fmtIDR(wonValue)}</div>
         </div>
         <div className="kpi" style={{ borderColor: lostDeals.length ? "var(--danger)" : "" }}>
-          <div className="kpi-label">Deal Lost</div>
+          <div className="kpi-label">Project Lost</div>
           <div className="kpi-num" style={{ color: lostDeals.length ? "var(--danger)" : "" }}>{lostDeals.length}</div>
           <div className="kpi-sub">{lostDeals.length ? lostDeals.map(d => d.name).join(", ").slice(0, 40) : "Tidak ada"}</div>
         </div>
@@ -269,7 +269,7 @@ export default function SummaryView({ data }: Props) {
           {/* Won deals detail */}
           {wonDeals.length > 0 && (
             <div className="panel">
-              <h2>Deal Won periode ini 🎉</h2>
+              <h2>Project Won periode ini 🎉</h2>
               {wonDeals.map(d => (
                 <div key={d.id} className="timeline-item">
                   <div className="ti-date">{clientName(d.client_id)}{d.owner ? ` · 👤 ${d.owner}` : ""}</div>

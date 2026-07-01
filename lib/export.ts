@@ -14,7 +14,7 @@ function download(filename: string, content: string) {
 }
 
 export function exportClients(clients: Client[], clientDeals: (id: string) => number) {
-  const header = ["Nama", "Sektor", "Status", "PIC", "Telepon PIC", "Website", "Alamat", "Ukuran Perusahaan", "Catatan", "Deal Aktif"];
+  const header = ["Nama", "Sektor", "Status", "PIC", "Telepon PIC", "Website", "Alamat", "Ukuran Perusahaan", "Catatan", "Project Aktif"];
   const rows = clients.map(c => {
     const pics = (Array.isArray(c.pic) ? c.pic : []) as PIC[];
     return [
@@ -29,13 +29,13 @@ export function exportClients(clients: Client[], clientDeals: (id: string) => nu
 }
 
 export function exportDeals(deals: Deal[], clientName: (id: string) => string) {
-  const header = ["Nama Deal", "Client", "Stage", "Tipe Deal", "Owner", "Nilai (Rp)", "Target Closing", "Produk", "Kompetitor", "Alasan Win/Loss", "Catatan"];
+  const header = ["Nama Project", "Client", "Stage", "Tipe Project", "Owner", "Nilai (Rp)", "Target Closing", "Produk", "Kompetitor", "Alasan Win/Loss", "Catatan"];
   const rows = deals.map(d => [
     d.name, clientName(d.client_id), d.stage, d.deal_type || "", d.owner || "",
     d.value, d.close_date || "", d.product || "", d.competitor || "",
     d.win_loss_reason || "", d.notes || "",
   ]);
-  download(`deals_${today()}.csv`, csv([header, ...rows]));
+  download(`pipeline_projects_${today()}.csv`, csv([header, ...rows]));
 }
 
 export function exportVisits(visits: Visit[], clientName: (id: string) => string) {
