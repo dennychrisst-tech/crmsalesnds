@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
@@ -97,9 +97,13 @@ function Column({ stage, deals, clientName, onDealClick }: { stage: string; deal
   const stageColor = STAGE_COLOR[stage] || "var(--brand)";
   return (
     <div ref={setNodeRef} className={`col${isOver ? " over" : ""}`} data-stage={stage} style={{ borderTop: `3px solid ${stageColor}` }}>
-      <h3 style={{ color: stageColor }}>{stage}</h3>
-      <div className="colval">{deals.length} · {fmtIDR(val)}</div>
-      {deals.map(d => <DealCard key={d.id} deal={d} clientName={clientName(d.client_id)} onClick={() => onDealClick(d)} />)}
+      <div className="col-head">
+        <h3 style={{ color: stageColor }}>{stage}</h3>
+        <div className="colval">{deals.length} · {fmtIDR(val)}</div>
+      </div>
+      <div className="col-list">
+        {deals.map(d => <DealCard key={d.id} deal={d} clientName={clientName(d.client_id)} onClick={() => onDealClick(d)} />)}
+      </div>
     </div>
   );
 }
@@ -114,6 +118,20 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   const [showPanel, setShowPanel] = useState(false);
   const [projectSearch, setProjectSearch] = useState("");
   const [pendingProjectIds, setPendingProjectIds] = useState<Set<string>>(new Set());
+  const boardRef = useRef<HTMLDivElement>(null);
+  const [boardHeight, setBoardHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    function measure() {
+      if (!boardRef.current) return;
+      const top = boardRef.current.getBoundingClientRect().top;
+      // .app has 80px bottom padding — subtract it too so the board doesn't overshoot and leave a page-level scrollbar
+      setBoardHeight(Math.max(window.innerHeight - top - 80 - 16, 240));
+    }
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [showPanel]);
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
   const open = deals.filter(d => d.stage !== "Lost");
@@ -195,7 +213,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
         {showPanel && !isViewer && (
           <ProjectPanel projects={availableProjects} clientName={clientName} search={projectSearch} onSearchChange={setProjectSearch} />
         )}
-        <div className="board">
+        <div ref={boardRef} className="board" style={boardHeight ? { height: boardHeight } : undefined}>
           {STAGES.map(stage => (
             <Column key={stage} stage={stage} deals={deals.filter(d => d.stage === stage)}
               clientName={clientName} onDealClick={d => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }} />
