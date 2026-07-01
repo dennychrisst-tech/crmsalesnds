@@ -157,6 +157,7 @@ export default function SummaryView({ data }: Props) {
           {offset !== 0 && <button className="btn btn-ghost btn-sm" onClick={() => setOffset(0)}>Sekarang</button>}
         </div>
         <select
+          className="sum-sales-filter"
           value={salesFilter}
           onChange={e => setSalesFilter(e.target.value)}
           style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)", cursor: "pointer" }}

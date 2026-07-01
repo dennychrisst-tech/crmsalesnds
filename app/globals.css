@@ -337,6 +337,7 @@ tr.task-soon td { background: #fffbeb; }
 .sum-toggle-active { background: var(--ink); color: #fff; }
 .sum-nav { display: flex; align-items: center; gap: 8px; }
 .sum-period-label { font-size: 15px; font-weight: 700; min-width: 180px; text-align: center; }
+.sum-sales-filter { margin-left: auto; }
 .feed-day-group { margin-bottom: 14px; }
 .feed-date-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--brand); margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
 .feed-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
@@ -527,8 +528,11 @@ tr.task-soon td { background: #fffbeb; }
 
   /* Summary view header */
   .sum-header { gap: 10px; }
+  .sum-period-toggle { flex: 1 1 100%; }
+  .sum-period-toggle button { flex: 1 1 0; }
   .sum-period-label { min-width: 0; font-size: 13px; }
   .sum-nav { flex: 1 1 100%; justify-content: center; }
+  .sum-sales-filter { flex: 1 1 100%; margin-left: 0; }
 
   /* Client card header */
   .ccard-head { flex-wrap: wrap; }
