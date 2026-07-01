@@ -33,6 +33,12 @@ const TABS: { id: ActiveView; label: string; icon: string }[] = [
 export default function CRMApp() {
   const router = useRouter();
   const [view, setView] = useState<ActiveView>("dashboard");
+  const [pendingClientId, setPendingClientId] = useState<string | null>(null);
+
+  function openClient(clientId: string) {
+    setPendingClientId(clientId);
+    setView("clients");
+  }
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -114,7 +120,8 @@ export default function CRMApp() {
                   <Clients data={data} currentUserName={currentUserName} isViewer={isViewer} onNavigate={setView}
                     onSaveClient={ro(upsertClient)} onDeleteClient={ro(deleteClient)}
                     onSaveContact={ro(upsertContact)} onDeleteContact={ro(deleteContact)}
-                    onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)} onCreateDeal={ro(upsertDeal)} />
+                    onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)} onCreateDeal={ro(upsertDeal)}
+                    openClientId={pendingClientId} onOpenClientHandled={() => setPendingClientId(null)} />
                 )}
                 {view === "pipeline" && (
                   <Pipeline data={data} currentUserName={currentUserName} isViewer={isViewer}
@@ -124,7 +131,7 @@ export default function CRMApp() {
                     onAddActivity={ro(upsertActivity)} onDeleteActivity={ro(deleteActivity)} />
                 )}
                 {view === "projects" && (
-                  <Projects data={data} isViewer={isViewer} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)} />
+                  <Projects data={data} isViewer={isViewer} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)} onOpenClient={openClient} />
                 )}
                 {view === "tasks" && (
                   <TasksView data={data} currentUserName={currentUserName} isViewer={isViewer} onSaveTask={ro(upsertTask)} onDeleteTask={ro(deleteTask)} onCreateDeal={ro(upsertDeal)} />

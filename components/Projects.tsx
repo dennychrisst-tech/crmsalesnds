@@ -10,9 +10,10 @@ interface Props {
   isViewer?: boolean;
   onSaveProject: (p: Project) => Promise<void>;
   onDeleteProject: (id: string) => Promise<void>;
+  onOpenClient: (clientId: string) => void;
 }
 
-export default function Projects({ data, isViewer, onSaveProject, onDeleteProject }: Props) {
+export default function Projects({ data, isViewer, onSaveProject, onDeleteProject, onOpenClient }: Props) {
   const { clients, projects, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
@@ -55,7 +56,24 @@ export default function Projects({ data, isViewer, onSaveProject, onDeleteProjec
               <tr key={p.id}>
                 <td><b>{p.name}</b><br /><span className="muted" style={{ fontSize: 11 }}>{p.notes}</span></td>
                 <td>{clientName(p.client_id)}</td>
-                <td>{p.partner ? <span style={{ fontSize: 12, background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 5, padding: "2px 8px" }}>{p.partner}</span> : <span className="muted">—</span>}</td>
+                <td>
+                  {p.partner ? (
+                    <span
+                      onClick={e => {
+                        e.stopPropagation();
+                        const partnerClient = clients.find(c => c.name === p.partner);
+                        if (partnerClient) onOpenClient(partnerClient.id);
+                      }}
+                      style={{
+                        fontSize: 12, background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 5,
+                        padding: "2px 8px", cursor: "pointer",
+                      }}
+                      title="Buka data client"
+                    >
+                      {p.partner}
+                    </span>
+                  ) : <span className="muted">—</span>}
+                </td>
                 <td>{p.product || "-"}</td>
                 <td>{p.status}</td>
                 <td>{fmtIDR(p.value)}</td>

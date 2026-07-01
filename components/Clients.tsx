@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { Client, Contact, Visit, Deal, PIC, Activity, ActiveView } from "@/types";
 import { fmtDate, fmtIDR, isoWeekLabel, CLIENT_STATUS_COLOR, SECTORS } from "@/lib/utils";
@@ -22,6 +22,8 @@ interface Props {
   onSaveVisit: (v: Visit) => Promise<void>;
   onDeleteVisit: (id: string) => Promise<void>;
   onCreateDeal: (d: Deal) => Promise<void>;
+  openClientId?: string | null;
+  onOpenClientHandled?: () => void;
 }
 
 const CLIENT_STATUSES = Object.keys(CLIENT_STATUS_COLOR);
@@ -52,7 +54,7 @@ function lastContactDate(clientId: string, visits: Visit[], activities: Activity
   return dates.length ? dates[dates.length - 1] : null;
 }
 
-export default function Clients({ data, currentUserName, isViewer, onNavigate, onSaveClient, onDeleteClient, onSaveContact, onDeleteContact, onSaveVisit, onDeleteVisit, onCreateDeal }: Props) {
+export default function Clients({ data, currentUserName, isViewer, onNavigate, onSaveClient, onDeleteClient, onSaveContact, onDeleteContact, onSaveVisit, onDeleteVisit, onCreateDeal, openClientId, onOpenClientHandled }: Props) {
   const { clients, contacts, visits, deals, activities, profiles, projects } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
@@ -73,6 +75,14 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
   const [visitModalOpen, setVisitModalOpen] = useState(false);
   const [editVisit, setEditVisit] = useState<Visit | null>(null);
   const [preClientId, setPreClientId] = useState<string | undefined>();
+
+  useEffect(() => {
+    if (!openClientId) return;
+    const client = clients.find(c => c.id === openClientId);
+    if (client) { setEditClient(client); setClientModalOpen(true); }
+    onOpenClientHandled?.();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openClientId]);
 
   const openDealsCount = (id: string) => deals.filter(d => d.client_id === id && d.stage !== "Won" && d.stage !== "Lost").length;
   const openDealsValue = (id: string) => deals.filter(d => d.client_id === id && d.stage !== "Won" && d.stage !== "Lost").reduce((s, d) => s + d.value, 0);
