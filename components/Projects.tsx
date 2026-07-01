@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { Project, PIC } from "@/types";
 import { fmtIDR, fmtDate } from "@/lib/utils";
@@ -11,15 +11,25 @@ interface Props {
   onSaveProject: (p: Project) => Promise<void>;
   onDeleteProject: (id: string) => Promise<void>;
   onOpenClient: (clientId: string) => void;
+  openProjectId?: string | null;
+  onOpenProjectHandled?: () => void;
 }
 
-export default function Projects({ data, isViewer, onSaveProject, onDeleteProject, onOpenClient }: Props) {
+export default function Projects({ data, isViewer, onSaveProject, onDeleteProject, onOpenClient, openProjectId, onOpenProjectHandled }: Props) {
   const { clients, projects, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
   const [salesFilter, setSalesFilter] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
+
+  useEffect(() => {
+    if (!openProjectId) return;
+    const project = projects.find(p => p.id === openProjectId);
+    if (project) { setEditProject(project); setModalOpen(true); }
+    onOpenProjectHandled?.();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openProjectId]);
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
   const filtered = projects.filter(p => {

@@ -19,9 +19,9 @@ function inRange(dateStr: string | null | undefined, start: string, end: string)
   return d >= start && d <= end;
 }
 
-interface Props { data: AppData; }
+interface Props { data: AppData; onOpenProject: (projectId: string) => void; }
 
-export default function WeeklyReport({ data }: Props) {
+export default function WeeklyReport({ data, onOpenProject }: Props) {
   const { clients, visits, deals, projects, profiles } = data;
   const team = profiles.filter(p => !["super_admin", "admin", "viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [offset, setOffset] = useState(0);
@@ -131,7 +131,14 @@ export default function WeeklyReport({ data }: Props) {
                           </span>
                         )}
                         {clientProjects.map(p => (
-                          <span key={p.id} className="wr-update-chip">🏗️ {p.name} · {p.status}</span>
+                          <span
+                            key={p.id}
+                            className="wr-update-chip wr-update-chip-clickable"
+                            onClick={() => onOpenProject(p.id)}
+                            title="Buka detail project"
+                          >
+                            🏗️ {p.name} · {p.status}
+                          </span>
                         ))}
                       </div>
                     )}

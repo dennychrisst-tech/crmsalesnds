@@ -34,10 +34,16 @@ export default function CRMApp() {
   const router = useRouter();
   const [view, setView] = useState<ActiveView>("dashboard");
   const [pendingClientId, setPendingClientId] = useState<string | null>(null);
+  const [pendingProjectId, setPendingProjectId] = useState<string | null>(null);
 
   function openClient(clientId: string) {
     setPendingClientId(clientId);
     setView("clients");
+  }
+
+  function openProject(projectId: string) {
+    setPendingProjectId(projectId);
+    setView("projects");
   }
 
   async function handleLogout() {
@@ -131,7 +137,8 @@ export default function CRMApp() {
                     onAddActivity={ro(upsertActivity)} onDeleteActivity={ro(deleteActivity)} />
                 )}
                 {view === "projects" && (
-                  <Projects data={data} isViewer={isViewer} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)} onOpenClient={openClient} />
+                  <Projects data={data} isViewer={isViewer} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)} onOpenClient={openClient}
+                    openProjectId={pendingProjectId} onOpenProjectHandled={() => setPendingProjectId(null)} />
                 )}
                 {view === "tasks" && (
                   <TasksView data={data} currentUserName={currentUserName} isViewer={isViewer} onSaveTask={ro(upsertTask)} onDeleteTask={ro(deleteTask)} onCreateDeal={ro(upsertDeal)} />
@@ -141,7 +148,7 @@ export default function CRMApp() {
                 )}
                 {view === "summary" && <SummaryView data={data} />}
                 {view === "visit-report" && <VisitReport data={data} />}
-                {view === "weekly-report" && <WeeklyReport data={data} />}
+                {view === "weekly-report" && <WeeklyReport data={data} onOpenProject={openProject} />}
               </>
             );
           })()}
