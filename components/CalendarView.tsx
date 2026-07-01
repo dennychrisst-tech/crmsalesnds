@@ -20,9 +20,30 @@ interface Props {
   onCreateTask: (t: Task) => Promise<void>;
 }
 
+const SALES_COLOR_PALETTE = [
+  { bg: "#DBEAFE", fg: "#1D4ED8" },
+  { bg: "#DCFCE7", fg: "#15803D" },
+  { bg: "#FEF3C7", fg: "#B45309" },
+  { bg: "#FCE7F3", fg: "#BE185D" },
+  { bg: "#E0E7FF", fg: "#4338CA" },
+  { bg: "#CCFBF1", fg: "#0F766E" },
+  { bg: "#FFE4E6", fg: "#BE123C" },
+  { bg: "#FFEDD5", fg: "#C2410C" },
+  { bg: "#F1F5F9", fg: "#334155" },
+  { bg: "#ECFCCB", fg: "#3F6212" },
+];
+
+function colorForSales(name: string) {
+  const key = name || "—";
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  return SALES_COLOR_PALETTE[hash % SALES_COLOR_PALETTE.length];
+}
+
 export default function CalendarView({ data, currentUserName, isViewer, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask }: Props) {
   const { clients, contacts, visits, events, projects, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
+  const salesLegend = Array.from(new Set([...team, ...visits.map(v => v.pic).filter(Boolean)] as string[])).sort((a, b) => a.localeCompare(b));
 
   async function handleSaveVisit(v: Visit) {
     await onSaveVisit(v);
@@ -74,7 +95,15 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
 
       {/* Legend */}
       <div className="cal-legend">
-        <span className="cal-legend-item"><span className="cal-dot cal-dot-visit" />Visit Client</span>
+        {salesLegend.map(name => {
+          const c = colorForSales(name);
+          return (
+            <span key={name} className="cal-legend-item">
+              <span className="cal-dot" style={{ background: c.bg, border: `1px solid ${c.fg}` }} />
+              {name}
+            </span>
+          );
+        })}
         <span className="cal-legend-item"><span className="cal-dot cal-dot-event" />Event / Kegiatan</span>
       </div>
 
@@ -91,13 +120,17 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
               <div key={ds} className={`cell${ds === today ? " today" : ""}`}
                 onDoubleClick={() => { if (!isViewer) openNewVisit(ds); }} title={isViewer ? "" : "Double-klik untuk tambah visit"}>
                 <div className="dnum">{day}</div>
-                {dayVisits.map(v => (
-                  <div key={v.id} className={`vpill${v.status === "Done" ? " done" : ""}`}
-                    onClick={e => { e.stopPropagation(); if (!isViewer) openEditVisit(v); }}
-                    title={`${clientName(v.client_id)}: ${v.purpose}`}>
-                    {clientName(v.client_id)}
-                  </div>
-                ))}
+                {dayVisits.map(v => {
+                  const c = colorForSales(v.pic || "—");
+                  return (
+                    <div key={v.id} className="vpill"
+                      style={{ background: c.bg, color: c.fg, opacity: v.status === "Done" ? 0.55 : 1, textDecoration: v.status === "Done" ? "line-through" : "none" }}
+                      onClick={e => { e.stopPropagation(); if (!isViewer) openEditVisit(v); }}
+                      title={`${clientName(v.client_id)}: ${v.purpose} (${v.pic || "Tanpa sales"})`}>
+                      {clientName(v.client_id)}
+                    </div>
+                  );
+                })}
                 {dayEvents.map(ev => (
                   <div key={ev.id} className="vpill vpill-event"
                     onClick={e => { e.stopPropagation(); if (!isViewer) openEditEvent(ev); }}
