@@ -46,7 +46,7 @@ function relativeTime(dateStr: string): string {
 function lastContactDate(clientId: string, visits: Visit[], activities: Activity[]): string | null {
   const dates = [
     ...visits.filter(v => v.client_id === clientId).map(v => v.date),
-    ...activities.filter(a => a.client_id === clientId).map(a => (a.created_at || "").slice(0, 10)),
+    ...activities.filter(a => a.client_id === clientId).map(a => (a.date || a.created_at || "").slice(0, 10)),
   ].filter(Boolean).sort();
   return dates.length ? dates[dates.length - 1] : null;
 }

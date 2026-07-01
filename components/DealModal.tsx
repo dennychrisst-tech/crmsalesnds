@@ -35,7 +35,7 @@ const emptyDeal = (clientId: string, defaultOwner = ""): Deal => ({
 });
 
 const emptyActivity = (dealId: string): Omit<Activity, "id" | "created_at"> => ({
-  deal_id: dealId, client_id: null, type: "Note", description: "", created_by: "",
+  deal_id: dealId, client_id: null, type: "Note", description: "", date: todayStr(), created_by: "",
 });
 
 export default function DealModal({
@@ -187,14 +187,23 @@ export default function DealModal({
                 {team.map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
-            <textarea
-              className={textareaCls}
-              style={{ marginBottom: 8 }}
-              rows={2}
-              value={actForm.description}
-              onChange={e => setActForm(f => ({ ...f, description: e.target.value }))}
-              placeholder="Catat aktivitas, hasil call, meeting, dll…"
-            />
+            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+              <input
+                type="date"
+                className={inputCls}
+                style={{ flex: "0 0 160px" }}
+                value={actForm.date || ""}
+                onChange={e => setActForm(f => ({ ...f, date: e.target.value || null }))}
+              />
+              <textarea
+                className={textareaCls}
+                style={{ flex: 1, margin: 0 }}
+                rows={2}
+                value={actForm.description}
+                onChange={e => setActForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="Catat aktivitas, hasil call, meeting, dll…"
+              />
+            </div>
             <button className="btn btn-sm" onClick={handleAddActivity} disabled={saving}>
               {saving ? "Menyimpan…" : "+ Tambah Aktivitas"}
             </button>
@@ -204,12 +213,12 @@ export default function DealModal({
             {activities.length === 0 && (
               <div className="empty-state" style={{ padding: "16px 0" }}>Belum ada aktivitas.</div>
             )}
-            {activities.map(a => (
+            {[...activities].sort((a, b) => (b.date || b.created_at || "").localeCompare(a.date || a.created_at || "")).map(a => (
               <div key={a.id} className="activity-item">
                 <div className="activity-header">
                   <span className="activity-type">{a.type}</span>
                   {a.created_by && <span className="activity-by">👤 {a.created_by}</span>}
-                  <span className="activity-date">{fmtDate((a.created_at || "").slice(0, 10))}</span>
+                  <span className="activity-date">{fmtDate((a.date || a.created_at || "").slice(0, 10))}</span>
                   <button className="activity-del" onClick={() => onDeleteActivity(a.id)} title="Hapus">×</button>
                 </div>
                 <div className="activity-desc">{a.description}</div>

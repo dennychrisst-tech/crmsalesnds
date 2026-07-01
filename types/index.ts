@@ -77,6 +77,7 @@ export interface Activity {
   client_id: string | null;
   type: string;
   description: string;
+  date?: string | null;
   created_by: string;
   created_by_id?: string;
   created_at?: string;

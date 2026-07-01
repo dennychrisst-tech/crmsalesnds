@@ -213,7 +213,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
 
   // Activities
   const periodActivities = activities
-    .filter(a => inPeriod((a.created_at || "").slice(0, 10)) && bySales(a.created_by));
+    .filter(a => inPeriod((a.date || a.created_at || "").slice(0, 10)) && bySales(a.created_by));
 
   // Projects (not filtered by sales — shared resource)
   const activeProjects = projects.filter(p => p.status === "In Progress" || p.status === "Initiation");
@@ -231,7 +231,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
     teamActivity[name] = {
       visits: filteredVisits.filter(v => picMatches(v.pic, name) && v.date && inPeriod(v.date)).length,
       tasks: tasks.filter(t => t.assigned_to === name && t.status === "Open").length,
-      activities: activities.filter(a => a.created_by === name && inPeriod((a.created_at || "").slice(0, 10))).length,
+      activities: activities.filter(a => a.created_by === name && inPeriod((a.date || a.created_at || "").slice(0, 10))).length,
     };
   });
 
@@ -240,7 +240,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
   const sparkDeals   = weeklyCount(deals.filter(d => bySales(d.owner)), d => (d.created_at || "").slice(0, 10));
   const sparkWon     = weeklyCount(wonDeals, d => (d.stage_updated_at || d.created_at || "").slice(0, 10));
   const sparkVisits  = weeklyCount(filteredVisits, v => v.date);
-  const sparkActivities = weeklyCount(activities.filter(a => bySales(a.created_by)), a => (a.created_at || "").slice(0, 10));
+  const sparkActivities = weeklyCount(activities.filter(a => bySales(a.created_by)), a => (a.date || a.created_at || "").slice(0, 10));
   const sparkTasks   = weeklyCount(filteredTasks, t => t.due_date || "");
   const sparkReschedule = weeklyCount(filteredVisits.filter(v => v.status === "Reschedule"), v => v.date);
 

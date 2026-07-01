@@ -188,11 +188,12 @@ model Activity {
   id            String   @id @default(uuid()) @db.Uuid
   deal_id       String?  @db.Uuid
   client_id     String?  @db.Uuid
-  type          String   @default("Note")
-  description   String   @default("")
-  created_by    String   @default("")
-  created_by_id String?  @db.Uuid
-  created_at    DateTime @default(now())
+  type          String    @default("Note")
+  description   String    @default("")
+  date          DateTime? @db.Date
+  created_by    String    @default("")
+  created_by_id String?   @db.Uuid
+  created_at    DateTime  @default(now())
 
   deal   Deal?   @relation(fields: [deal_id], references: [id], onDelete: Cascade)
   client Client? @relation(fields: [client_id], references: [id], onDelete: Cascade)

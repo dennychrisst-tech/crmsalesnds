@@ -60,7 +60,7 @@ export default function SummaryView({ data }: Props) {
 
   const periodVisits   = visits.filter(v => inRange(v.date, start, end) && matchSales(v.pic));
   const periodTasks    = tasks.filter(t => inRange(t.due_date, start, end) && matchSales(t.assigned_to));
-  const periodActivities = activities.filter(a => inRange(a.created_at, start, end) && matchSales(a.created_by));
+  const periodActivities = activities.filter(a => inRange(a.date || a.created_at, start, end) && matchSales(a.created_by));
   const periodEvents   = events.filter(e => inRange(e.date, start, end) && matchSales(e.created_by));
   const periodDeals    = deals.filter(d => inRange(d.created_at, start, end) && matchSales(d.owner));
   const wonDeals       = deals.filter(d => d.stage === "Won" && inRange(d.stage_updated_at || d.created_at, start, end) && matchSales(d.owner));
@@ -89,7 +89,7 @@ export default function SummaryView({ data }: Props) {
     }));
 
     periodActivities.forEach(a => items.push({
-      date: (a.created_at || "").slice(0, 10), icon: "💬", type: "activity",
+      date: (a.date || a.created_at || "").slice(0, 10), icon: "💬", type: "activity",
       label: `${a.type}: ${a.description.slice(0, 60)}${a.description.length > 60 ? "…" : ""}`,
       sub: a.deal_id ? `Project · ${deals.find(d => d.id === a.deal_id)?.name || "—"}` : "Aktivitas",
       who: a.created_by || "—",
