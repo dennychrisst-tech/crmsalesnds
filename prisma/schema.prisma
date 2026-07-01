@@ -140,6 +140,7 @@ model Task {
   due_date      DateTime? @db.Date
   client_id     String?   @db.Uuid
   deal_id       String?   @db.Uuid
+  pic_client    String    @default("")
   assigned_to   String    @default("")
   status        String    @default("Open")
   notes         String    @default("")

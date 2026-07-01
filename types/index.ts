@@ -104,6 +104,7 @@ export interface Task {
   due_date: string;
   client_id: string | null;
   deal_id: string | null;
+  pic_client: string;
   assigned_to: string;
   status: TaskStatus;
   notes: string;

@@ -12,6 +12,7 @@ interface Props {
   isViewer?: boolean;
   onSaveTask: (t: Task) => Promise<void>;
   onDeleteTask: (id: string) => Promise<void>;
+  onCreateDeal: (d: Deal) => Promise<void>;
 }
 
 function statusBadge(status: string) {
@@ -33,8 +34,8 @@ function urgencyClass(dueDate: string, status: string): string {
   return "";
 }
 
-export default function TasksView({ data, currentUserName, isViewer, onSaveTask, onDeleteTask }: Props) {
-  const { tasks, clients, deals, profiles } = data;
+export default function TasksView({ data, currentUserName, isViewer, onSaveTask, onDeleteTask, onCreateDeal }: Props) {
+  const { tasks, clients, contacts, deals, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
@@ -114,8 +115,8 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
         </div>
       )}
 
-      <TaskModal open={modalOpen} task={editTask} clients={clients} deals={deals} team={team} defaultAssignee={currentUserName}
-        onSave={onSaveTask} onDelete={onDeleteTask} onClose={() => setModalOpen(false)} />
+      <TaskModal open={modalOpen} task={editTask} clients={clients} contacts={contacts} deals={deals} team={team} defaultAssignee={currentUserName}
+        onSave={onSaveTask} onDelete={onDeleteTask} onCreateDeal={onCreateDeal} onClose={() => setModalOpen(false)} />
     </section>
   );
 }
