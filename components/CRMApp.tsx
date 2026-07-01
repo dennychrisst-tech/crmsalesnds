@@ -15,6 +15,7 @@ import GlobalSearch from "./GlobalSearch";
 import RemindersBell from "./RemindersBell";
 import SummaryView from "./SummaryView";
 import VisitReport from "./VisitReport";
+import LiveClock from "./ui/LiveClock";
 
 const TABS: { id: ActiveView; label: string; icon: string }[] = [
   { id: "dashboard",    label: "Dashboard",         icon: "📊" },
@@ -76,6 +77,7 @@ export default function CRMApp() {
         {!loading && (
           <RemindersBell data={data} currentUserName={currentProfile?.name ?? ""} isAdmin={isAdmin} onNavigate={setView} />
         )}
+        <LiveClock />
         <div className="sync-status">{syncStatus}</div>
         {currentProfile && ["super_admin", "admin"].includes(currentProfile.role) && (
           <a href="/admin/users" className="btn-admin">Admin</a>

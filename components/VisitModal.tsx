@@ -4,7 +4,7 @@ import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import SearchableSelect from "./ui/SearchableSelect";
 import { Visit, Client, Contact, Project, Task } from "@/types";
-import { VISIT_STATUS, todayStr, picList } from "@/lib/utils";
+import { VISIT_STATUS, todayStr, picList, addDaysStr } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -27,12 +27,6 @@ interface TaskDraft {
   due_date: string;
   assigned_to: string;
   notes: string;
-}
-
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr + "T00:00:00");
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
 }
 
 function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit {
@@ -121,7 +115,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       await onCreateTask({
         id: uuid(),
         title: task.title.trim(),
-        due_date: task.due_date || addDays(form.date, 7),
+        due_date: task.due_date || addDaysStr(form.date, 7),
         client_id: form.client_id,
         deal_id: null,
         assigned_to: task.assigned_to || picList(form.pic)[0] || "",
@@ -169,7 +163,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         <Field label="Tanggal approach">
           <input type="date" className={inputCls} value={form.date} onChange={e => {
             const newDate = e.target.value;
-            setForm(f => ({ ...f, date: newDate, followup_date: f.followup_date || addDays(newDate, 7) }));
+            setForm(f => ({ ...f, date: newDate, followup_date: f.followup_date || addDaysStr(newDate, 7) }));
           }} />
         </Field>
         <Field label="Status">

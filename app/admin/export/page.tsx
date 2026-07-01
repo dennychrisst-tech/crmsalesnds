@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { todayStr } from "@/lib/utils";
 
 const TABLES = [
   { key: "clients", label: "Client", desc: "Nama, sektor, status, kontak, alamat" },
@@ -27,7 +28,7 @@ export default function AdminExport() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${table}_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `${table}_${todayStr()}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     } finally {

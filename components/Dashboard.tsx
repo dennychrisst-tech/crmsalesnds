@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
 import { ActiveView } from "@/types";
-import { STAGES, STAGE_PROB, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches } from "@/lib/utils";
+import { STAGES, STAGE_PROB, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches, fmtDateStr } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import EmptyState from "./ui/EmptyState";
 
@@ -19,8 +19,8 @@ function weeklyCount<T>(items: T[], getDate: (item: T) => string, weeks = 7): nu
     const mon = new Date(today);
     mon.setDate(today.getDate() - ((today.getDay() + 6) % 7) - (weeks - 1 - i) * 7);
     const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-    const s = mon.toISOString().slice(0, 10);
-    const e = sun.toISOString().slice(0, 10);
+    const s = fmtDateStr(mon);
+    const e = fmtDateStr(sun);
     return items.filter(item => { const d = getDate(item); return d >= s && d <= e; }).length;
   });
 }
@@ -138,7 +138,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
 
   // ── Period range ────────────────────────────────────────────────────────
   const { periodStart, periodEnd, periodLabel } = useMemo(() => {
-    const d = new Date(today);
+    const d = new Date(today + "T00:00:00");
     if (period === "daily") {
       return { periodStart: today, periodEnd: today, periodLabel: "Hari Ini" };
     }
@@ -147,8 +147,8 @@ export default function Dashboard({ data, onNavigate }: Props) {
       const mon = new Date(d); mon.setDate(d.getDate() - ((dow + 6) % 7));
       const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
       return {
-        periodStart: mon.toISOString().slice(0, 10),
-        periodEnd: sun.toISOString().slice(0, 10),
+        periodStart: fmtDateStr(mon),
+        periodEnd: fmtDateStr(sun),
         periodLabel: "Minggu Ini",
       };
     }
@@ -182,8 +182,8 @@ export default function Dashboard({ data, onNavigate }: Props) {
 
   const closingInPeriod = openDeals.filter(d => d.close_date && inPeriod(d.close_date));
 
-  const in30 = new Date(today); in30.setDate(in30.getDate() + 30);
-  const in30Str = in30.toISOString().slice(0, 10);
+  const in30 = new Date(today + "T00:00:00"); in30.setDate(in30.getDate() + 30);
+  const in30Str = fmtDateStr(in30);
   const closingSoon = openDeals
     .filter(d => d.close_date && d.close_date >= today && d.close_date <= in30Str)
     .sort((a, b) => (a.close_date || "").localeCompare(b.close_date || ""));

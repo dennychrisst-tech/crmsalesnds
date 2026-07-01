@@ -84,6 +84,15 @@ export function useData() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Poll every 30s so idle tabs pick up changes made elsewhere without a manual refresh.
+  // Skips while the tab is hidden/backgrounded to avoid wasted requests.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") load();
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [load]);
+
   async function upsert(table: string, record: Record<string, unknown>) {
     if (!record.id) record.id = uuid();
     await api(`/api/data/${table}`, "POST", record);

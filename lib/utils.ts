@@ -48,8 +48,23 @@ export function fmtDate(d: string): string {
   });
 }
 
+/** Formats a Date using its local (browser) calendar date — never UTC. */
+export function fmtDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
+  return fmtDateStr(new Date());
+}
+
+/** Adds `days` to a "YYYY-MM-DD" string, using local dates throughout (avoids UTC day-shift bugs). */
+export function addDaysStr(dateStr: string, days: number): string {
+  const d = new Date(dateStr + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return fmtDateStr(d);
 }
 
 export function isoWeekLabel(dateStr: string): { key: string; label: string } {

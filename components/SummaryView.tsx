@@ -1,14 +1,14 @@
 "use client";
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
-import { fmtIDR, fmtDate, picMatches } from "@/lib/utils";
+import { fmtIDR, fmtDate, picMatches, fmtDateStr } from "@/lib/utils";
 
 interface Props { data: AppData; }
 
 type Period = "week" | "month";
 
 function toDate(s: string) { return new Date(s + "T00:00:00"); }
-function ymd(d: Date) { return d.toISOString().slice(0, 10); }
+function ymd(d: Date) { return fmtDateStr(d); }
 
 function getWeekRange(offset: number) {
   const now = new Date();

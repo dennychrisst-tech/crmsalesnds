@@ -1,4 +1,5 @@
 import { Client, Deal, Visit, PIC } from "@/types";
+import { todayStr } from "./utils";
 
 function csv(rows: (string | number | null | undefined)[][]): string {
   return rows
@@ -56,4 +57,4 @@ export function exportVisitReport(visits: Visit[], clientName: (id: string) => s
   download(`visit_report_${today()}.csv`, csv([header, ...rows]));
 }
 
-function today() { return new Date().toISOString().slice(0, 10); }
+const today = todayStr;
