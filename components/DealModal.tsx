@@ -61,13 +61,13 @@ export default function DealModal({
   const set = <K extends keyof Deal>(k: K, v: Deal[K]) => setForm(f => ({ ...f, [k]: v }));
 
   async function handleSave() {
-    if (!form.name.trim()) { alert("Nama deal wajib diisi."); return; }
+    if (!form.name.trim()) { alert("Nama project wajib diisi."); return; }
     await onSave(form);
     onClose();
   }
 
   async function handleDelete() {
-    if (!confirm("Hapus deal ini?")) return;
+    if (!confirm("Hapus project ini?")) return;
     await onDelete(form.id);
     onClose();
   }
@@ -87,7 +87,7 @@ export default function DealModal({
   const showWinLoss = form.stage === "Won" || form.stage === "Lost";
 
   return (
-    <Modal open={open} onClose={onClose} title={`${isEdit ? "Edit" : "Tambah"} Deal`}>
+    <Modal open={open} onClose={onClose} title={`${isEdit ? "Edit" : "Tambah"} Project`}>
       {isEdit && (
         <div className="modal-tabs">
           <button className={tabCls("info")} onClick={() => setTab("info")}>Info</button>
@@ -105,7 +105,7 @@ export default function DealModal({
 
       {tab === "info" && (
         <>
-          <Field label="Nama deal">
+          <Field label="Nama project">
             <input className={inputCls} value={form.name} onChange={e => set("name", e.target.value)} />
           </Field>
           <Field label="Client">
@@ -121,7 +121,7 @@ export default function DealModal({
                 {[...STAGES, "Lost"].map(s => <option key={s}>{s}</option>)}
               </select>
             </Field>
-            <Field label="Tipe Deal">
+            <Field label="Tipe Project">
               <select className={selectCls} value={form.deal_type} onChange={e => set("deal_type", e.target.value)}>
                 <option value="">— Pilih —</option>
                 {DEAL_TYPES.map(t => <option key={t}>{t}</option>)}
@@ -161,7 +161,7 @@ export default function DealModal({
           </Field>
           {showWinLoss && (
             <Field label={`Alasan ${form.stage}`}>
-              <textarea className={textareaCls} value={form.win_loss_reason} onChange={e => set("win_loss_reason", e.target.value)} placeholder={`Kenapa deal ini ${form.stage}?`} />
+              <textarea className={textareaCls} value={form.win_loss_reason} onChange={e => set("win_loss_reason", e.target.value)} placeholder={`Kenapa project ini ${form.stage}?`} />
             </Field>
           )}
           <Field label="Catatan">
