@@ -37,6 +37,35 @@ function toWANumber(phone: string): string {
   return "62" + d;
 }
 
+function extractDomain(website: string): string {
+  return website.trim().replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0];
+}
+
+function ClientLogo({ name, website, size = 36 }: { name: string; website?: string; size?: number }) {
+  const [failed, setFailed] = useState(false);
+  const domain = website ? extractDomain(website) : "";
+
+  if (!domain || failed) {
+    return (
+      <div className="client-logo client-logo-fallback" style={{ width: size, height: size, fontSize: size * 0.42 }}>
+        {name.charAt(0).toUpperCase()}
+      </div>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      className="client-logo"
+      src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
+      alt=""
+      width={size}
+      height={size}
+      style={{ width: size, height: size }}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 function relativeTime(dateStr: string): string {
   const days = Math.floor((Date.now() - new Date(dateStr + "T00:00:00").getTime()) / 86_400_000);
   if (days === 0) return "hari ini";
@@ -188,7 +217,12 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
                 const pics = (Array.isArray(c.pic) ? c.pic : []) as PIC[];
                 return (
                   <tr key={c.id} style={{ cursor: isViewer ? "default" : "pointer" }} onClick={() => { if (!isViewer) { setEditClient(c); setClientModalOpen(true); } }}>
-                    <td style={{ fontWeight: 700 }}>{c.name}</td>
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <ClientLogo name={c.name} website={c.website} size={24} />
+                        <span className="client-name-cell">{c.name}</span>
+                      </div>
+                    </td>
                     <td>{c.sector}</td>
                     <td><span className="chip" style={sc ? { background: sc.bg, color: sc.fg } : undefined}>{c.status || "—"}</span></td>
                     <td>{pics[0]?.name || <span className="muted">—</span>}{pics.length > 1 && ` +${pics.length - 1}`}</td>
@@ -226,6 +260,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
         return (
           <div key={c.id} className="ccard" style={{ borderLeft: `4px solid ${edgeColor}` }}>
             <div className="ccard-head">
+              <ClientLogo name={c.name} website={c.website} size={44} />
               <div>
                 <div className="cname">{c.name}</div>
                 <div className="cmeta">
