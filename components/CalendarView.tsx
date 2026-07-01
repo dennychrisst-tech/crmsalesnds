@@ -21,16 +21,18 @@ interface Props {
 }
 
 const SALES_COLOR_PALETTE = [
-  { bg: "#DBEAFE", fg: "#1D4ED8" },
-  { bg: "#DCFCE7", fg: "#15803D" },
-  { bg: "#FEF3C7", fg: "#B45309" },
-  { bg: "#FCE7F3", fg: "#BE185D" },
-  { bg: "#E0E7FF", fg: "#4338CA" },
-  { bg: "#CCFBF1", fg: "#0F766E" },
-  { bg: "#FFE4E6", fg: "#BE123C" },
-  { bg: "#FFEDD5", fg: "#C2410C" },
-  { bg: "#F1F5F9", fg: "#334155" },
-  { bg: "#ECFCCB", fg: "#3F6212" },
+  { bg: "#2563EB", fg: "#FFFFFF" },
+  { bg: "#16A34A", fg: "#FFFFFF" },
+  { bg: "#F59E0B", fg: "#1F2937" },
+  { bg: "#DB2777", fg: "#FFFFFF" },
+  { bg: "#7C3AED", fg: "#FFFFFF" },
+  { bg: "#0D9488", fg: "#FFFFFF" },
+  { bg: "#E11D48", fg: "#FFFFFF" },
+  { bg: "#EA580C", fg: "#FFFFFF" },
+  { bg: "#0891B2", fg: "#FFFFFF" },
+  { bg: "#65A30D", fg: "#FFFFFF" },
+  { bg: "#9333EA", fg: "#FFFFFF" },
+  { bg: "#CA8A04", fg: "#1F2937" },
 ];
 
 function colorForSales(name: string) {
@@ -99,7 +101,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
           const c = colorForSales(name);
           return (
             <span key={name} className="cal-legend-item">
-              <span className="cal-dot" style={{ background: c.bg, border: `1px solid ${c.fg}` }} />
+              <span className="cal-dot" style={{ background: c.bg, border: "1px solid rgba(0,0,0,0.15)" }} />
               {name}
             </span>
           );
