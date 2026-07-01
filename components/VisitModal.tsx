@@ -194,9 +194,11 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         </Field>
       </div>
 
-      <Field label="Tanggal follow-up (default 1 minggu)">
-        <input type="date" className={inputCls} value={form.followup_date || ""} onChange={e => set("followup_date", e.target.value || null)} />
-      </Field>
+      {isDone && (
+        <Field label="Tanggal follow-up">
+          <input type="date" className={inputCls} value={form.followup_date || ""} onChange={e => set("followup_date", e.target.value || null)} />
+        </Field>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="PIC Client yang dikunjungi">
