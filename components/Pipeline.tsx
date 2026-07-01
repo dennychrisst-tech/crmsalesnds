@@ -45,12 +45,21 @@ interface Props {
   onOpenDealHandled?: () => void;
 }
 
-function DealCard({ deal, clientName, onClick }: { deal: Deal; clientName: string; onClick: () => void }) {
+function DealCard({ deal, clientName, onClick, onMoveStage, isViewer }: { deal: Deal; clientName: string; onClick: () => void; onMoveStage: (stage: string) => void; isViewer?: boolean }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: deal.id });
   const style = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
   const days = agingDays(deal);
   const isClosed = deal.stage === "Won" || deal.stage === "Lost";
   const stageColor = STAGE_COLOR[deal.stage] || "var(--brand)";
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const close = () => setPickerOpen(false);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [pickerOpen]);
+
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} style={{ ...style, borderLeft: `3px solid ${stageColor}` }} className="deal" onClick={onClick}>
       <div className="deal-top">
@@ -60,6 +69,22 @@ function DealCard({ deal, clientName, onClick }: { deal: Deal; clientName: strin
       <div className="dc">{clientName}{deal.product ? ` · ${deal.product}` : ""}</div>
       {deal.owner && <div className="dc">👤 {deal.owner}</div>}
       <div className="dv">{fmtIDR(deal.value)}</div>
+      {!isViewer && (
+        <div className="stage-move-wrap">
+          <button type="button" className="btn btn-ghost btn-sm stage-move-btn"
+            onClick={e => { e.stopPropagation(); setPickerOpen(o => !o); }}>
+            Pindah stage →
+          </button>
+          {pickerOpen && (
+            <div className="stage-move-menu" onClick={e => e.stopPropagation()}>
+              {STAGES.filter(s => s !== deal.stage).map(s => (
+                <button key={s} type="button" className="stage-move-item"
+                  onClick={() => { onMoveStage(s); setPickerOpen(false); }}>{s}</button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -93,7 +118,7 @@ function ProjectPanel({ projects, clientName, search, onSearchChange }: { projec
   );
 }
 
-function Column({ stage, deals, clientName, onDealClick }: { stage: string; deals: Deal[]; clientName: (id: string) => string; onDealClick: (d: Deal) => void }) {
+function Column({ stage, deals, clientName, onDealClick, onMoveStage, isViewer }: { stage: string; deals: Deal[]; clientName: (id: string) => string; onDealClick: (d: Deal) => void; onMoveStage: (dealId: string, stage: string) => void; isViewer?: boolean }) {
   const { isOver, setNodeRef } = useDroppable({ id: stage });
   const val = deals.reduce((s, d) => s + d.value, 0);
   const stageColor = STAGE_COLOR[stage] || "var(--brand)";
@@ -104,7 +129,10 @@ function Column({ stage, deals, clientName, onDealClick }: { stage: string; deal
         <div className="colval">{deals.length} · {fmtIDR(val)}</div>
       </div>
       <div className="col-list">
-        {deals.map(d => <DealCard key={d.id} deal={d} clientName={clientName(d.client_id)} onClick={() => onDealClick(d)} />)}
+        {deals.map(d => (
+          <DealCard key={d.id} deal={d} clientName={clientName(d.client_id)} onClick={() => onDealClick(d)}
+            onMoveStage={s => onMoveStage(d.id, s)} isViewer={isViewer} />
+        ))}
       </div>
     </div>
   );
@@ -212,11 +240,13 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
         <span className="muted">Tarik proyek atau kartu antar kolom untuk ubah stage.</span>
         <button className="btn btn-ghost btn-sm" onClick={() => exportDeals(deals, clientName)}>↓ Export CSV</button>
         {!isViewer && (
-          <button className="btn" onClick={() => setShowPanel(s => !s)}>
+          <button className="btn add-btn-desktop" onClick={() => setShowPanel(s => !s)}>
             {showPanel ? "Tutup Panel Proyek" : "+ Tambah dari Proyek"}
           </button>
         )}
       </div>
+
+      {!isViewer && <button className="fab" onClick={() => setShowPanel(s => !s)} aria-label="Tambah dari Proyek">+</button>}
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         {showPanel && !isViewer && (
           <ProjectPanel projects={availableProjects} clientName={clientName} search={projectSearch} onSearchChange={setProjectSearch} />
@@ -224,7 +254,8 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
         <div ref={boardRef} className="board" style={boardHeight ? { height: boardHeight } : undefined}>
           {STAGES.map(stage => (
             <Column key={stage} stage={stage} deals={deals.filter(d => d.stage === stage)}
-              clientName={clientName} onDealClick={d => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }} />
+              clientName={clientName} onDealClick={d => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}
+              onMoveStage={(dealId, s) => onUpdateStage(dealId, s)} isViewer={isViewer} />
           ))}
         </div>
         <DragOverlay>

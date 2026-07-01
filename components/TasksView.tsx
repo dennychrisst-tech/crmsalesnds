@@ -5,6 +5,7 @@ import { Task, Client, Deal } from "@/types";
 import { fmtDate, todayStr, TASK_STATUS_COLOR } from "@/lib/utils";
 import TaskModal from "./TaskModal";
 import EmptyState from "./ui/EmptyState";
+import FilterSheet, { FilterField } from "./ui/FilterSheet";
 
 interface Props {
   data: AppData;
@@ -64,16 +65,34 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
     <section>
       <div className="toolbar">
         <input className="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari task…" />
-        <select className="search" style={{ flex: "none", width: "auto" }} value={filterStatus} onChange={e => setFilterStatus(e.target.value as "All" | "Open" | "Done")}>
-          <option value="All">Semua status</option>
-          <option value="Open">Open</option>
-          <option value="Done">Done</option>
-        </select>
-        <select className="search" style={{ flex: "none", width: "auto" }} value={filterAssignee} onChange={e => setFilterAssignee(e.target.value)}>
-          {assignees.map(a => <option key={a} value={a}>{a === "All" ? "Semua Sales" : a}</option>)}
-        </select>
-        {!isViewer && <button className="btn" onClick={openNew}>+ Task Baru</button>}
+        <span className="filter-inline">
+          <select className="search" style={{ flex: "none", width: "auto" }} value={filterStatus} onChange={e => setFilterStatus(e.target.value as "All" | "Open" | "Done")}>
+            <option value="All">Semua status</option>
+            <option value="Open">Open</option>
+            <option value="Done">Done</option>
+          </select>
+          <select className="search" style={{ flex: "none", width: "auto" }} value={filterAssignee} onChange={e => setFilterAssignee(e.target.value)}>
+            {assignees.map(a => <option key={a} value={a}>{a === "All" ? "Semua Sales" : a}</option>)}
+          </select>
+        </span>
+        <FilterSheet>
+          <FilterField label="Status">
+            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as "All" | "Open" | "Done")}>
+              <option value="All">Semua status</option>
+              <option value="Open">Open</option>
+              <option value="Done">Done</option>
+            </select>
+          </FilterField>
+          <FilterField label="Assigned To">
+            <select value={filterAssignee} onChange={e => setFilterAssignee(e.target.value)}>
+              {assignees.map(a => <option key={a} value={a}>{a === "All" ? "Semua Sales" : a}</option>)}
+            </select>
+          </FilterField>
+        </FilterSheet>
+        {!isViewer && <button className="btn add-btn-desktop" onClick={openNew}>+ Task Baru</button>}
       </div>
+
+      {!isViewer && <button className="fab" onClick={openNew} aria-label="Tambah Task">+</button>}
 
       {(openCount > 0 || overdueCount > 0) && (
         <div className="task-summary">

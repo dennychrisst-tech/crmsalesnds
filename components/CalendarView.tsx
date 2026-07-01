@@ -57,6 +57,56 @@ function WfoChip({ name }: { name: string }) {
   );
 }
 
+function AgendaDayCard({
+  ds, day, y, m, today, dayVisits, dayEvents, clientName, isViewer, pickWfoName, onMarkWfo, onEditVisit, onEditEvent,
+}: {
+  ds: string; day: number; y: number; m: number; today: string; dayVisits: Visit[]; dayEvents: CalendarEvent[];
+  clientName: (id: string) => string; isViewer?: boolean; pickWfoName: string | null;
+  onMarkWfo: (ds: string) => void; onEditVisit: (v: Visit) => void; onEditEvent: (e: CalendarEvent) => void;
+}) {
+  const label = new Date(y, m, day).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" });
+  return (
+    <div className="agenda-day">
+      <div className={`agenda-date${ds === today ? " is-today" : ""}`}>
+        <span>{label}</span>
+        {pickWfoName && (
+          <button type="button" className="agenda-wfo-pick" onClick={() => onMarkWfo(ds)}>🏠 Tandai di sini</button>
+        )}
+      </div>
+      <div className="agenda-items">
+        {dayVisits.map(v => {
+          const names = picList(v.pic);
+          const color = colorForSales(names[0] || "—");
+          return (
+            <button key={v.id} type="button" className="agenda-item" style={{ background: "var(--paper)" }}
+              onClick={() => { if (!isViewer) onEditVisit(v); }}>
+              <span className="agenda-item-dot" style={{ background: color.bg }} />
+              <span>
+                <div className="agenda-item-title">{clientName(v.client_id)}</div>
+                <div className="agenda-item-sub">{v.purpose}{names.length ? ` · ${names.join(" & ")}` : ""}{v.status === "Done" ? " · Selesai" : ""}</div>
+              </span>
+            </button>
+          );
+        })}
+        {dayEvents.map(ev => {
+          const isWfo = ev.type === "WFO";
+          return (
+            <button key={ev.id} type="button" className="agenda-item" style={{ background: isWfo ? "var(--brand-soft)" : "var(--paper)", cursor: isWfo ? "default" : "pointer" }}
+              onClick={() => { if (!isWfo && !isViewer) onEditEvent(ev); }}>
+              <span className="agenda-item-dot" style={{ background: isWfo ? "var(--brand)" : "var(--gold)" }} />
+              <span>
+                <div className="agenda-item-title">{isWfo ? `🏠 WFO — ${ev.created_by || "—"}` : ev.title}</div>
+                {!isWfo && <div className="agenda-item-sub">{ev.type}{ev.created_by ? ` · ${ev.created_by}` : ""}</div>}
+              </span>
+            </button>
+          );
+        })}
+        {!dayVisits.length && !dayEvents.length && <div className="agenda-item-sub" style={{ padding: "2px 4px" }}>Tidak ada jadwal.</div>}
+      </div>
+    </div>
+  );
+}
+
 function DayCell({
   ds, day, isToday, dayVisits, dayEvents, clientName, isViewer, onOpenNewVisit, onEditVisit, onEditEvent,
 }: {
@@ -119,6 +169,8 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
   const [showWfoPanel, setShowWfoPanel] = useState(false);
   const [activeWfoName, setActiveWfoName] = useState<string | null>(null);
   const [pendingWfo, setPendingWfo] = useState<Set<string>>(new Set());
+  // Tap-to-mark WFO — the mobile alternative to dragging a WfoChip onto a grid cell.
+  const [pickWfoName, setPickWfoName] = useState<string | null>(null);
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
   const y = cursor.getFullYear(), m = cursor.getMonth();
@@ -143,14 +195,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
     if (id.startsWith(WFO_DRAG_PREFIX)) setActiveWfoName(id.slice(WFO_DRAG_PREFIX.length));
   }
 
-  async function handleDragEnd(e: DragEndEvent) {
-    setActiveWfoName(null);
-    const { over, active } = e;
-    if (!over) return;
-    const id = String(active.id);
-    if (!id.startsWith(WFO_DRAG_PREFIX)) return;
-    const name = id.slice(WFO_DRAG_PREFIX.length);
-    const ds = String(over.id);
+  async function markWfo(name: string, ds: string) {
     const key = `${name}::${ds}`;
     if (pendingWfo.has(key)) return;
     const exists = events.some(ev => ev.type === "WFO" && ev.date === ds && ev.created_by === name);
@@ -168,10 +213,28 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
     }
   }
 
+  async function handleDragEnd(e: DragEndEvent) {
+    setActiveWfoName(null);
+    const { over, active } = e;
+    if (!over) return;
+    const id = String(active.id);
+    if (!id.startsWith(WFO_DRAG_PREFIX)) return;
+    await markWfo(id.slice(WFO_DRAG_PREFIX.length), String(over.id));
+  }
+
   const sortedVisits = [...visits]
     .filter(v => picMatches(v.pic, salesFilter))
     .sort((a, b) => b.date.localeCompare(a.date));
   const sortedEvents = [...events].sort((a, b) => b.date.localeCompare(a.date));
+
+  const monthDays = Array.from({ length: daysInMonth }, (_, i) => {
+    const day = i + 1;
+    const ds = `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    return { ds, day, dayVisits: visits.filter(v => v.date === ds), dayEvents: events.filter(e => e.date === ds) };
+  });
+  // Agenda mode shows only days with something scheduled, unless the user is
+  // actively picking a WFO name — then every day needs to stay tappable.
+  const agendaDays = pickWfoName ? monthDays : monthDays.filter(d => d.dayVisits.length || d.dayEvents.length);
 
   return (
     <section>
@@ -189,9 +252,11 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
             </button>
           )}
           {!isViewer && <button className="btn btn-ghost" onClick={() => openNewEvent()}>+ Event</button>}
-          {!isViewer && <button className="btn" onClick={() => openNewVisit()}>+ Jadwalkan Visit</button>}
+          {!isViewer && <button className="btn add-btn-desktop" onClick={() => openNewVisit()}>+ Jadwalkan Visit</button>}
         </div>
       </div>
+
+      {!isViewer && <button className="fab" onClick={() => openNewVisit()} aria-label="Jadwalkan Visit">+</button>}
 
       {/* Legend */}
       <div className="cal-legend">
@@ -208,40 +273,64 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
         <span className="cal-legend-item"><span className="cal-dot cal-dot-wfo" />WFO (tidak visit)</span>
       </div>
 
-      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        {showWfoPanel && !isViewer && (
-          <div className="wfo-panel">
-            <div className="wfo-panel-hint">🏠 Seret nama ke tanggal kalender untuk menandai hari itu WFO (tidak visit client)</div>
-            <div className="wfo-panel-list">
-              {team.map(name => <WfoChip key={name} name={name} />)}
+      <div className="cal-grid-view">
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          {showWfoPanel && !isViewer && (
+            <div className="wfo-panel">
+              <div className="wfo-panel-hint">🏠 Seret nama ke tanggal kalender untuk menandai hari itu WFO (tidak visit client)</div>
+              <div className="wfo-panel-list">
+                {team.map(name => <WfoChip key={name} name={name} />)}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="panel">
-          <div className="calendar">
-            {dows.map(d => <div key={d} className="dow">{d}</div>)}
-            {Array.from({ length: firstDay }, (_, i) => <div key={`e${i}`} className="cell empty" />)}
-            {Array.from({ length: daysInMonth }, (_, i) => {
-              const day = i + 1;
-              const ds = `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-              const dayVisits = visits.filter(v => v.date === ds);
-              const dayEvents = events.filter(e => e.date === ds);
-              return (
+          <div className="panel">
+            <div className="calendar">
+              {dows.map(d => <div key={d} className="dow">{d}</div>)}
+              {Array.from({ length: firstDay }, (_, i) => <div key={`e${i}`} className="cell empty" />)}
+              {monthDays.map(({ ds, day, dayVisits, dayEvents }) => (
                 <DayCell key={ds} ds={ds} day={day} isToday={ds === today} dayVisits={dayVisits} dayEvents={dayEvents}
                   clientName={clientName} isViewer={isViewer}
                   onOpenNewVisit={openNewVisit} onEditVisit={openEditVisit} onEditEvent={openEditEvent} />
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
 
-        <DragOverlay>
-          {activeWfoName && (
-            <div className="wfo-chip" style={{ opacity: 0.9, cursor: "grabbing" }}>🏠 {activeWfoName}</div>
-          )}
-        </DragOverlay>
-      </DndContext>
+          <DragOverlay>
+            {activeWfoName && (
+              <div className="wfo-chip" style={{ opacity: 0.9, cursor: "grabbing" }}>🏠 {activeWfoName}</div>
+            )}
+          </DragOverlay>
+        </DndContext>
+      </div>
+
+      {/* Agenda list — mobile only, replaces the month grid above */}
+      <div className="cal-agenda">
+        {showWfoPanel && !isViewer && (
+          <div className="agenda-day" style={{ background: "var(--brand-soft)" }}>
+            <div className="agenda-date">
+              <span>🏠 Tandai WFO — pilih nama</span>
+              {pickWfoName && <button type="button" className="agenda-wfo-pick" onClick={() => setPickWfoName(null)}>Batal</button>}
+            </div>
+            <div className="agenda-items" style={{ flexDirection: "row", flexWrap: "wrap" }}>
+              {team.map(name => (
+                <button key={name} type="button" className="agenda-wfo-pick"
+                  style={{ background: pickWfoName === name ? "var(--brand)" : "var(--card)", color: pickWfoName === name ? "#fff" : "var(--brand)" }}
+                  onClick={() => setPickWfoName(p => p === name ? null : name)}>
+                  {name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {agendaDays.length === 0 ? (
+          <div className="agenda-empty">Tidak ada visit atau event bulan ini.</div>
+        ) : agendaDays.map(({ ds, day, dayVisits, dayEvents }) => (
+          <AgendaDayCard key={ds} ds={ds} day={day} y={y} m={m} today={today} dayVisits={dayVisits} dayEvents={dayEvents}
+            clientName={clientName} isViewer={isViewer} pickWfoName={pickWfoName}
+            onMarkWfo={dsArg => markWfo(pickWfoName!, dsArg)} onEditVisit={openEditVisit} onEditEvent={openEditEvent} />
+        ))}
+      </div>
 
       {/* Visit table */}
       <div className="panel">

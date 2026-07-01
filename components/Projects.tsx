@@ -4,6 +4,7 @@ import { AppData } from "@/hooks/useData";
 import { Project, PIC } from "@/types";
 import { fmtIDR, fmtDate } from "@/lib/utils";
 import ProjectModal from "./ProjectModal";
+import FilterSheet, { FilterField } from "./ui/FilterSheet";
 
 interface Props {
   data: AppData;
@@ -33,16 +34,28 @@ export default function Projects({ data, isViewer, onSaveProject, onDeleteProjec
     <section>
       <div className="toolbar">
         <input className="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari project / client…" />
-        <select
-          value={salesFilter}
-          onChange={e => setSalesFilter(e.target.value)}
-          style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)", cursor: "pointer" }}
-        >
-          <option value="all">Semua Sales</option>
-          {team.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-        {!isViewer && <button className="btn" onClick={() => { setEditProject(null); setModalOpen(true); }}>+ Project Baru</button>}
+        <span className="filter-inline">
+          <select
+            value={salesFilter}
+            onChange={e => setSalesFilter(e.target.value)}
+            style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)", cursor: "pointer" }}
+          >
+            <option value="all">Semua Sales</option>
+            {team.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </span>
+        <FilterSheet>
+          <FilterField label="Sales">
+            <select value={salesFilter} onChange={e => setSalesFilter(e.target.value)}>
+              <option value="all">Semua Sales</option>
+              {team.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </FilterField>
+        </FilterSheet>
+        {!isViewer && <button className="btn add-btn-desktop" onClick={() => { setEditProject(null); setModalOpen(true); }}>+ Project Baru</button>}
       </div>
+
+      {!isViewer && <button className="fab" onClick={() => { setEditProject(null); setModalOpen(true); }} aria-label="Tambah Project">+</button>}
       <div className="panel">
         <table className="data-table">
           <thead>

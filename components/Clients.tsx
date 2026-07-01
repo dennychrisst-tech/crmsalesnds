@@ -9,6 +9,7 @@ import ClientModal from "./ClientModal";
 import ContactModal from "./ContactModal";
 import VisitModal from "./VisitModal";
 import { exportClients } from "@/lib/export";
+import FilterSheet, { FilterField } from "./ui/FilterSheet";
 
 interface Props {
   data: AppData;
@@ -174,27 +175,53 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
     <section>
       <div className="toolbar">
         <input className="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari client…" />
-        <select value={salesFilter} onChange={e => setSalesFilter(e.target.value)} className="select-sm">
-          <option value="all">Semua Sales</option>
-          {team.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-        <select value={sectorFilter} onChange={e => setSectorFilter(e.target.value)} className="select-sm">
-          <option value="all">Semua Sektor</option>
-          {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <select value={sortBy} onChange={e => setSortBy(e.target.value as SortBy)} className="select-sm">
-          <option value="name">Urutkan: Nama (A-Z)</option>
-          <option value="contact_oldest">Urutkan: Kontak Terlama</option>
-          <option value="contact_newest">Urutkan: Kontak Terbaru</option>
-          <option value="deal_value">Urutkan: Nilai Project Tertinggi</option>
-        </select>
+        <span className="filter-inline">
+          <select value={salesFilter} onChange={e => setSalesFilter(e.target.value)} className="select-sm">
+            <option value="all">Semua Sales</option>
+            {team.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <select value={sectorFilter} onChange={e => setSectorFilter(e.target.value)} className="select-sm">
+            <option value="all">Semua Sektor</option>
+            {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select value={sortBy} onChange={e => setSortBy(e.target.value as SortBy)} className="select-sm">
+            <option value="name">Urutkan: Nama (A-Z)</option>
+            <option value="contact_oldest">Urutkan: Kontak Terlama</option>
+            <option value="contact_newest">Urutkan: Kontak Terbaru</option>
+            <option value="deal_value">Urutkan: Nilai Project Tertinggi</option>
+          </select>
+        </span>
+        <FilterSheet>
+          <FilterField label="Sales">
+            <select value={salesFilter} onChange={e => setSalesFilter(e.target.value)}>
+              <option value="all">Semua Sales</option>
+              {team.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </FilterField>
+          <FilterField label="Sektor">
+            <select value={sectorFilter} onChange={e => setSectorFilter(e.target.value)}>
+              <option value="all">Semua Sektor</option>
+              {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </FilterField>
+          <FilterField label="Urutkan">
+            <select value={sortBy} onChange={e => setSortBy(e.target.value as SortBy)}>
+              <option value="name">Nama (A-Z)</option>
+              <option value="contact_oldest">Kontak Terlama</option>
+              <option value="contact_newest">Kontak Terbaru</option>
+              <option value="deal_value">Nilai Project Tertinggi</option>
+            </select>
+          </FilterField>
+        </FilterSheet>
         <div className="view-toggle">
           <button className={viewMode === "detail" ? "active" : ""} onClick={() => setViewMode("detail")} title="Tampilan detail">☰ Detail</button>
           <button className={viewMode === "compact" ? "active" : ""} onClick={() => setViewMode("compact")} title="Tampilan tabel ringkas">▦ Tabel</button>
         </div>
         <button className="btn btn-ghost btn-sm" onClick={() => exportClients(clients, openDealsCount)}>↓ Export CSV</button>
-        {!isViewer && <button className="btn" onClick={() => { setEditClient(null); setClientModalOpen(true); }}>+ Client Baru</button>}
+        {!isViewer && <button className="btn add-btn-desktop" onClick={() => { setEditClient(null); setClientModalOpen(true); }}>+ Client Baru</button>}
       </div>
+
+      {!isViewer && <button className="fab" onClick={() => { setEditClient(null); setClientModalOpen(true); }} aria-label="Tambah Client">+</button>}
 
       {/* Summary bar */}
       <div className="client-summary">
