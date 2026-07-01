@@ -175,19 +175,19 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         />
       </Field>
 
-      <Field label="Deal / Project (opsional)">
+      <Field label="Project (opsional)">
         {!addingDeal ? (
           <>
             <SearchableSelect
               options={clientDeals.map(d => ({ value: d.id, label: d.name }))}
               value={form.deal_id || ""}
               onChange={v => set("deal_id", v || null)}
-              placeholder="Cari deal…"
-              clearLabel="— Tidak terkait deal —"
+              placeholder="Cari project…"
+              clearLabel="— Tidak terkait project —"
             />
             {onCreateDeal && form.client_id && (
               <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 6 }} onClick={() => setAddingDeal(true)}>
-                + Deal Baru
+                + Project Baru
               </button>
             )}
           </>
@@ -197,7 +197,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
               className={inputCls}
               value={newDealName}
               onChange={e => setNewDealName(e.target.value)}
-              placeholder="Nama deal baru"
+              placeholder="Nama project baru"
               autoFocus
             />
             <button type="button" className="btn btn-sm" onClick={handleCreateDeal}>Buat</button>
