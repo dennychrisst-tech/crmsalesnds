@@ -15,7 +15,7 @@ interface Props {
   onClose: () => void;
 }
 
-const PRODUCT_CATEGORIES = ["Solution", "Talent", "License", "IBM"] as const;
+const PRODUCT_CATEGORIES = ["Solution", "Talent", "License", "Support", "IBM"] as const;
 const IBM_PRODUCTS = ["IBM Filenet", "IBM MQ", "IBM BAW", "IBM BOB"] as const;
 
 function parseProduct(product: string) {
