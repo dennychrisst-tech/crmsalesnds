@@ -15,9 +15,13 @@ interface Props {
   placeholder?: string;
   /** Label for a "clear selection" row, e.g. "— Tidak ada —". Omit for required fields. */
   clearLabel?: string;
+  /** Called with the typed text when the user picks the "create new" row. */
+  onCreate?: (query: string) => void;
+  /** Customize the "create new" row's text. Defaults to `+ Buat baru: "query"`. */
+  createLabel?: (query: string) => string;
 }
 
-export default function SearchableSelect({ options, value, onChange, placeholder = "Cari & pilih…", clearLabel }: Props) {
+export default function SearchableSelect({ options, value, onChange, placeholder = "Cari & pilih…", clearLabel, onCreate, createLabel }: Props) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
@@ -40,6 +44,10 @@ export default function SearchableSelect({ options, value, onChange, placeholder
     return options.filter(o => o.label.toLowerCase().includes(q) || (o.sub || "").toLowerCase().includes(q));
   }, [options, query, selected]);
 
+  const trimmedQuery = query.trim();
+  const exactMatch = !!trimmedQuery && options.some(o => o.label.toLowerCase() === trimmedQuery.toLowerCase());
+  const showCreate = !!onCreate && !!trimmedQuery && !exactMatch;
+
   function openDropdown() {
     setQuery(selected ? selected.label : "");
     setOpen(true);
@@ -51,15 +59,25 @@ export default function SearchableSelect({ options, value, onChange, placeholder
     setOpen(false);
   }
 
+  function create() {
+    if (!onCreate || !trimmedQuery) return;
+    onCreate(trimmedQuery);
+    setOpen(false);
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (!open) {
       if (e.key === "ArrowDown" || e.key === "Enter") openDropdown();
       return;
     }
-    if (e.key === "ArrowDown") { e.preventDefault(); setHighlight(h => Math.min(h + 1, filtered.length - 1)); }
+    const itemCount = filtered.length + (showCreate ? 1 : 0);
+    if (e.key === "ArrowDown") { e.preventDefault(); setHighlight(h => Math.min(h + 1, itemCount - 1)); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setHighlight(h => Math.max(h - 1, 0)); }
-    else if (e.key === "Enter") { e.preventDefault(); if (filtered[highlight]) pick(filtered[highlight]); }
-    else if (e.key === "Escape") { setOpen(false); }
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      if (highlight < filtered.length) { if (filtered[highlight]) pick(filtered[highlight]); }
+      else create();
+    } else if (e.key === "Escape") { setOpen(false); }
   }
 
   return (
@@ -83,7 +101,7 @@ export default function SearchableSelect({ options, value, onChange, placeholder
               {clearLabel}
             </div>
           )}
-          {filtered.length === 0 && (
+          {filtered.length === 0 && !showCreate && (
             <div className="px-3 py-2 text-sm text-[var(--ink-soft)]">Tidak ada hasil</div>
           )}
           {filtered.map((o, i) => (
@@ -97,6 +115,15 @@ export default function SearchableSelect({ options, value, onChange, placeholder
               {o.sub && <div className="text-xs text-[var(--ink-soft)]">{o.sub}</div>}
             </div>
           ))}
+          {showCreate && (
+            <div
+              className={`px-3 py-2 text-sm cursor-pointer font-medium text-[var(--brand)] ${highlight === filtered.length ? "bg-[var(--paper)]" : ""} hover:bg-[var(--paper)]`}
+              onMouseDown={e => { e.preventDefault(); create(); }}
+              onMouseEnter={() => setHighlight(filtered.length)}
+            >
+              {createLabel ? createLabel(trimmedQuery) : `+ Buat baru: "${trimmedQuery}"`}
+            </div>
+          )}
         </div>
       )}
     </div>

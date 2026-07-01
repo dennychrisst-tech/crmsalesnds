@@ -46,8 +46,6 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   const [pic1, setPic1] = useState(defaultPic);
   const [pic2, setPic2] = useState("");
   const [manualPic, setManualPic] = useState(false);
-  const [addingDeal, setAddingDeal] = useState(false);
-  const [newDealName, setNewDealName] = useState("");
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "";
   const dealName = (id: string | null | undefined) => deals.find(d => d.id === id)?.name || "";
@@ -76,14 +74,12 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       setPic1(a); setPic2(b);
       const hasMatchingContact = contacts.some(c => c.client_id === visit.client_id && c.name === visit.pic_client);
       setManualPic(!!visit.pic_client && !hasMatchingContact);
-      setAddingDeal(false); setNewDealName("");
       if (visit.status === "Done") setTask(buildDefaultTask(restored));
     } else {
       const f = emptyVisit(preClientId || "", defaultPic, preDate || todayStr());
       setForm(f);
       setPic1(defaultPic); setPic2("");
       setManualPic(false);
-      setAddingDeal(false); setNewDealName("");
       setTask({ title: "", due_date: "", assigned_to: "", notes: "" });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -104,21 +100,18 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   function handleClientChange(clientId: string) {
     setForm(f => ({ ...f, client_id: clientId, pic_client: "", jabatan: "", deal_id: null, project: null }));
     setManualPic(false);
-    setAddingDeal(false); setNewDealName("");
   }
 
-  async function handleCreateDeal() {
-    if (!newDealName.trim() || !onCreateDeal || !form.client_id) return;
+  async function handleCreateDeal(name: string) {
+    if (!onCreateDeal || !form.client_id) return;
     const id = uuid();
     await onCreateDeal({
-      id, name: newDealName.trim(), client_id: form.client_id, value: 0,
+      id, name, client_id: form.client_id, value: 0,
       stage: "Cold Call", deal_type: "", product: "", close_date: "",
       notes: "", owner: picList(form.pic)[0] || "", win_loss_reason: "", competitor: "",
       stage_updated_at: new Date().toISOString(),
     });
     set("deal_id", id);
-    setAddingDeal(false);
-    setNewDealName("");
   }
 
   function handleContactChange(name: string) {
@@ -176,34 +169,15 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       </Field>
 
       <Field label="Project (opsional)">
-        {!addingDeal ? (
-          <>
-            <SearchableSelect
-              options={clientDeals.map(d => ({ value: d.id, label: d.name }))}
-              value={form.deal_id || ""}
-              onChange={v => set("deal_id", v || null)}
-              placeholder="Cari project…"
-              clearLabel="— Tidak terkait project —"
-            />
-            {onCreateDeal && form.client_id && (
-              <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 6 }} onClick={() => setAddingDeal(true)}>
-                + Project Baru
-              </button>
-            )}
-          </>
-        ) : (
-          <div style={{ display: "flex", gap: 6 }}>
-            <input
-              className={inputCls}
-              value={newDealName}
-              onChange={e => setNewDealName(e.target.value)}
-              placeholder="Nama project baru"
-              autoFocus
-            />
-            <button type="button" className="btn btn-sm" onClick={handleCreateDeal}>Buat</button>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setAddingDeal(false); setNewDealName(""); }}>Batal</button>
-          </div>
-        )}
+        <SearchableSelect
+          options={clientDeals.map(d => ({ value: d.id, label: d.name }))}
+          value={form.deal_id || ""}
+          onChange={v => set("deal_id", v || null)}
+          placeholder="Cari atau buat project…"
+          clearLabel="— Tidak terkait project —"
+          onCreate={onCreateDeal && form.client_id ? handleCreateDeal : undefined}
+          createLabel={q => `+ Buat project baru: "${q}"`}
+        />
       </Field>
 
       <div className="grid grid-cols-2 gap-3">
