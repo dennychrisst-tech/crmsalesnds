@@ -19,9 +19,9 @@ function inRange(dateStr: string | null | undefined, start: string, end: string)
   return d >= start && d <= end;
 }
 
-interface Props { data: AppData; onOpenProject: (projectId: string) => void; }
+interface Props { data: AppData; onOpenProject: (projectId: string) => void; onOpenDeal: (dealId: string) => void; }
 
-export default function WeeklyReport({ data, onOpenProject }: Props) {
+export default function WeeklyReport({ data, onOpenProject, onOpenDeal }: Props) {
   const { clients, visits, deals, projects, profiles } = data;
   const team = profiles.filter(p => !["super_admin", "admin", "viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [offset, setOffset] = useState(0);
@@ -123,8 +123,10 @@ export default function WeeklyReport({ data, onOpenProject }: Props) {
                       <div className="wr-updates">
                         {deal && (
                           <span
-                            className="wr-update-chip"
+                            className="wr-update-chip wr-update-chip-clickable"
                             style={{ borderColor: STAGE_COLOR[deal.stage] || "var(--brand)", color: STAGE_COLOR[deal.stage] || "var(--brand)" }}
+                            onClick={() => onOpenDeal(deal.id)}
+                            title="Buka detail pipeline"
                           >
                             💼 {deal.name} → {deal.stage}
                             {dealUpdatedThisWeek && " · update minggu ini"}

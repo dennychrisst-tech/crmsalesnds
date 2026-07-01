@@ -41,6 +41,8 @@ interface Props {
   onDeleteAttachment: (id: string) => Promise<void>;
   onAddActivity: (a: Activity) => Promise<void>;
   onDeleteActivity: (id: string) => Promise<void>;
+  openDealId?: string | null;
+  onOpenDealHandled?: () => void;
 }
 
 function DealCard({ deal, clientName, onClick }: { deal: Deal; clientName: string; onClick: () => void }) {
@@ -108,11 +110,19 @@ function Column({ stage, deals, clientName, onDealClick }: { stage: string; deal
   );
 }
 
-export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity }: Props) {
+export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity, openDealId, onOpenDealHandled }: Props) {
   const { clients, deals, products, documents, attachments, activities, profiles, projects } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [modalOpen, setModalOpen] = useState(false);
   const [editDeal, setEditDeal] = useState<Deal | null>(null);
+
+  useEffect(() => {
+    if (!openDealId) return;
+    const deal = deals.find(d => d.id === openDealId);
+    if (deal) { setEditDeal(deal); setModalOpen(true); }
+    onOpenDealHandled?.();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openDealId]);
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [showPanel, setShowPanel] = useState(false);

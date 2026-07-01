@@ -35,6 +35,7 @@ export default function CRMApp() {
   const [view, setView] = useState<ActiveView>("dashboard");
   const [pendingClientId, setPendingClientId] = useState<string | null>(null);
   const [pendingProjectId, setPendingProjectId] = useState<string | null>(null);
+  const [pendingDealId, setPendingDealId] = useState<string | null>(null);
 
   function openClient(clientId: string) {
     setPendingClientId(clientId);
@@ -44,6 +45,11 @@ export default function CRMApp() {
   function openProject(projectId: string) {
     setPendingProjectId(projectId);
     setView("projects");
+  }
+
+  function openDeal(dealId: string) {
+    setPendingDealId(dealId);
+    setView("pipeline");
   }
 
   async function handleLogout() {
@@ -134,7 +140,8 @@ export default function CRMApp() {
                     onSaveDeal={ro(upsertDeal)} onDeleteDeal={ro(deleteDeal)} onUpdateStage={ro(updateDealStage)}
                     onAddDocument={ro(upsertDocument)} onDeleteDocument={ro(deleteDocument)}
                     onUploadAttachment={ro(uploadAttachment)} onDeleteAttachment={ro(deleteAttachment)}
-                    onAddActivity={ro(upsertActivity)} onDeleteActivity={ro(deleteActivity)} />
+                    onAddActivity={ro(upsertActivity)} onDeleteActivity={ro(deleteActivity)}
+                    openDealId={pendingDealId} onOpenDealHandled={() => setPendingDealId(null)} />
                 )}
                 {view === "projects" && (
                   <Projects data={data} isViewer={isViewer} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)} onOpenClient={openClient}
@@ -148,7 +155,7 @@ export default function CRMApp() {
                 )}
                 {view === "summary" && <SummaryView data={data} />}
                 {view === "visit-report" && <VisitReport data={data} />}
-                {view === "weekly-report" && <WeeklyReport data={data} onOpenProject={openProject} />}
+                {view === "weekly-report" && <WeeklyReport data={data} onOpenProject={openProject} onOpenDeal={openDeal} />}
               </>
             );
           })()}
