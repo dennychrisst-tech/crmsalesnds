@@ -245,15 +245,14 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
     await markWfo(id.slice(WFO_DRAG_PREFIX.length), String(over.id));
   }
 
-  const sortedVisits = [...visits]
-    .filter(v => picMatches(v.pic, salesFilter))
-    .sort((a, b) => b.date.localeCompare(a.date));
+  const filteredVisits = visits.filter(v => picMatches(v.pic, salesFilter));
+  const sortedVisits = [...filteredVisits].sort((a, b) => b.date.localeCompare(a.date));
   const sortedEvents = [...events].sort((a, b) => b.date.localeCompare(a.date));
 
   const monthDays = Array.from({ length: daysInMonth }, (_, i) => {
     const day = i + 1;
     const ds = `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return { ds, day, dayVisits: visits.filter(v => v.date === ds), dayEvents: events.filter(e => e.date === ds) };
+    return { ds, day, dayVisits: filteredVisits.filter(v => v.date === ds), dayEvents: events.filter(e => e.date === ds) };
   });
   // Agenda mode only lists days with something scheduled, Google-Calendar-mobile style.
   const agendaDays = monthDays.filter(d => d.dayVisits.length || d.dayEvents.length);
@@ -266,7 +265,15 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
           <span className="mtitle">{title}</span>
           <button className="cal-nav-btn" onClick={nextMonth}>›</button>
         </div>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+          <select
+            value={salesFilter}
+            onChange={e => setSalesFilter(e.target.value)}
+            style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)", cursor: "pointer" }}
+          >
+            <option value="all">Semua Sales</option>
+            {team.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
           <button className="btn btn-ghost btn-sm" onClick={() => exportVisits(visits, id => clients.find(c => c.id === id)?.name || "—")}>↓ Export CSV</button>
           {!isViewer && (
             <button className="btn btn-ghost" onClick={() => setShowWfoPanel(s => !s)}>
@@ -344,21 +351,10 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
         ))}
       </div>
 
-      {/* Visit table */}
-      <div className="panel">
+      {/* Visit table — desktop only; mobile already sees this via the agenda list above */}
+      <div className="panel desktop-only">
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
           <h2 style={{ margin: 0 }}>Jadwal Visit <span className="count">({sortedVisits.length})</span></h2>
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>Sales:</span>
-            <select
-              value={salesFilter}
-              onChange={e => setSalesFilter(e.target.value)}
-              style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)", cursor: "pointer" }}
-            >
-              <option value="all">Semua</option>
-              {team.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
         </div>
         <table>
           <thead>
