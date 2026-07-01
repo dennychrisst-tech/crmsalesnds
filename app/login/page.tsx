@@ -137,19 +137,50 @@ export default function LoginPage() {
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: "48px 40px",
       }}>
-        <div style={{ width: "100%", maxWidth: 360 }}>
-          {/* Mobile-only logo */}
-          <div className="lp-mobile-logo" style={{ display: "none", marginBottom: 28 }}>
-            <svg viewBox="0 0 210 72" height="36" aria-label="NDS" xmlns="http://www.w3.org/2000/svg">
-              <text x="0" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#58595B">N</text>
-              <path d="M68 6 C90 6 104 20 104 36 C104 52 90 66 68 66" stroke="#00AFA0" strokeWidth="7" fill="none" strokeLinecap="round"/>
-              <text x="108" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#58595B">S</text>
-              <text x="148" y="28" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="#58595B">NUSANTARA</text>
-              <text x="148" y="42" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="#58595B"><tspan fill="#00AFA0">D</tspan>UTA</text>
-              <text x="148" y="56" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="#58595B">SOLUSINDO</text>
-            </svg>
-          </div>
+        {/* Mobile-only hero — fills the gradient area above the form card */}
+        <div className="lp-mobile-hero" style={{
+          display: "none", position: "relative", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          padding: "36px 24px 24px", overflow: "hidden",
+        }}>
+          <div style={{
+            position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
+            width: 230, height: 230, borderRadius: "50%",
+            border: "1px solid rgba(255,255,255,.07)", pointerEvents: "none",
+          }} />
+          <div style={{
+            position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
+            width: 150, height: 150, borderRadius: "50%",
+            border: "1px solid rgba(0,175,160,.16)", pointerEvents: "none",
+          }} />
+          <div style={{
+            position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
+            width: 90, height: 90, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(0,175,160,.18) 0%, transparent 70%)", pointerEvents: "none",
+          }} />
 
+          <div style={{ position: "relative", textAlign: "center" }}>
+            <svg viewBox="0 0 210 72" height="48" aria-label="NDS" xmlns="http://www.w3.org/2000/svg">
+              <text x="0" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#fff">N</text>
+              <path d="M68 6 C90 6 104 20 104 36 C104 52 90 66 68 66" stroke="#00AFA0" strokeWidth="7" fill="none" strokeLinecap="round"/>
+              <text x="108" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#fff">S</text>
+              <text x="148" y="28" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.6)">NUSANTARA</text>
+              <text x="148" y="42" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.6)"><tspan fill="#00AFA0">D</tspan>UTA</text>
+              <text x="148" y="56" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.6)">SOLUSINDO</text>
+            </svg>
+            <div style={{ width: 32, height: 2, background: "#00AFA0", borderRadius: 999, margin: "14px auto 12px" }} />
+            <div style={{
+              display: "inline-block", fontSize: 9.5, fontWeight: 800, letterSpacing: ".2em",
+              textTransform: "uppercase", background: "#00AFA0", color: "#fff",
+              padding: "3px 12px", borderRadius: 6,
+            }}>Sales CRM</div>
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,.55)", marginTop: 12, lineHeight: 1.5 }}>
+              Pipeline · Kunjungan · Laporan · Project
+            </p>
+          </div>
+        </div>
+
+        <div className="lp-form-card" style={{ width: "100%", maxWidth: 360 }}>
           {/* Heading */}
           <div style={{ marginBottom: 32 }}>
             <div style={{ width: 32, height: 3, background: "#0A6E5C", borderRadius: 999, marginBottom: 18 }} />
@@ -263,16 +294,17 @@ export default function LoginPage() {
           .lp-form {
             background: linear-gradient(145deg, #0A6E5C 0%, #0B2540 55%, #081624 100%) !important;
             align-items: stretch !important;
+            flex-direction: column !important;
             padding: 0 !important;
           }
-          .lp-form > div {
+          .lp-mobile-hero { display: flex !important; flex: 1; min-height: 160px; }
+          .lp-form-card {
             background: #F2F0E9;
             border-radius: 20px 20px 0 0;
             margin-top: auto;
             padding: 32px 24px 44px;
             max-width: 100% !important;
           }
-          .lp-mobile-logo { display: block !important; }
         }
       `}</style>
     </div>
