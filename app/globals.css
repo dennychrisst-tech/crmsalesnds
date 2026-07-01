@@ -502,16 +502,20 @@ tr.task-soon td { background: #fffbeb; }
 @media (max-width: 640px) {
   .app { padding: 0 10px calc(74px + env(safe-area-inset-bottom)); }
 
-  /* Header — wraps into rows: brand+tag (+ log out, top-right corner) / search+bell / admin */
+  /* Header — wraps into rows: brand+tag (+ log out, top-right corner) / search+clock+bell / admin */
   header.top {
     flex-wrap: wrap; row-gap: 10px; padding: 14px 88px 14px 0; margin-bottom: 14px;
   }
   .header-brand svg { height: 32px; }
   .header-crm-tag { font-size: 9px; padding: 2px 6px; }
-  .live-clock { display: none; }
   .header-search-row { display: flex; align-items: center; gap: 8px; order: 3; flex: 1 1 100%; max-width: 100%; }
-  .header-search-row .gs-wrap { flex: 1 1 auto; max-width: none; }
+  .header-search-row .gs-wrap { flex: 1 1 auto; max-width: none; min-width: 0; }
   .header-search-row .rb-wrap { flex: 0 0 auto; }
+  .header-search-row .live-clock {
+    flex: 0 0 auto; margin-left: 0; align-items: center; line-height: 1.1;
+  }
+  .header-search-row .live-clock-time { font-size: 11px; }
+  .header-search-row .live-clock-date { display: none; }
   .btn-admin { order: 5; padding: 5px 10px; font-size: 11px; }
   .btn-logout { top: 14px; padding: 5px 10px; font-size: 11px; }
 
