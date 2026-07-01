@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
-import { fmtIDR, fmtDate } from "@/lib/utils";
+import { fmtIDR, fmtDate, picMatches } from "@/lib/utils";
 
 interface Props { data: AppData; }
 
@@ -125,8 +125,8 @@ export default function SummaryView({ data }: Props) {
   // Per-person breakdown
   const teamStats = (salesFilter === "all" ? team : team.filter(t => t === salesFilter)).map(name => ({
     name,
-    visits: periodVisits.filter(v => v.pic === name).length,
-    visitsDone: periodVisits.filter(v => v.pic === name && v.status === "Done").length,
+    visits: periodVisits.filter(v => picMatches(v.pic, name)).length,
+    visitsDone: periodVisits.filter(v => picMatches(v.pic, name) && v.status === "Done").length,
     tasks: periodTasks.filter(t => t.assigned_to === name).length,
     tasksDone: doneTasks.filter(t => t.assigned_to === name).length,
     activities: periodActivities.filter(a => a.created_by === name).length,

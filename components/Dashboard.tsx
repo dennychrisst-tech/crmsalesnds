@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
 import { ActiveView } from "@/types";
-import { STAGES, STAGE_PROB, STAGE_COLOR, fmtIDR, fmtDate, todayStr } from "@/lib/utils";
+import { STAGES, STAGE_PROB, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import EmptyState from "./ui/EmptyState";
 
@@ -167,7 +167,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
 
   // ── Filtered data ──────────────────────────────────────────────────────
   const filteredDeals = deals.filter(d => bySales(d.owner));
-  const filteredVisits = visits.filter(v => bySales(v.pic));
+  const filteredVisits = visits.filter(v => picMatches(v.pic, salesFilter));
   const filteredTasks = tasks.filter(t => bySales(t.assigned_to));
 
   // Deals
@@ -229,7 +229,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
   const teamActivity: Record<string, { visits: number; tasks: number; activities: number }> = {};
   salesList.forEach(name => {
     teamActivity[name] = {
-      visits: filteredVisits.filter(v => v.pic === name && v.date && inPeriod(v.date)).length,
+      visits: filteredVisits.filter(v => picMatches(v.pic, name) && v.date && inPeriod(v.date)).length,
       tasks: tasks.filter(t => t.assigned_to === name && t.status === "Open").length,
       activities: activities.filter(a => a.created_by === name && inPeriod((a.created_at || "").slice(0, 10))).length,
     };

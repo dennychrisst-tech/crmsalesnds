@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import { Visit, Client, Contact, Project, Task } from "@/types";
-import { VISIT_STATUS, todayStr } from "@/lib/utils";
+import { VISIT_STATUS, todayStr, picList } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -47,6 +47,8 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   const isEdit = !!visit;
   const [form, setForm] = useState<Visit>(emptyVisit(clients[0]?.id || "", defaultPic));
   const [task, setTask] = useState<TaskDraft>({ title: "", due_date: "", assigned_to: "", notes: "" });
+  const [pic1, setPic1] = useState(defaultPic);
+  const [pic2, setPic2] = useState("");
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "";
 
@@ -54,7 +56,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
     return {
       title: `Follow-up: ${clientName(f.client_id)}${f.project ? ` · ${f.project}` : ""}`,
       due_date: f.followup_date || "",
-      assigned_to: f.pic || "",
+      assigned_to: picList(f.pic)[0] || "",
       notes: f.pic_client ? `PIC Client: ${f.pic_client}${f.jabatan ? ` (${f.jabatan})` : ""}` : "",
     };
   }
@@ -69,10 +71,13 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         followup_date: visit.followup_date ?? null,
       };
       setForm(restored);
+      const [a = "", b = ""] = picList(visit.pic);
+      setPic1(a); setPic2(b);
       if (visit.status === "Done") setTask(buildDefaultTask(restored));
     } else {
       const f = emptyVisit(preClientId || clients[0]?.id || "", defaultPic, preDate || todayStr());
       setForm(f);
+      setPic1(defaultPic); setPic2("");
       setTask({ title: "", due_date: "", assigned_to: "", notes: "" });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,6 +85,11 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
 
   const set = (k: keyof Visit, v: string | null) => setForm(f => ({ ...f, [k]: v }));
   const setT = (k: keyof TaskDraft, v: string) => setTask(t => ({ ...t, [k]: v }));
+
+  function updatePic(a: string, b: string) {
+    setPic1(a); setPic2(b);
+    setForm(f => ({ ...f, pic: [a, b].filter(Boolean).join(", ") }));
+  }
 
   const clientContacts = contacts.filter(c => c.client_id === form.client_id);
   const clientProjects = projects.filter(p => p.client_id === form.client_id);
@@ -112,7 +122,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         due_date: task.due_date || addDays(form.date, 7),
         client_id: form.client_id,
         deal_id: null,
-        assigned_to: task.assigned_to || form.pic || "",
+        assigned_to: task.assigned_to || picList(form.pic)[0] || "",
         status: "Open",
         notes: task.notes,
       });
@@ -188,12 +198,20 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         </Field>
       </div>
 
-      <Field label="PIC NDS (sales)">
-        <select className={selectCls} value={form.pic} onChange={e => set("pic", e.target.value)}>
-          <option value="">— Pilih —</option>
-          {team.map(t => <option key={t}>{t}</option>)}
-        </select>
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="PIC NDS Sales 1">
+          <select className={selectCls} value={pic1} onChange={e => updatePic(e.target.value, pic2)}>
+            <option value="">— Pilih —</option>
+            {team.filter(t => t !== pic2).map(t => <option key={t}>{t}</option>)}
+          </select>
+        </Field>
+        <Field label="PIC NDS Sales 2 (opsional)">
+          <select className={selectCls} value={pic2} onChange={e => updatePic(pic1, e.target.value)}>
+            <option value="">— Tidak ada —</option>
+            {team.filter(t => t !== pic1).map(t => <option key={t}>{t}</option>)}
+          </select>
+        </Field>
+      </div>
 
       <Field label="Jenis approach">
         <select className={selectCls} value={form.approach} onChange={e => set("approach", e.target.value)}>

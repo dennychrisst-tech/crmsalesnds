@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
-import { fmtDate, todayStr } from "@/lib/utils";
+import { fmtDate, todayStr, picList, picMatches } from "@/lib/utils";
 import { exportVisitReport } from "@/lib/export";
 
 interface Props { data: AppData; }
@@ -31,7 +31,7 @@ export default function VisitReport({ data }: Props) {
   const filtered = useMemo(() => {
     let list = visits.filter(v => v.status === "Done");
     if (filterMonth) list = list.filter(v => v.date?.startsWith(filterMonth));
-    if (filterSales !== "all") list = list.filter(v => v.pic === filterSales);
+    if (filterSales !== "all") list = list.filter(v => picMatches(v.pic, filterSales));
     if (search) {
       const q = search.toLowerCase();
       list = list.filter(v =>
@@ -82,7 +82,10 @@ export default function VisitReport({ data }: Props) {
   // Summary stats
   const total = filtered.length;
   const byPic: Record<string, number> = {};
-  filtered.forEach(v => { byPic[v.pic || "—"] = (byPic[v.pic || "—"] || 0) + 1; });
+  filtered.forEach(v => {
+    const names = picList(v.pic);
+    (names.length ? names : ["—"]).forEach(name => { byPic[name] = (byPic[name] || 0) + 1; });
+  });
 
   const thSt: React.CSSProperties = {
     padding: "8px 14px", textAlign: "left", fontSize: 11, fontWeight: 700,

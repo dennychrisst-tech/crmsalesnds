@@ -29,6 +29,14 @@ export const DEAL_TYPES = ["New Business", "Renewal", "Upsell", "Cross-sell", "L
 export const ACTIVITY_TYPES = ["Note", "Call", "Meeting", "Email", "Demo", "Follow-up", "Proposal Sent", "Lainnya"] as const;
 export const COMPANY_SIZES = ["< 50 karyawan", "50–200 karyawan", "200–1000 karyawan", "> 1000 karyawan", "> 10.000 karyawan", "> 100.000 karyawan"] as const;
 
+export function picList(pic: string | null | undefined): string[] {
+  return (pic || "").split(",").map(s => s.trim()).filter(Boolean);
+}
+
+export function picMatches(pic: string | null | undefined, filter: string): boolean {
+  return filter === "all" || filter === "" || picList(pic).includes(filter);
+}
+
 export function fmtIDR(n: number): string {
   return "Rp " + (Number(n) || 0).toLocaleString("id-ID");
 }

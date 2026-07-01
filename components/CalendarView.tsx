@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { Visit, CalendarEvent, Task } from "@/types";
-import { fmtDate, todayStr, visitStatusClass } from "@/lib/utils";
+import { fmtDate, todayStr, visitStatusClass, picList, picMatches } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import VisitModal from "./VisitModal";
 import EventModal from "./EventModal";
@@ -45,7 +45,7 @@ function colorForSales(name: string) {
 export default function CalendarView({ data, currentUserName, isViewer, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask }: Props) {
   const { clients, contacts, visits, events, projects, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
-  const salesLegend = Array.from(new Set([...team, ...visits.map(v => v.pic).filter(Boolean)] as string[])).sort((a, b) => a.localeCompare(b));
+  const salesLegend = Array.from(new Set([...team, ...visits.flatMap(v => picList(v.pic))])).sort((a, b) => a.localeCompare(b));
 
   async function handleSaveVisit(v: Visit) {
     await onSaveVisit(v);
@@ -76,7 +76,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
   function openEditEvent(e: CalendarEvent) { setEditEvent(e); setPreDate(undefined); setEventModal(true); }
 
   const sortedVisits = [...visits]
-    .filter(v => salesFilter === "all" || v.pic === salesFilter)
+    .filter(v => picMatches(v.pic, salesFilter))
     .sort((a, b) => b.date.localeCompare(a.date));
   const sortedEvents = [...events].sort((a, b) => b.date.localeCompare(a.date));
 
@@ -123,12 +123,16 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
                 onDoubleClick={() => { if (!isViewer) openNewVisit(ds); }} title={isViewer ? "" : "Double-klik untuk tambah visit"}>
                 <div className="dnum">{day}</div>
                 {dayVisits.map(v => {
-                  const c = colorForSales(v.pic || "—");
+                  const names = picList(v.pic);
+                  const colors = (names.length ? names : ["—"]).map(colorForSales);
+                  const background = colors.length > 1
+                    ? `linear-gradient(90deg, ${colors[0].bg} 50%, ${colors[1].bg} 50%)`
+                    : colors[0].bg;
                   return (
                     <div key={v.id} className="vpill"
-                      style={{ background: c.bg, color: c.fg, opacity: v.status === "Done" ? 0.55 : 1, textDecoration: v.status === "Done" ? "line-through" : "none" }}
+                      style={{ background, color: colors[0].fg, opacity: v.status === "Done" ? 0.55 : 1, textDecoration: v.status === "Done" ? "line-through" : "none" }}
                       onClick={e => { e.stopPropagation(); if (!isViewer) openEditVisit(v); }}
-                      title={`${clientName(v.client_id)}: ${v.purpose} (${v.pic || "Tanpa sales"})`}>
+                      title={`${clientName(v.client_id)}: ${v.purpose} (${names.join(" & ") || "Tanpa sales"})`}>
                       {clientName(v.client_id)}
                     </div>
                   );
