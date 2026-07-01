@@ -1,13 +1,17 @@
 "use client";
 import { useState } from "react";
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { Visit, CalendarEvent, Task, Deal } from "@/types";
-import { fmtDate, todayStr, visitStatusClass, picList, picMatches } from "@/lib/utils";
+import { fmtDate, todayStr, picList, picMatches } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import VisitModal from "./VisitModal";
 import EventModal from "./EventModal";
 import { exportVisits } from "@/lib/export";
 import { v4 as uuid } from "uuid";
+
+const WFO_DRAG_PREFIX = "wfo:";
 
 interface Props {
   data: AppData;
@@ -43,6 +47,58 @@ function colorForSales(name: string) {
   return SALES_COLOR_PALETTE[hash % SALES_COLOR_PALETTE.length];
 }
 
+function WfoChip({ name }: { name: string }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `${WFO_DRAG_PREFIX}${name}` });
+  const style = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
+  return (
+    <div ref={setNodeRef} {...listeners} {...attributes} style={style} className="wfo-chip">
+      🏠 {name}
+    </div>
+  );
+}
+
+function DayCell({
+  ds, day, isToday, dayVisits, dayEvents, clientName, isViewer, onOpenNewVisit, onEditVisit, onEditEvent,
+}: {
+  ds: string; day: number; isToday: boolean; dayVisits: Visit[]; dayEvents: CalendarEvent[];
+  clientName: (id: string) => string; isViewer?: boolean;
+  onOpenNewVisit: (ds: string) => void; onEditVisit: (v: Visit) => void; onEditEvent: (e: CalendarEvent) => void;
+}) {
+  const { isOver, setNodeRef } = useDroppable({ id: ds });
+  return (
+    <div ref={setNodeRef} className={`cell${isToday ? " today" : ""}${isOver ? " wfo-drop-target" : ""}`}
+      onDoubleClick={() => { if (!isViewer) onOpenNewVisit(ds); }}
+      title={isViewer ? "" : "Double-klik untuk tambah visit, atau seret WFO ke sini"}>
+      <div className="dnum">{day}</div>
+      {dayVisits.map(v => {
+        const names = picList(v.pic);
+        const colors = (names.length ? names : ["—"]).map(colorForSales);
+        const background = colors.length > 1
+          ? `linear-gradient(90deg, ${colors[0].bg} 50%, ${colors[1].bg} 50%)`
+          : colors[0].bg;
+        return (
+          <div key={v.id} className="vpill"
+            style={{ background, color: colors[0].fg, opacity: v.status === "Done" ? 0.55 : 1, textDecoration: v.status === "Done" ? "line-through" : "none" }}
+            onClick={e => { e.stopPropagation(); if (!isViewer) onEditVisit(v); }}
+            title={`${clientName(v.client_id)}: ${v.purpose} (${names.join(" & ") || "Tanpa sales"})`}>
+            {clientName(v.client_id)}
+          </div>
+        );
+      })}
+      {dayEvents.map(ev => {
+        const isWfo = ev.type === "WFO";
+        return (
+          <div key={ev.id} className={`vpill ${isWfo ? "vpill-wfo" : "vpill-event"}`}
+            onClick={e => { e.stopPropagation(); if (!isViewer) onEditEvent(ev); }}
+            title={isWfo ? `WFO: ${ev.created_by || "—"}` : ev.title}>
+            {isWfo ? `🏠 ${ev.created_by || "WFO"}` : ev.title}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function CalendarView({ data, currentUserName, isViewer, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask, onCreateDeal }: Props) {
   const { clients, contacts, visits, events, deals, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
@@ -59,6 +115,9 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
   const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
   const [preClientId, setPreClientId] = useState<string | undefined>();
   const [preDate, setPreDate] = useState<string | undefined>();
+  const [showWfoPanel, setShowWfoPanel] = useState(false);
+  const [activeWfoName, setActiveWfoName] = useState<string | null>(null);
+  const [pendingWfo, setPendingWfo] = useState<Set<string>>(new Set());
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
   const y = cursor.getFullYear(), m = cursor.getMonth();
@@ -76,6 +135,38 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
   function openNewEvent(dateStr?: string) { setEditEvent(null); setPreDate(dateStr); setEventModal(true); }
   function openEditEvent(e: CalendarEvent) { setEditEvent(e); setPreDate(undefined); setEventModal(true); }
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  function handleDragStart(e: DragStartEvent) {
+    const id = String(e.active.id);
+    if (id.startsWith(WFO_DRAG_PREFIX)) setActiveWfoName(id.slice(WFO_DRAG_PREFIX.length));
+  }
+
+  async function handleDragEnd(e: DragEndEvent) {
+    setActiveWfoName(null);
+    const { over, active } = e;
+    if (!over) return;
+    const id = String(active.id);
+    if (!id.startsWith(WFO_DRAG_PREFIX)) return;
+    const name = id.slice(WFO_DRAG_PREFIX.length);
+    const ds = String(over.id);
+    const key = `${name}::${ds}`;
+    if (pendingWfo.has(key)) return;
+    const exists = events.some(ev => ev.type === "WFO" && ev.date === ds && ev.created_by === name);
+    if (exists) { alert(`${name} sudah ditandai WFO pada tanggal ${ds}.`); return; }
+    setPendingWfo(prev => new Set(prev).add(key));
+    try {
+      await onSaveEvent({
+        id: uuid(), title: "Work From Office", date: ds, type: "WFO",
+        description: "", created_by: name, client_id: null,
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Gagal menandai WFO.");
+    } finally {
+      setPendingWfo(prev => { const next = new Set(prev); next.delete(key); return next; });
+    }
+  }
+
   const sortedVisits = [...visits]
     .filter(v => picMatches(v.pic, salesFilter))
     .sort((a, b) => b.date.localeCompare(a.date));
@@ -91,6 +182,11 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
           <button className="btn btn-ghost btn-sm" onClick={() => exportVisits(visits, id => clients.find(c => c.id === id)?.name || "—")}>↓ Export CSV</button>
+          {!isViewer && (
+            <button className="btn btn-ghost" onClick={() => setShowWfoPanel(s => !s)}>
+              {showWfoPanel ? "Tutup Panel WFO" : "🏠 Tandai WFO"}
+            </button>
+          )}
           {!isViewer && <button className="btn btn-ghost" onClick={() => openNewEvent()}>+ Event</button>}
           {!isViewer && <button className="btn" onClick={() => openNewVisit()}>+ Jadwalkan Visit</button>}
         </div>
@@ -108,48 +204,43 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
           );
         })}
         <span className="cal-legend-item"><span className="cal-dot cal-dot-event" />Event / Kegiatan</span>
+        <span className="cal-legend-item"><span className="cal-dot cal-dot-wfo" />WFO (tidak visit)</span>
       </div>
 
-      <div className="panel">
-        <div className="calendar">
-          {dows.map(d => <div key={d} className="dow">{d}</div>)}
-          {Array.from({ length: firstDay }, (_, i) => <div key={`e${i}`} className="cell empty" />)}
-          {Array.from({ length: daysInMonth }, (_, i) => {
-            const day = i + 1;
-            const ds = `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            const dayVisits = visits.filter(v => v.date === ds);
-            const dayEvents = events.filter(e => e.date === ds);
-            return (
-              <div key={ds} className={`cell${ds === today ? " today" : ""}`}
-                onDoubleClick={() => { if (!isViewer) openNewVisit(ds); }} title={isViewer ? "" : "Double-klik untuk tambah visit"}>
-                <div className="dnum">{day}</div>
-                {dayVisits.map(v => {
-                  const names = picList(v.pic);
-                  const colors = (names.length ? names : ["—"]).map(colorForSales);
-                  const background = colors.length > 1
-                    ? `linear-gradient(90deg, ${colors[0].bg} 50%, ${colors[1].bg} 50%)`
-                    : colors[0].bg;
-                  return (
-                    <div key={v.id} className="vpill"
-                      style={{ background, color: colors[0].fg, opacity: v.status === "Done" ? 0.55 : 1, textDecoration: v.status === "Done" ? "line-through" : "none" }}
-                      onClick={e => { e.stopPropagation(); if (!isViewer) openEditVisit(v); }}
-                      title={`${clientName(v.client_id)}: ${v.purpose} (${names.join(" & ") || "Tanpa sales"})`}>
-                      {clientName(v.client_id)}
-                    </div>
-                  );
-                })}
-                {dayEvents.map(ev => (
-                  <div key={ev.id} className="vpill vpill-event"
-                    onClick={e => { e.stopPropagation(); if (!isViewer) openEditEvent(ev); }}
-                    title={ev.title}>
-                    {ev.title}
-                  </div>
-                ))}
-              </div>
-            );
-          })}
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        {showWfoPanel && !isViewer && (
+          <div className="wfo-panel">
+            <div className="wfo-panel-hint">🏠 Seret nama ke tanggal kalender untuk menandai hari itu WFO (tidak visit client)</div>
+            <div className="wfo-panel-list">
+              {team.map(name => <WfoChip key={name} name={name} />)}
+            </div>
+          </div>
+        )}
+
+        <div className="panel">
+          <div className="calendar">
+            {dows.map(d => <div key={d} className="dow">{d}</div>)}
+            {Array.from({ length: firstDay }, (_, i) => <div key={`e${i}`} className="cell empty" />)}
+            {Array.from({ length: daysInMonth }, (_, i) => {
+              const day = i + 1;
+              const ds = `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+              const dayVisits = visits.filter(v => v.date === ds);
+              const dayEvents = events.filter(e => e.date === ds);
+              return (
+                <DayCell key={ds} ds={ds} day={day} isToday={ds === today} dayVisits={dayVisits} dayEvents={dayEvents}
+                  clientName={clientName} isViewer={isViewer}
+                  onOpenNewVisit={openNewVisit} onEditVisit={openEditVisit} onEditEvent={openEditEvent} />
+              );
+            })}
+          </div>
         </div>
-      </div>
+
+        <DragOverlay>
+          {activeWfoName && (
+            <div className="wfo-chip" style={{ opacity: 0.9, cursor: "grabbing" }}>🏠 {activeWfoName}</div>
+          )}
+        </DragOverlay>
+      </DndContext>
 
       {/* Visit table */}
       <div className="panel">
