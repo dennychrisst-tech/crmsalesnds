@@ -75,6 +75,13 @@ nav.tabs button.active::after {
 }
 .tab-icon { font-size: 14px; line-height: 1; }
 
+/* Bottom nav — mobile only, see @media (max-width: 640px) below */
+.bottom-nav { display: none; }
+.more-sheet-backdrop { display: none; }
+
+/* Mobile card list (Tasks, Projects) — hidden on desktop, table shown instead */
+.mobile-cards { display: none; }
+
 /* KPIs */
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 14px; margin-bottom: 24px; }
 .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
@@ -468,7 +475,7 @@ tr.task-soon td { background: #fffbeb; }
 
 /* ───────────────────── Mobile ───────────────────── */
 @media (max-width: 640px) {
-  .app { padding: 0 10px 60px; }
+  .app { padding: 0 10px calc(74px + env(safe-area-inset-bottom)); }
 
   /* Header — wraps into rows: brand+tag / search (full width) / sync+admin+logout */
   header.top {
@@ -481,14 +488,40 @@ tr.task-soon td { background: #fffbeb; }
   .sync-status { order: 5; font-size: 11px; }
   .btn-admin, .btn-logout { order: 6; padding: 5px 10px; font-size: 11px; }
 
-  /* Nav — horizontal scroll instead of wrapping pills */
-  nav.tabs {
-    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
-    margin: 0 -10px 18px; padding: 0 10px 6px;
-    scrollbar-width: none;
+  /* Nav — replaced by fixed bottom nav on mobile */
+  nav.tabs { display: none; }
+
+  .bottom-nav {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    background: var(--card); border-top: 1px solid var(--line);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    box-shadow: 0 -2px 12px rgba(11,27,43,.08);
   }
-  nav.tabs::-webkit-scrollbar { display: none; }
-  nav.tabs button { flex-shrink: 0; padding: 8px 13px; font-size: 12.5px; }
+  .bottom-nav button {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    background: none; border: none; font-family: inherit; color: var(--ink-soft);
+    padding: 5px 2px; border-radius: 10px; cursor: pointer;
+  }
+  .bottom-nav button.active { color: var(--brand); background: rgba(0,175,160,.1); }
+  .bottom-nav-icon { font-size: 19px; line-height: 1; }
+  .bottom-nav-label { font-size: 9.5px; font-weight: 600; white-space: nowrap; }
+
+  .more-sheet-backdrop {
+    display: block; position: fixed; inset: 0; background: rgba(11,27,43,.45); z-index: 70;
+  }
+  .more-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; background: var(--card);
+    border-radius: 16px 16px 0 0; padding: 10px 12px calc(16px + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 20px rgba(11,27,43,.15); max-height: 70vh; overflow-y: auto;
+  }
+  .more-sheet-handle { width: 36px; height: 4px; background: var(--line); border-radius: 999px; margin: 4px auto 12px; }
+  .more-sheet-item {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    background: none; border: none; font-family: inherit; font-size: 14px; font-weight: 600;
+    color: var(--ink); padding: 12px 10px; border-radius: 10px; cursor: pointer;
+  }
+  .more-sheet-item.active { color: var(--brand); background: rgba(0,175,160,.1); }
+  .more-sheet-item:active { background: var(--paper); }
 
   /* KPI cards — 2 per row, tighter padding */
   .kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
@@ -518,10 +551,26 @@ tr.task-soon td { background: #fffbeb; }
   .dnum { font-size: 10px; }
   .vpill { font-size: 9px; padding: 2px 3px; border-radius: 4px; margin-top: 2px; }
 
-  /* Tables — keep natural width, scroll the panel horizontally instead of squashing columns */
+  /* Tables — keep natural width, scroll the panel horizontally instead of squashing columns.
+     Views with a dedicated .mobile-cards layout hide the table entirely instead (see below). */
   .panel { overflow-x: auto; }
   .panel > table, .panel table { min-width: 540px; }
   th, td { padding: 7px 8px; font-size: 12px; }
+
+  .view-toggle { display: none; }
+
+  /* Data table → stacked card list on mobile (Tasks, Projects) */
+  table.data-table { display: none; }
+  .mobile-cards { display: flex; flex-direction: column; gap: 10px; }
+  .mcard {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .mcard-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .mcard-title { font-size: 13.5px; font-weight: 700; }
+  .mcard-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--ink-soft); }
+  .mcard-row b { color: var(--ink); font-weight: 600; }
+  .mcard-actions { display: flex; gap: 8px; margin-top: 4px; justify-content: flex-end; }
 
   /* Pipeline board — horizontal scroll-snap kanban on small phones */
   .board {

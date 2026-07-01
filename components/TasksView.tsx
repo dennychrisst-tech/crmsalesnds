@@ -86,7 +86,7 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
         <div className="panel"><EmptyState icon="✅" label="Tidak ada task yang cocok" sub="Coba ubah filter atau tambah task baru" /></div>
       ) : (
         <div className="panel" style={{ padding: 0 }}>
-          <table>
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Task</th>
@@ -112,6 +112,27 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
               ))}
             </tbody>
           </table>
+
+          <div className="mobile-cards" style={{ padding: 10 }}>
+            {filtered.map(t => (
+              <div key={t.id} className={`mcard ${urgencyClass(t.due_date, t.status)}`}>
+                <div className="mcard-head">
+                  <div className="mcard-title">{t.title}</div>
+                  {statusBadge(t.status)}
+                </div>
+                {t.notes && <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{t.notes}</div>}
+                <div className="mcard-row"><span>Deadline</span><b>{t.due_date ? fmtDate(t.due_date) : "—"}</b></div>
+                <div className="mcard-row"><span>Assigned To</span><b>{t.assigned_to || "—"}</b></div>
+                <div className="mcard-row"><span>Client</span><b>{clientName(t.client_id)}</b></div>
+                <div className="mcard-row"><span>Project</span><b>{dealName(t.deal_id)}</b></div>
+                {!isViewer && (
+                  <div className="mcard-actions">
+                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)}>Edit</button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

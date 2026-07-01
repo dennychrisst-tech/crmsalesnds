@@ -17,6 +17,8 @@ interface Props {
   onNavigate: (view: ActiveView) => void;
   onSaveClient: (c: Client) => Promise<void>;
   onDeleteClient: (id: string) => Promise<void>;
+  onUploadLogo: (file: File, clientId: string) => Promise<string>;
+  onDeleteLogo: (url: string) => Promise<void>;
   onSaveContact: (c: Contact) => Promise<void>;
   onDeleteContact: (id: string) => Promise<void>;
   onSaveVisit: (v: Visit) => Promise<void>;
@@ -41,11 +43,12 @@ function extractDomain(website: string): string {
   return website.trim().replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0];
 }
 
-function ClientLogo({ name, website, size = 36 }: { name: string; website?: string; size?: number }) {
+function ClientLogo({ name, website, logoUrl, size = 36 }: { name: string; website?: string; logoUrl?: string | null; size?: number }) {
   const [failed, setFailed] = useState(false);
   const domain = website ? extractDomain(website) : "";
+  const src = logoUrl || (domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : "");
 
-  if (!domain || failed) {
+  if (!src || failed) {
     return (
       <div className="client-logo client-logo-fallback" style={{ width: size, height: size, fontSize: size * 0.42 }}>
         {name.charAt(0).toUpperCase()}
@@ -56,7 +59,7 @@ function ClientLogo({ name, website, size = 36 }: { name: string; website?: stri
     // eslint-disable-next-line @next/next/no-img-element
     <img
       className="client-logo"
-      src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
+      src={src}
       alt=""
       width={size}
       height={size}
@@ -83,7 +86,7 @@ function lastContactDate(clientId: string, visits: Visit[], activities: Activity
   return dates.length ? dates[dates.length - 1] : null;
 }
 
-export default function Clients({ data, currentUserName, isViewer, onNavigate, onSaveClient, onDeleteClient, onSaveContact, onDeleteContact, onSaveVisit, onDeleteVisit, onCreateDeal, openClientId, onOpenClientHandled }: Props) {
+export default function Clients({ data, currentUserName, isViewer, onNavigate, onSaveClient, onDeleteClient, onUploadLogo, onDeleteLogo, onSaveContact, onDeleteContact, onSaveVisit, onDeleteVisit, onCreateDeal, openClientId, onOpenClientHandled }: Props) {
   const { clients, contacts, visits, deals, activities, profiles, projects } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
@@ -92,6 +95,15 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
   const [sectorFilter, setSectorFilter] = useState("all");
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [viewMode, setViewMode] = useState<ViewMode>("detail");
+
+  // Force card view on mobile — the compact table doesn't fit small screens.
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const apply = () => { if (mq.matches) setViewMode("detail"); };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   const [clientModalOpen, setClientModalOpen] = useState(false);
@@ -219,7 +231,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
                   <tr key={c.id} style={{ cursor: isViewer ? "default" : "pointer" }} onClick={() => { if (!isViewer) { setEditClient(c); setClientModalOpen(true); } }}>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <ClientLogo name={c.name} website={c.website} size={24} />
+                        <ClientLogo name={c.name} website={c.website} logoUrl={c.logo_url} size={24} />
                         <span className="client-name-cell">{c.name}</span>
                       </div>
                     </td>
@@ -260,7 +272,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
         return (
           <div key={c.id} className="ccard" style={{ borderLeft: `4px solid ${edgeColor}` }}>
             <div className="ccard-head">
-              <ClientLogo name={c.name} website={c.website} size={44} />
+              <ClientLogo name={c.name} website={c.website} logoUrl={c.logo_url} size={44} />
               <div>
                 <div className="cname">{c.name}</div>
                 <div className="cmeta">
@@ -417,7 +429,9 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
       })}
 
       <ClientModal open={clientModalOpen} client={editClient} team={team}
-        onSave={onSaveClient} onDelete={onDeleteClient} onClose={() => setClientModalOpen(false)} />
+        onSave={onSaveClient} onDelete={onDeleteClient}
+        onUploadLogo={onUploadLogo} onDeleteLogo={onDeleteLogo}
+        onClose={() => setClientModalOpen(false)} />
       <ContactModal open={contactModalOpen} contact={editContact} clientId={contactClientId}
         onSave={onSaveContact} onDelete={onDeleteContact} onClose={() => setContactModalOpen(false)} />
       <VisitModal open={visitModalOpen} visit={editVisit} preClientId={preClientId} clients={clients} contacts={contacts} deals={deals} team={team} defaultPic={currentUserName}

@@ -256,6 +256,23 @@ export function useData() {
     commit(prev => ({ ...prev, attachments: prev.attachments.filter(a => a.id !== id) }));
   }
 
+  async function uploadClientLogo(file: File, clientId: string): Promise<string> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("clientId", clientId);
+    const res = await fetch("/api/upload/logo", { method: "POST", body: formData });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error || "Upload logo gagal");
+    }
+    const { url } = await res.json();
+    return url as string;
+  }
+
+  async function deleteClientLogo(url: string) {
+    await api("/api/upload/logo", "DELETE", { url });
+  }
+
   return {
     data, loading, syncStatus, currentProfile,
     upsertClient, deleteClient,
@@ -267,6 +284,7 @@ export function useData() {
     upsertProduct, deleteProduct,
     upsertDocument, deleteDocument,
     uploadAttachment, deleteAttachment,
+    uploadClientLogo, deleteClientLogo,
     upsertActivity, deleteActivity,
     upsertEvent, deleteEvent,
   };

@@ -20,6 +20,7 @@ export interface Client {
   address?: string;
   website?: string;
   company_size?: string;
+  logo_url?: string | null;
   created_by_id?: string;
   created_at?: string;
 }

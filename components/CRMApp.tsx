@@ -30,11 +30,16 @@ const TABS: { id: ActiveView; label: string; icon: string }[] = [
   { id: "weekly-report",label: "Laporan Mingguan",  icon: "🗓️" },
 ];
 
+// Bottom nav (mobile only) surfaces the 4 most-used views + a "Lainnya" sheet for the rest.
+const PRIMARY_VIEWS: ActiveView[] = ["dashboard", "clients", "calendar", "pipeline"];
+const MORE_TABS = TABS.filter(t => !PRIMARY_VIEWS.includes(t.id));
+
 export default function CRMApp() {
   const router = useRouter();
   const [view, setView] = useState<ActiveView>("dashboard");
   const [pendingClientId, setPendingClientId] = useState<string | null>(null);
   const [pendingDealId, setPendingDealId] = useState<string | null>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   function openClient(clientId: string) {
     setPendingClientId(clientId);
@@ -61,6 +66,7 @@ export default function CRMApp() {
     upsertProduct, deleteProduct,
     upsertDocument, deleteDocument,
     uploadAttachment, deleteAttachment,
+    uploadClientLogo, deleteClientLogo,
     upsertActivity, deleteActivity,
     upsertEvent, deleteEvent,
   } = useData();
@@ -107,6 +113,34 @@ export default function CRMApp() {
         ))}
       </nav>
 
+      {/* Bottom nav — mobile only (see globals.css). Desktop keeps the tab row above. */}
+      <nav className="bottom-nav">
+        {TABS.filter(t => PRIMARY_VIEWS.includes(t.id)).map(t => (
+          <button key={t.id} className={view === t.id && !moreOpen ? "active" : ""} onClick={() => { setView(t.id); setMoreOpen(false); }}>
+            <span className="bottom-nav-icon">{t.icon}</span>
+            <span className="bottom-nav-label">{t.label}</span>
+          </button>
+        ))}
+        <button className={moreOpen || MORE_TABS.some(t => t.id === view) ? "active" : ""} onClick={() => setMoreOpen(o => !o)}>
+          <span className="bottom-nav-icon">⋯</span>
+          <span className="bottom-nav-label">Lainnya</span>
+        </button>
+      </nav>
+
+      {moreOpen && (
+        <div className="more-sheet-backdrop" onClick={() => setMoreOpen(false)}>
+          <div className="more-sheet" onClick={e => e.stopPropagation()}>
+            <div className="more-sheet-handle" />
+            {MORE_TABS.map(t => (
+              <button key={t.id} className={`more-sheet-item${view === t.id ? " active" : ""}`}
+                onClick={() => { setView(t.id); setMoreOpen(false); }}>
+                <span className="bottom-nav-icon">{t.icon}</span>{t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="empty-state">Memuat data…</div>
       ) : (
@@ -125,6 +159,7 @@ export default function CRMApp() {
                 {view === "clients" && (
                   <Clients data={data} currentUserName={currentUserName} isViewer={isViewer} onNavigate={setView}
                     onSaveClient={ro(upsertClient)} onDeleteClient={ro(deleteClient)}
+                    onUploadLogo={uploadClientLogo} onDeleteLogo={deleteClientLogo}
                     onSaveContact={ro(upsertContact)} onDeleteContact={ro(deleteContact)}
                     onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)} onCreateDeal={ro(upsertDeal)}
                     openClientId={pendingClientId} onOpenClientHandled={() => setPendingClientId(null)} />

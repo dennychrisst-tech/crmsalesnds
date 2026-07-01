@@ -44,7 +44,7 @@ export default function Projects({ data, isViewer, onSaveProject, onDeleteProjec
         {!isViewer && <button className="btn" onClick={() => { setEditProject(null); setModalOpen(true); }}>+ Project Baru</button>}
       </div>
       <div className="panel">
-        <table>
+        <table className="data-table">
           <thead>
             <tr>
               <th>Project</th><th>Client</th><th>Partner</th><th>Produk / Solusi</th>
@@ -83,6 +83,41 @@ export default function Projects({ data, isViewer, onSaveProject, onDeleteProjec
             )) : <tr><td colSpan={8} className="empty-state">Belum ada project.</td></tr>}
           </tbody>
         </table>
+
+        {filtered.length > 0 && (
+          <div className="mobile-cards">
+            {filtered.map(p => (
+              <div key={p.id} className="mcard">
+                <div className="mcard-head">
+                  <div className="mcard-title">{p.name}</div>
+                  <span className="chip">{p.status}</span>
+                </div>
+                {p.notes && <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{p.notes}</div>}
+                <div className="mcard-row"><span>Client</span><b>{clientName(p.client_id)}</b></div>
+                {p.partner && (
+                  <div className="mcard-row">
+                    <span>Partner</span>
+                    <b
+                      onClick={() => {
+                        const partnerClient = clients.find(c => c.name === p.partner);
+                        if (partnerClient) onOpenClient(partnerClient.id);
+                      }}
+                      style={{ cursor: "pointer", textDecoration: "underline" }}
+                    >{p.partner}</b>
+                  </div>
+                )}
+                <div className="mcard-row"><span>Produk / Solusi</span><b>{p.product || "-"}</b></div>
+                <div className="mcard-row"><span>Nilai</span><b>{fmtIDR(p.value)}</b></div>
+                <div className="mcard-row"><span>Target Go-Live</span><b>{fmtDate(p.golive)}</b></div>
+                {!isViewer && (
+                  <div className="mcard-actions">
+                    <button className="btn btn-ghost btn-sm" onClick={() => { setEditProject(p); setModalOpen(true); }}>Edit</button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       <ProjectModal open={modalOpen} project={editProject} clients={clients}
         onSave={onSaveProject} onDelete={onDeleteProject} onClose={() => setModalOpen(false)} />
