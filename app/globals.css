@@ -95,7 +95,7 @@ nav.tabs button.active::after {
 
 /* Pipeline board */
 .board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; min-height: 300px; }
-.board .col { flex: 0 0 220px; }
+.board .col { flex: 0 0 260px; }
 .col {
   display: flex; flex-direction: column; min-height: 0;
   background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
