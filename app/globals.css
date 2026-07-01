@@ -113,6 +113,22 @@ nav.tabs button.active::after {
 .aging-critical { background: #7F1D1D; color: #FEE2E2; }
 .col.over { background: var(--brand-soft); border-color: var(--brand); }
 
+.project-panel {
+  background: var(--paper); border: 1px dashed var(--brand); border-radius: 12px;
+  padding: 12px; margin-bottom: 12px;
+}
+.project-panel-search {
+  width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px;
+  font-size: 13px; margin-bottom: 10px; background: var(--card);
+}
+.project-panel-list { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.project-chip {
+  background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--brand);
+  border-radius: 8px; padding: 10px; font-size: 13px; cursor: grab; touch-action: none;
+  flex: 0 0 180px;
+}
+.project-chip:active { cursor: grabbing; }
+
 /* Calendar */
 .cal-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .mtitle { font-size: 18px; font-weight: 800; }
