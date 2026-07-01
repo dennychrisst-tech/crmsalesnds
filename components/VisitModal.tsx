@@ -168,7 +168,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         />
       </Field>
 
-      <Field label="Project (opsional)">
+      <Field label="Project">
         <SearchableSelect
           options={clientDeals.map(d => ({ value: d.id, label: d.name }))}
           value={form.deal_id || ""}
