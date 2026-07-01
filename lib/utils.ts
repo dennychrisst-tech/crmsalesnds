@@ -1,10 +1,12 @@
-export const STAGES = ["Lead", "Discovery", "Proposal", "Negotiation", "Won"] as const;
+export const STAGES = ["Cold Call", "First Meeting", "Discovery", "Proposal", "Negotiation", "Contract", "PO", "Won", "On Hold"] as const;
 export const STAGE_PROB: Record<string, number> = {
-  Lead: 10, Discovery: 30, Proposal: 60, Negotiation: 80, Won: 100, Lost: 0,
+  "Cold Call": 5, "First Meeting": 15, Discovery: 30, Proposal: 45, Negotiation: 65,
+  Contract: 80, PO: 95, Won: 100, "On Hold": 10, Lost: 0,
 };
 export const STAGE_COLOR: Record<string, string> = {
-  Lead: "#94A3B8", Discovery: "#378ADD", Proposal: "#D97706",
-  Negotiation: "#DB2777", Won: "#16A34A", Lost: "#DC2626",
+  "Cold Call": "#94A3B8", "First Meeting": "#60A5FA", Discovery: "#378ADD", Proposal: "#8B5CF6",
+  Negotiation: "#DB2777", Contract: "#D97706", PO: "#CA8A04", Won: "#16A34A",
+  "On Hold": "#78716C", Lost: "#DC2626",
 };
 export const TASK_STATUS_COLOR: Record<string, { bg: string; fg: string }> = {
   Open: { bg: "#FEF3C7", fg: "#B45309" },
@@ -59,8 +61,9 @@ export function isoWeekLabel(dateStr: string): { key: string; label: string } {
 
 export function stageBadgeClass(stage: string): string {
   const map: Record<string, string> = {
-    Lead: "badge-lead", Discovery: "badge-discovery", Proposal: "badge-proposal",
-    Negotiation: "badge-negotiation", Won: "badge-won", Lost: "badge-lost",
+    "Cold Call": "badge-cold-call", "First Meeting": "badge-first-meeting", Discovery: "badge-discovery",
+    Proposal: "badge-proposal", Negotiation: "badge-negotiation", Contract: "badge-contract",
+    PO: "badge-po", Won: "badge-won", "On Hold": "badge-on-hold", Lost: "badge-lost",
   };
   return map[stage] || "";
 }

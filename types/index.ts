@@ -1,5 +1,5 @@
 export type Sector = "Banking" | "Multifinance" | "Insurance" | "Health Care" | "Industrial" | "Technology" | "Telekomunikasi" | "Infrastruktur" | "Transportasi" | "Energy" | "Lainnya";
-export type DealStage = "Lead" | "Discovery" | "Proposal" | "Negotiation" | "Won" | "Lost";
+export type DealStage = "Cold Call" | "First Meeting" | "Discovery" | "Proposal" | "Negotiation" | "Contract" | "PO" | "Won" | "On Hold" | "Lost";
 export type VisitStatus = "Planned" | "Done" | "Cancel" | "Reschedule";
 export type ProjectStatus = "Initiation" | "In Progress" | "On Hold" | "Delivered" | "Closed";
 export type TaskStatus = "Open" | "Done";

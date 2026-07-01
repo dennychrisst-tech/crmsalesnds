@@ -30,7 +30,7 @@ interface Props {
 
 const emptyDeal = (clientId: string, defaultOwner = ""): Deal => ({
   id: uuid(), name: "", client_id: clientId, value: 0,
-  stage: "Lead", deal_type: "", product: "", close_date: "", notes: "",
+  stage: "Cold Call", deal_type: "", product: "", close_date: "", notes: "",
   owner: defaultOwner, win_loss_reason: "", competitor: "", stage_updated_at: new Date().toISOString(),
 });
 

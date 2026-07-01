@@ -91,8 +91,8 @@ nav.tabs button.active::after {
 .count { color: var(--ink-soft); font-weight: 500; font-size: 13px; }
 
 /* Pipeline board */
-.board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-@media(max-width: 1000px){ .board { grid-template-columns: repeat(2,1fr); } }
+.board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+.board .col { flex: 0 0 220px; }
 .col { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-height: 200px; }
 .col h3 { margin: 0 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
 .colval { font-size: 12px; color: var(--ink-soft); margin-bottom: 10px; }
@@ -142,11 +142,15 @@ tr:hover td { background: var(--paper); }
 
 /* Badges */
 .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
-.badge-lead { background: #EAE6DA; color: #5C5440; }
+.badge-cold-call { background: #EAE6DA; color: #5C5440; }
+.badge-first-meeting { background: #DCEAFE; color: #1D4ED8; }
 .badge-discovery { background: #E2EAF0; color: #2A526E; }
-.badge-proposal { background: #FBF0DA; color: #9A6E12; }
+.badge-proposal { background: #EDE4FB; color: #6D28D9; }
 .badge-negotiation { background: #F6E4D6; color: #9A4E1E; }
+.badge-contract { background: #FBF0DA; color: #9A6E12; }
+.badge-po { background: #FBF3D6; color: #92730C; }
 .badge-won { background: var(--brand-soft); color: var(--brand); }
+.badge-on-hold { background: #E7E5E4; color: #57534E; }
 .badge-lost { background: #EFE2E2; color: var(--lost); }
 .st-planned { background: #E2EAF0; color: #2A526E; }
 .st-done { background: var(--brand-soft); color: var(--brand); }
