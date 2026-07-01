@@ -21,7 +21,9 @@ interface Reminder {
 
 export default function RemindersBell({ data, currentUserName, isAdmin, onNavigate }: Props) {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const bellRef = useRef<HTMLButtonElement>(null);
   const today = todayStr();
 
   useEffect(() => {
@@ -31,6 +33,25 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  function updatePosition() {
+    if (!bellRef.current) return;
+    const rect = bellRef.current.getBoundingClientRect();
+    const width = Math.min(320, window.innerWidth - 20);
+    const left = Math.max(10, Math.min(rect.right - width, window.innerWidth - width - 10));
+    setPos({ top: rect.bottom + 6, left, width });
+  }
+
+  function toggle() {
+    if (!open) updatePosition();
+    setOpen(o => !o);
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    window.addEventListener("resize", updatePosition);
+    return () => window.removeEventListener("resize", updatePosition);
+  }, [open]);
 
   const clientName = (id: string) => data.clients.find(c => c.id === id)?.name || "—";
   const mine = (owner: string) => isAdmin || owner === currentUserName;
@@ -67,14 +88,14 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
 
   return (
     <div ref={ref} className="rb-wrap">
-      <button className="rb-bell" onClick={() => setOpen(o => !o)} title="Reminder" aria-label="Reminder">
+      <button ref={bellRef} className="rb-bell" onClick={toggle} title="Reminder" aria-label="Reminder">
         🔔
         {reminders.length > 0 && (
           <span className="rb-badge" style={{ background: badgeColor || undefined }}>{reminders.length > 9 ? "9+" : reminders.length}</span>
         )}
       </button>
-      {open && (
-        <div className="rb-dropdown">
+      {open && pos && (
+        <div className="rb-dropdown" style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width }}>
           <div className="rb-header">Reminder{!isAdmin && currentUserName ? ` — ${currentUserName}` : ""}</div>
           {reminders.length === 0 ? (
             <div className="rb-empty">Tidak ada reminder. Semua aman 🎉</div>

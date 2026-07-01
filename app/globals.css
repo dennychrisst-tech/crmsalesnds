@@ -351,7 +351,7 @@ tr.task-soon td { background: #fffbeb; }
 .rb-bell { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 9px; width: 36px; height: 36px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .rb-bell:hover { border-color: var(--brand); }
 .rb-badge { position: absolute; top: -5px; right: -5px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: var(--brand); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; line-height: 1; }
-.rb-dropdown { position: absolute; top: calc(100% + 6px); right: 0; width: 320px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); z-index: 100; max-height: 380px; overflow-y: auto; }
+.rb-dropdown { background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); z-index: 100; max-height: 380px; overflow-y: auto; }
 .rb-header { padding: 10px 12px; font-size: 12px; font-weight: 700; color: var(--ink-soft); border-bottom: 1px solid var(--line); }
 .rb-item { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--line); }
 .rb-item:last-child { border-bottom: none; }
@@ -421,7 +421,6 @@ tr.task-soon td { background: #fffbeb; }
   .header-crm-tag { font-size: 9px; padding: 2px 6px; }
   .gs-wrap { order: 3; flex: 1 1 100%; max-width: 100%; }
   .rb-wrap { order: 4; }
-  .rb-dropdown { right: -10px; width: calc(100vw - 20px); }
   .sync-status { order: 5; font-size: 11px; }
   .btn-admin, .btn-logout { order: 6; padding: 5px 10px; font-size: 11px; }
 
