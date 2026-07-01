@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import SearchableSelect from "./ui/SearchableSelect";
+import { VisitBadge } from "./ui/Badge";
 import { Visit, Client, Contact, Deal, Task } from "@/types";
-import { VISIT_STATUS, todayStr, picList, addDaysStr } from "@/lib/utils";
+import { VISIT_STATUS, STAGE_COLOR, todayStr, picList, addDaysStr, fmtDate } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -42,13 +43,15 @@ function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit
 export default function VisitModal({ open, visit, preClientId, preDate, clients, contacts, deals, team, defaultPic = "", onSave, onDelete, onCreateTask, onCreateDeal, onClose }: Props) {
   const isEdit = !!visit;
   const [form, setForm] = useState<Visit>(emptyVisit("", defaultPic));
+  const [tab, setTab] = useState<"detail" | "edit">("edit");
   const [task, setTask] = useState<TaskDraft>({ title: "", due_date: "", assigned_to: "", notes: "" });
   const [pic1, setPic1] = useState(defaultPic);
   const [pic2, setPic2] = useState("");
   const [manualPic, setManualPic] = useState(false);
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "";
-  const dealName = (id: string | null | undefined) => deals.find(d => d.id === id)?.name || "";
+  const deal = (id: string | null | undefined) => id ? deals.find(d => d.id === id) || null : null;
+  const dealName = (id: string | null | undefined) => deal(id)?.name || "";
 
   function buildDefaultTask(f: Visit): TaskDraft {
     return {
@@ -74,12 +77,14 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       setPic1(a); setPic2(b);
       const hasMatchingContact = contacts.some(c => c.client_id === visit.client_id && c.name === visit.pic_client);
       setManualPic(!!visit.pic_client && !hasMatchingContact);
+      setTab("detail");
       if (visit.status === "Done") setTask(buildDefaultTask(restored));
     } else {
       const f = emptyVisit(preClientId || "", defaultPic, preDate || todayStr());
       setForm(f);
       setPic1(defaultPic); setPic2("");
       setManualPic(false);
+      setTab("edit");
       setTask({ title: "", due_date: "", assigned_to: "", notes: "" });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -158,8 +163,58 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
     marginTop: 16, paddingTop: 14,
   };
 
+  const tabCls = (t: string) => `modal-tab${tab === t ? " modal-tab-active" : ""}`;
+  const visitDeal = deal(form.deal_id);
+
   return (
-    <Modal open={open} onClose={onClose} title={`${isEdit ? "Edit" : "Jadwalkan"} Visit`}>
+    <Modal open={open} onClose={onClose} title={isEdit ? (tab === "detail" ? "Detail Visit" : "Edit Visit") : "Jadwalkan Visit"}>
+      {isEdit && (
+        <div className="modal-tabs">
+          <button className={tabCls("detail")} onClick={() => setTab("detail")}>Detail</button>
+          <button className={tabCls("edit")} onClick={() => setTab("edit")}>Edit</button>
+        </div>
+      )}
+
+      {tab === "detail" && isEdit && (
+        <>
+          <div className="dd-title-row">
+            <div>
+              <div className="dd-name">{clientName(form.client_id)}</div>
+              <div className="dd-client">{fmtDate(form.date)}{form.approach ? ` · ${form.approach}` : ""}</div>
+            </div>
+            <VisitBadge status={form.status} />
+          </div>
+          <div className="dd-grid">
+            <div className="dd-item"><div className="dd-label">Project</div><div className="dd-value">{visitDeal?.name || "—"}</div></div>
+            <div className="dd-item">
+              <div className="dd-label">Stage</div>
+              <div className="dd-value">
+                {visitDeal ? <span style={{ color: STAGE_COLOR[visitDeal.stage] || "var(--brand)" }}>{visitDeal.stage}</span> : "—"}
+              </div>
+            </div>
+            <div className="dd-item"><div className="dd-label">PIC Client</div><div className="dd-value">{form.pic_client || "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Jabatan</div><div className="dd-value">{form.jabatan || "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">PIC NDS Sales</div><div className="dd-value">{picList(form.pic).join(" & ") || "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Tanggal Follow-up</div><div className="dd-value">{form.followup_date ? fmtDate(form.followup_date) : "—"}</div></div>
+          </div>
+          <div className="dd-block">
+            <div className="dd-label">Tujuan Visit</div>
+            <div className="dd-text">{form.purpose || "—"}</div>
+          </div>
+          {form.status === "Done" && (
+            <div className="dd-block">
+              <div className="dd-label">Summary / Hasil</div>
+              <div className="dd-text">{form.summary || "—"}</div>
+            </div>
+          )}
+          <ModalActions>
+            <button className="btn btn-ghost" onClick={onClose}>Tutup</button>
+          </ModalActions>
+        </>
+      )}
+
+      {tab === "edit" && (
+        <>
       <Field label="Client">
         <SearchableSelect
           options={clients.map(c => ({ value: c.id, label: c.name }))}
@@ -305,6 +360,8 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
         <button className="btn" onClick={handleSave}>Simpan</button>
       </ModalActions>
+        </>
+      )}
     </Modal>
   );
 }

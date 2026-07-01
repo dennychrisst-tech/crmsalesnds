@@ -32,14 +32,17 @@ export default function ContactModal({ open, contact, clientId, onSave, onDelete
 
   // Edit mode: single form
   const [form, setForm] = useState<Contact>(emptyRow(clientId));
+  const [tab, setTab] = useState<"detail" | "edit">("edit");
   // Add mode: multiple rows
   const [rows, setRows] = useState<Contact[]>([emptyRow(clientId)]);
 
   useEffect(() => {
     if (isEdit) {
       setForm({ ...contact });
+      setTab("detail");
     } else {
       setRows([emptyRow(clientId)]);
+      setTab("edit");
     }
   }, [contact, clientId, open, isEdit]);
 
@@ -81,9 +84,40 @@ export default function ContactModal({ open, contact, clientId, onSave, onDelete
     background: "var(--paper)",
   };
 
+  const tabCls = (t: string) => `modal-tab${tab === t ? " modal-tab-active" : ""}`;
+
   return (
-    <Modal open={open} onClose={onClose} title={`${isEdit ? "Edit" : "Tambah"} Kontak`}>
-      {isEdit ? (
+    <Modal open={open} onClose={onClose} title={isEdit ? (tab === "detail" ? "Detail Kontak" : "Edit Kontak") : "Tambah Kontak"}>
+      {isEdit && (
+        <div className="modal-tabs">
+          <button className={tabCls("detail")} onClick={() => setTab("detail")}>Detail</button>
+          <button className={tabCls("edit")} onClick={() => setTab("edit")}>Edit</button>
+        </div>
+      )}
+
+      {isEdit && tab === "detail" && (
+        <>
+          <div className="dd-title-row">
+            <div>
+              <div className="dd-name">{form.name}</div>
+              <div className="dd-client">{form.title || "—"}</div>
+            </div>
+          </div>
+          <div className="dd-grid">
+            <div className="dd-item"><div className="dd-label">Email</div><div className="dd-value">{form.email || "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">No. Telepon</div><div className="dd-value">{form.phone ? formatPhone(form.phone) : "—"}</div></div>
+          </div>
+          <div className="dd-block">
+            <div className="dd-label">Catatan</div>
+            <div className="dd-text">{form.notes || "—"}</div>
+          </div>
+          <ModalActions>
+            <button className="btn btn-ghost" onClick={onClose}>Tutup</button>
+          </ModalActions>
+        </>
+      )}
+
+      {isEdit && tab === "edit" ? (
         <>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Nama">
@@ -104,8 +138,13 @@ export default function ContactModal({ open, contact, clientId, onSave, onDelete
           <Field label="Catatan">
             <textarea className={textareaCls} value={form.notes} onChange={e => setField("notes", e.target.value)} />
           </Field>
+          <ModalActions>
+            {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
+            <button className="btn btn-ghost" onClick={onClose}>Batal</button>
+            <button className="btn" onClick={handleSave}>Simpan</button>
+          </ModalActions>
         </>
-      ) : (
+      ) : !isEdit ? (
         <>
           {rows.map((row, i) => (
             <div key={row.id} style={rowStyle}>
@@ -144,13 +183,12 @@ export default function ContactModal({ open, contact, clientId, onSave, onDelete
           >
             + Tambah Kontak Lagi
           </button>
+          <ModalActions>
+            <button className="btn btn-ghost" onClick={onClose}>Batal</button>
+            <button className="btn" onClick={handleSave}>Simpan {rows.filter(r => r.name.trim()).length > 1 ? `(${rows.filter(r => r.name.trim()).length} kontak)` : ""}</button>
+          </ModalActions>
         </>
-      )}
-      <ModalActions>
-        {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
-        <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-        <button className="btn" onClick={handleSave}>Simpan {!isEdit && rows.filter(r => r.name.trim()).length > 1 ? `(${rows.filter(r => r.name.trim()).length} kontak)` : ""}</button>
-      </ModalActions>
+      ) : null}
     </Modal>
   );
 }
