@@ -195,6 +195,23 @@ tr:hover td { background: var(--paper); }
 .vt-approach { color: var(--ink-soft); flex: 1; }
 .vt-empty { font-size: 12px; color: var(--ink-soft); font-style: italic; }
 .vt-add { font-size: 12px; margin-left: auto; }
+.chip-value { background: var(--brand-soft); color: var(--brand); }
+.ccard-collapse-toggle { display: block; width: 100%; text-align: left; background: none; border: none; border-top: 1px dashed var(--line); padding: 8px 0 0; margin-bottom: 4px; font-size: 11px; color: var(--ink-soft); cursor: pointer; font-family: inherit; }
+.ccard-collapse-toggle:hover { color: var(--brand); }
+
+/* Client toolbar controls */
+.select-sm { font-size: 13px; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; font-family: inherit; }
+.view-toggle { display: flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+.view-toggle button { background: var(--card); border: none; padding: 8px 12px; font-size: 12px; font-weight: 600; color: var(--ink-soft); cursor: pointer; font-family: inherit; }
+.view-toggle button + button { border-left: 1px solid var(--line); }
+.view-toggle button.active { background: var(--ink); color: #fff; }
+
+/* Client summary bar */
+.client-summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.csum-chip { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 12px; font-weight: 600; color: var(--ink-soft); cursor: pointer; font-family: inherit; }
+.csum-chip b { font-weight: 800; color: var(--ink); margin-left: 4px; }
+.csum-chip.active { border-color: var(--brand); }
+.csum-chip.active b { color: inherit; }
 
 /* Modal tabs */
 .modal-tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
