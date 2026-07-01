@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { v4 as uuid } from "uuid";
 import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity, CalendarEvent, Profile } from "@/types";
+import { STAGES } from "@/lib/utils";
 
 export interface AppData {
   clients: Client[];
@@ -107,8 +108,8 @@ export function useData() {
     if (v.approach === "First Meeting") {
       const dealName = (v.project && v.project.trim()) || data.clients.find(c => c.id === v.client_id)?.name || "";
       if (dealName) {
-        const exists = data.deals.some(d => d.client_id === v.client_id && d.name.trim().toLowerCase() === dealName.trim().toLowerCase());
-        if (!exists) {
+        const existing = data.deals.find(d => d.client_id === v.client_id && d.name.trim().toLowerCase() === dealName.trim().toLowerCase());
+        if (!existing) {
           const owner = (v.pic || "").split(",")[0]?.trim() || "";
           await upsert("deals", {
             id: uuid(), name: dealName, client_id: v.client_id, value: 0,
@@ -116,6 +117,12 @@ export function useData() {
             notes: "", owner, win_loss_reason: "", competitor: "",
             stage_updated_at: new Date().toISOString(),
           });
+        } else {
+          const stageOrder = STAGES.indexOf(existing.stage as typeof STAGES[number]);
+          const firstMeetingOrder = STAGES.indexOf("First Meeting");
+          if (stageOrder !== -1 && stageOrder < firstMeetingOrder) {
+            await patch("deals", existing.id, { stage: "First Meeting", stage_updated_at: new Date().toISOString() });
+          }
         }
       }
     }
