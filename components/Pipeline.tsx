@@ -113,13 +113,14 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [showPanel, setShowPanel] = useState(false);
   const [projectSearch, setProjectSearch] = useState("");
+  const [pendingProjectIds, setPendingProjectIds] = useState<Set<string>>(new Set());
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
   const open = deals.filter(d => d.stage !== "Lost");
   const weighted = open.filter(d => d.stage !== "Won").reduce((s, d) => s + (d.value * STAGE_PROB[d.stage] / 100), 0);
 
   const usedProjectKeys = new Set(deals.map(d => projectKey(d.name, d.client_id)));
-  const availableProjects = projects.filter(p => !usedProjectKeys.has(projectKey(p.name, p.client_id)));
+  const availableProjects = projects.filter(p => !usedProjectKeys.has(projectKey(p.name, p.client_id)) && !pendingProjectIds.has(p.id));
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -145,14 +146,26 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
     try {
       if (id.startsWith(PROJECT_DRAG_PREFIX)) {
         if (!(STAGES as readonly string[]).includes(stage)) return;
-        const project = projects.find(p => p.id === id.slice(PROJECT_DRAG_PREFIX.length));
+        const projectId = id.slice(PROJECT_DRAG_PREFIX.length);
+        if (pendingProjectIds.has(projectId)) return;
+        const project = projects.find(p => p.id === projectId);
         if (!project) return;
-        await onSaveDeal({
-          id: uuid(), name: project.name, client_id: project.client_id, value: project.value,
-          stage: stage as Deal["stage"], deal_type: "", product: project.product, close_date: "",
-          notes: "", owner: currentUserName, win_loss_reason: "", competitor: "",
-          stage_updated_at: new Date().toISOString(),
-        });
+        const key = projectKey(project.name, project.client_id);
+        if (usedProjectKeys.has(key)) {
+          alert("Project ini sudah ada di pipeline.");
+          return;
+        }
+        setPendingProjectIds(prev => new Set(prev).add(projectId));
+        try {
+          await onSaveDeal({
+            id: uuid(), name: project.name, client_id: project.client_id, value: project.value,
+            stage: stage as Deal["stage"], deal_type: "", product: project.product, close_date: "",
+            notes: "", owner: currentUserName, win_loss_reason: "", competitor: "",
+            stage_updated_at: new Date().toISOString(),
+          });
+        } finally {
+          setPendingProjectIds(prev => { const next = new Set(prev); next.delete(projectId); return next; });
+        }
         return;
       }
 
