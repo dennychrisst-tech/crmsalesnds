@@ -42,13 +42,13 @@ export function useData() {
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState("Memuat…");
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (): Promise<AppData | null> => {
     try {
       const json = await api("/api/data");
       // Normalize date fields back to "YYYY-MM-DD" — Prisma returns full ISO strings
       // but <input type="date"> and date logic throughout the app expect "YYYY-MM-DD"
       const d10 = (v: unknown) => (typeof v === "string" && v ? v.slice(0, 10) : v);
-      setData({
+      const fresh: AppData = {
         clients: json.clients ?? [],
         contacts: json.contacts ?? [],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -67,13 +67,16 @@ export function useData() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         events: (json.events ?? []).map((v: any) => ({ ...v, date: d10(v.date) }) as CalendarEvent),
         profiles: json.profiles ?? [],
-      });
+      };
+      setData(fresh);
       if (json.currentUser) {
         setCurrentProfile({ id: json.currentUser.id, name: json.currentUser.name, email: json.currentUser.email, role: json.currentUser.role });
       }
       setSyncStatus("Tersimpan otomatis");
+      return fresh;
     } catch (e) {
       setSyncStatus(e instanceof Error ? e.message : "Gagal memuat data");
+      return null;
     } finally {
       setLoading(false);
     }
@@ -84,7 +87,7 @@ export function useData() {
   async function upsert(table: string, record: Record<string, unknown>) {
     if (!record.id) record.id = uuid();
     await api(`/api/data/${table}`, "POST", record);
-    await load();
+    return load();
   }
 
   async function remove(table: string, id: string) {
@@ -104,11 +107,11 @@ export function useData() {
   const deleteContact = (id: string) => remove("contacts", id);
 
   async function upsertVisit(v: Visit) {
-    await upsert("visits", v as unknown as Record<string, unknown>);
-    if (v.approach === "First Meeting") {
-      const dealName = (v.project && v.project.trim()) || data.clients.find(c => c.id === v.client_id)?.name || "";
+    const fresh = await upsert("visits", v as unknown as Record<string, unknown>);
+    if (v.approach === "First Meeting" && fresh) {
+      const dealName = (v.project && v.project.trim()) || fresh.clients.find(c => c.id === v.client_id)?.name || "";
       if (dealName) {
-        const existing = data.deals.find(d => d.client_id === v.client_id && d.name.trim().toLowerCase() === dealName.trim().toLowerCase());
+        const existing = fresh.deals.find(d => d.client_id === v.client_id && d.name.trim().toLowerCase() === dealName.trim().toLowerCase());
         if (!existing) {
           const owner = (v.pic || "").split(",")[0]?.trim() || "";
           await upsert("deals", {
