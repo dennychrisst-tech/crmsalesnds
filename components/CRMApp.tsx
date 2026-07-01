@@ -18,8 +18,8 @@ import VisitReport from "./VisitReport";
 
 const TABS: { id: ActiveView; label: string; icon: string }[] = [
   { id: "dashboard",    label: "Dashboard",         icon: "📊" },
-  { id: "calendar",    label: "Calendar Visit",     icon: "📅" },
   { id: "clients",     label: "Client",             icon: "🏢" },
+  { id: "calendar",    label: "Calendar Visit",     icon: "📅" },
   { id: "pipeline",    label: "Pipeline",           icon: "💼" },
   { id: "projects",    label: "Project",            icon: "🏗️" },
   { id: "tasks",       label: "Tasks",              icon: "✅" },
