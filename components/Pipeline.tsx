@@ -5,7 +5,7 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, u
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { Deal, CRMDocument, Attachment, Activity, Project } from "@/types";
-import { STAGES, STAGE_PROB, STAGE_COLOR, fmtIDR, todayStr } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, todayStr } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 
 const PROJECT_DRAG_PREFIX = "project:";
@@ -134,8 +134,6 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   }, [showPanel]);
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
-  const open = deals.filter(d => d.stage !== "Lost");
-  const weighted = open.filter(d => d.stage !== "Won").reduce((s, d) => s + (d.value * STAGE_PROB[d.stage] / 100), 0);
 
   const usedProjectKeys = new Set(deals.map(d => projectKey(d.name, d.client_id)));
   const availableProjects = projects.filter(p => !usedProjectKeys.has(projectKey(p.name, p.client_id)) && !pendingProjectIds.has(p.id));
@@ -201,7 +199,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   return (
     <section>
       <div className="toolbar">
-        <span className="muted">Tarik proyek atau kartu antar kolom untuk ubah stage. Weighted pipeline: <b>{fmtIDR(Math.round(weighted))}</b></span>
+        <span className="muted">Tarik proyek atau kartu antar kolom untuk ubah stage.</span>
         <button className="btn btn-ghost btn-sm" onClick={() => exportDeals(deals, clientName)}>↓ Export CSV</button>
         {!isViewer && (
           <button className="btn" onClick={() => setShowPanel(s => !s)}>

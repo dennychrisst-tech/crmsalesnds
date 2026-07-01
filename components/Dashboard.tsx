@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
 import { ActiveView } from "@/types";
-import { STAGES, STAGE_PROB, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches, fmtDateStr } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches, fmtDateStr } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import EmptyState from "./ui/EmptyState";
 
@@ -176,7 +176,6 @@ export default function Dashboard({ data, onNavigate }: Props) {
   const lostDeals   = filteredDeals.filter(d => d.stage === "Lost");
   const closedTotal = wonDeals.length + lostDeals.length;
   const winRate     = closedTotal > 0 ? Math.round((wonDeals.length / closedTotal) * 100) : null;
-  const weighted    = openDeals.reduce((s, d) => s + (d.value * STAGE_PROB[d.stage] / 100), 0);
   const wonValue    = wonDeals.reduce((s, d) => s + d.value, 0);
   const pipelineValue = openDeals.reduce((s, d) => s + d.value, 0);
 
@@ -247,11 +246,6 @@ export default function Dashboard({ data, onNavigate }: Props) {
   const kpis = [
     {
       label: "Pipeline Aktif", num: openDeals.length, sub: fmtIDR(pipelineValue),
-      accent: "var(--brand)", view: "pipeline" as ActiveView,
-      spark: sparkDeals, warn: false,
-    },
-    {
-      label: "Weighted Value", num: fmtIDR(Math.round(weighted)), sub: "prob. tertimbang",
       accent: "var(--brand)", view: "pipeline" as ActiveView,
       spark: sparkDeals, warn: false,
     },
