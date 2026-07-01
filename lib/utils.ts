@@ -56,13 +56,6 @@ export function todayStr(): string {
   return fmtDateStr(new Date());
 }
 
-/** Adds `days` to a "YYYY-MM-DD" string, using local dates throughout (avoids UTC day-shift bugs). */
-export function addDaysStr(dateStr: string, days: number): string {
-  const d = new Date(dateStr + "T00:00:00");
-  d.setDate(d.getDate() + days);
-  return fmtDateStr(d);
-}
-
 export function isoWeekLabel(dateStr: string): { key: string; label: string } {
   const d = new Date(dateStr + "T00:00:00");
   const t = new Date(d);

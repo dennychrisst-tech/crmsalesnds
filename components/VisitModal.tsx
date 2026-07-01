@@ -5,7 +5,7 @@ import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./
 import SearchableSelect from "./ui/SearchableSelect";
 import { VisitBadge } from "./ui/Badge";
 import { Visit, Client, Contact, Deal, Task } from "@/types";
-import { VISIT_STATUS, STAGE_COLOR, todayStr, picList, addDaysStr, fmtDate } from "@/lib/utils";
+import { VISIT_STATUS, STAGE_COLOR, todayStr, picList, fmtDate } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -140,7 +140,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       await onCreateTask({
         id: uuid(),
         title: task.title.trim(),
-        due_date: task.due_date || addDaysStr(form.date, 7),
+        due_date: task.due_date,
         client_id: form.client_id,
         deal_id: form.deal_id ?? null,
         pic_client: form.pic_client || "",
@@ -238,10 +238,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Tanggal approach">
-          <input type="date" className={inputCls} value={form.date} onChange={e => {
-            const newDate = e.target.value;
-            setForm(f => ({ ...f, date: newDate, followup_date: f.followup_date || addDaysStr(newDate, 7) }));
-          }} />
+          <input type="date" className={inputCls} value={form.date} onChange={e => set("date", e.target.value)} />
         </Field>
         <Field label="Status">
           <select className={selectCls} value={form.status} onChange={e => handleStatusChange(e.target.value as Visit["status"])}>
