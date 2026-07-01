@@ -95,10 +95,10 @@ export default function CRMApp() {
         </div>
         <div className="header-search-row">
           {!loading && <GlobalSearch data={data} onNavigate={setView} />}
-          <LiveClock />
           {!loading && (
             <RemindersBell data={data} currentUserName={currentProfile?.name ?? ""} isAdmin={isAdmin} onNavigate={setView} />
           )}
+          <LiveClock />
         </div>
         {currentProfile && ["super_admin", "admin"].includes(currentProfile.role) && (
           <a href="/admin/users" className="btn-admin">Admin</a>
