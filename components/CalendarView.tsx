@@ -265,7 +265,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
           <span className="mtitle">{title}</span>
           <button className="cal-nav-btn" onClick={nextMonth}>›</button>
         </div>
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+        <div className="cal-toolbar-actions">
           <select
             value={salesFilter}
             onChange={e => setSalesFilter(e.target.value)}

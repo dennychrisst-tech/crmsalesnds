@@ -170,6 +170,7 @@ nav.tabs button.active::after {
 .mtitle { font-size: 18px; font-weight: 800; }
 .cal-nav-btn { border: 1px solid var(--line); background: var(--card); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 16px; }
 .cal-nav-btn:hover { border-color: var(--brand); color: var(--brand); }
+.cal-toolbar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .calendar { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; }
 .dow { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing:.08em; color: var(--ink-soft); padding-bottom: 4px; }
 .cell { background: var(--card); border: 1px solid var(--line); border-radius: 8px; min-height: 92px; padding: 6px; font-size: 12px; }
@@ -227,7 +228,7 @@ tr:hover td { background: var(--paper); }
 .st-nogo { background: #EFE2E2; color: var(--lost); }
 
 /* Buttons */
-.btn { border: none; background: var(--brand); color: #fff; padding: 9px 16px; border-radius: 9px; cursor: pointer; font-weight: 700; font-size: 13px; font-family: inherit; }
+.btn { border: none; background: var(--brand); color: #fff; padding: 9px 16px; border-radius: 9px; cursor: pointer; font-weight: 700; font-size: 13px; font-family: inherit; white-space: nowrap; }
 .btn:hover { filter: brightness(1.08); }
 .btn-ghost { background: transparent; color: var(--brand); border: 1px solid var(--brand); }
 .btn-sm { padding: 5px 10px; font-size: 12px; }
@@ -571,6 +572,15 @@ tr.task-soon td { background: #fffbeb; }
   .cal-head { gap: 8px; margin-bottom: 10px; }
   .mtitle { font-size: 15px; }
   .cal-nav-btn { width: 28px; height: 28px; font-size: 14px; }
+
+  /* Toolbar action buttons — horizontal scroll strip instead of wrapping/squashing */
+  .cal-toolbar-actions {
+    margin-left: 0; flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto;
+    -webkit-overflow-scrolling: touch; padding-bottom: 2px; scrollbar-width: none;
+  }
+  .cal-toolbar-actions::-webkit-scrollbar { display: none; }
+  .cal-toolbar-actions > * { flex-shrink: 0; }
+  .cal-toolbar-actions select { min-width: 130px; }
   .cal-legend { gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
   .cal-legend-item { font-size: 11px; }
   .calendar { gap: 3px; }
