@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity, CalendarEvent, Profile } from "@/types";
 import { STAGES } from "@/lib/utils";
@@ -19,6 +19,32 @@ export interface AppData {
   profiles: Profile[];
 }
 
+type TableKey = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events";
+
+// Prisma returns full ISO timestamps, but <input type="date"> and date logic
+// throughout the app expect plain "YYYY-MM-DD" for these date-only columns.
+const DATE_FIELDS: Partial<Record<TableKey, string[]>> = {
+  visits: ["date", "followup_date"],
+  deals: ["close_date"],
+  projects: ["golive"],
+  tasks: ["due_date"],
+  activities: ["date"],
+  events: ["date"],
+};
+
+function d10(v: unknown): unknown {
+  return typeof v === "string" && v ? v.slice(0, 10) : v;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeRow(table: TableKey, row: any): any {
+  const fields = DATE_FIELDS[table];
+  if (!fields || !row) return row;
+  const patched = { ...row };
+  for (const f of fields) patched[f] = d10(patched[f]);
+  return patched;
+}
+
 async function api(path: string, method = "GET", body?: unknown) {
   const res = await fetch(path, {
     method,
@@ -32,43 +58,56 @@ async function api(path: string, method = "GET", body?: unknown) {
   return res.json();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mergeRecord(list: any[], record: any): any[] {
+  const idx = list.findIndex(item => item.id === record.id);
+  if (idx === -1) return [...list, record];
+  const next = [...list];
+  next[idx] = record;
+  return next;
+}
+
+const EMPTY_DATA: AppData = {
+  clients: [], contacts: [], visits: [], deals: [], projects: [],
+  tasks: [], products: [], documents: [], attachments: [], activities: [], events: [],
+  profiles: [],
+};
+
 export function useData() {
-  const [data, setData] = useState<AppData>({
-    clients: [], contacts: [], visits: [], deals: [], projects: [],
-    tasks: [], products: [], documents: [], attachments: [], activities: [], events: [],
-    profiles: [],
-  });
+  const [data, setData] = useState<AppData>(EMPTY_DATA);
+  // Mirrors `data` synchronously so async flows (e.g. upsertVisit's dedup check)
+  // can read the latest committed state without waiting for a re-render.
+  const dataRef = useRef<AppData>(EMPTY_DATA);
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState("Memuat…");
 
+  const commit = useCallback((updater: (prev: AppData) => AppData) => {
+    setData(prev => {
+      const next = updater(prev);
+      dataRef.current = next;
+      return next;
+    });
+  }, []);
+
   const load = useCallback(async (): Promise<AppData | null> => {
     try {
       const json = await api("/api/data");
-      // Normalize date fields back to "YYYY-MM-DD" — Prisma returns full ISO strings
-      // but <input type="date"> and date logic throughout the app expect "YYYY-MM-DD"
-      const d10 = (v: unknown) => (typeof v === "string" && v ? v.slice(0, 10) : v);
       const fresh: AppData = {
         clients: json.clients ?? [],
         contacts: json.contacts ?? [],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        visits: (json.visits ?? []).map((v: any) => ({ ...v, date: d10(v.date), followup_date: d10(v.followup_date) }) as Visit),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        deals: (json.deals ?? []).map((v: any) => ({ ...v, close_date: d10(v.close_date) }) as Deal),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        projects: (json.projects ?? []).map((v: any) => ({ ...v, golive: d10(v.golive) }) as Project),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        tasks: (json.tasks ?? []).map((v: any) => ({ ...v, due_date: d10(v.due_date) }) as Task),
+        visits: (json.visits ?? []).map((v: Visit) => normalizeRow("visits", v)),
+        deals: (json.deals ?? []).map((v: Deal) => normalizeRow("deals", v)),
+        projects: (json.projects ?? []).map((v: Project) => normalizeRow("projects", v)),
+        tasks: (json.tasks ?? []).map((v: Task) => normalizeRow("tasks", v)),
         products: (json.products ?? []) as Product[],
         documents: (json.documents ?? []) as CRMDocument[],
         attachments: (json.attachments ?? []) as Attachment[],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        activities: (json.activities ?? []).map((v: any) => ({ ...v, date: d10(v.date) }) as Activity),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        events: (json.events ?? []).map((v: any) => ({ ...v, date: d10(v.date) }) as CalendarEvent),
+        activities: (json.activities ?? []).map((v: Activity) => normalizeRow("activities", v)),
+        events: (json.events ?? []).map((v: CalendarEvent) => normalizeRow("events", v)),
         profiles: json.profiles ?? [],
       };
-      setData(fresh);
+      commit(() => fresh);
       if (json.currentUser) {
         setCurrentProfile({ id: json.currentUser.id, name: json.currentUser.name, email: json.currentUser.email, role: json.currentUser.role });
       }
@@ -80,7 +119,7 @@ export function useData() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [commit]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -93,20 +132,26 @@ export function useData() {
     return () => clearInterval(interval);
   }, [load]);
 
-  async function upsert(table: string, record: Record<string, unknown>) {
+  // Mutations update local state directly from the server's response instead of
+  // re-fetching all 12 tables — that used to happen after every single save/delete.
+  async function upsert(table: TableKey, record: Record<string, unknown>) {
     if (!record.id) record.id = uuid();
-    await api(`/api/data/${table}`, "POST", record);
-    return load();
+    const result = await api(`/api/data/${table}`, "POST", record);
+    const normalized = normalizeRow(table, result);
+    commit(prev => ({ ...prev, [table]: mergeRecord(prev[table], normalized) }));
+    return normalized;
   }
 
-  async function remove(table: string, id: string) {
+  async function remove(table: TableKey, id: string) {
     await api(`/api/data/${table}/${id}`, "DELETE");
-    await load();
+    commit(prev => ({ ...prev, [table]: (prev[table] as { id: string }[]).filter(item => item.id !== id) }));
   }
 
-  async function patch(table: string, id: string, data: Record<string, unknown>) {
-    await api(`/api/data/${table}/${id}`, "PATCH", data);
-    await load();
+  async function patch(table: TableKey, id: string, patchData: Record<string, unknown>) {
+    const result = await api(`/api/data/${table}/${id}`, "PATCH", patchData);
+    const normalized = normalizeRow(table, result);
+    commit(prev => ({ ...prev, [table]: mergeRecord(prev[table], normalized) }));
+    return normalized;
   }
 
   const upsertClient = (c: Client) => upsert("clients", c as unknown as Record<string, unknown>);
@@ -116,8 +161,9 @@ export function useData() {
   const deleteContact = (id: string) => remove("contacts", id);
 
   async function upsertVisit(v: Visit) {
-    const fresh = await upsert("visits", v as unknown as Record<string, unknown>);
-    if (v.approach === "First Meeting" && fresh) {
+    await upsert("visits", v as unknown as Record<string, unknown>);
+    if (v.approach === "First Meeting") {
+      const fresh = dataRef.current;
       const dealName = (v.project && v.project.trim()) || fresh.clients.find(c => c.id === v.client_id)?.name || "";
       if (dealName) {
         const existing = fresh.deals.find(d => d.client_id === v.client_id && d.name.trim().toLowerCase() === dealName.trim().toLowerCase());
@@ -174,12 +220,13 @@ export function useData() {
       const json = await res.json().catch(() => ({}));
       throw new Error(json.error || "Upload gagal");
     }
-    await load();
+    const attachment = await res.json();
+    commit(prev => ({ ...prev, attachments: mergeRecord(prev.attachments, attachment) }));
   }
 
   async function deleteAttachment(id: string) {
     await api("/api/upload", "DELETE", { id });
-    await load();
+    commit(prev => ({ ...prev, attachments: prev.attachments.filter(a => a.id !== id) }));
   }
 
   return {

@@ -55,6 +55,7 @@ model Contact {
 
   client Client @relation(fields: [client_id], references: [id], onDelete: Cascade)
 
+  @@index([client_id])
   @@map("contacts")
 }
 
@@ -76,6 +77,9 @@ model Visit {
 
   client Client @relation(fields: [client_id], references: [id], onDelete: Cascade)
 
+  @@index([client_id])
+  @@index([status])
+  @@index([date])
   @@map("visits")
 }
 
@@ -102,6 +106,8 @@ model Deal {
   activities  Activity[]
   tasks       Task[]
 
+  @@index([client_id])
+  @@index([stage])
   @@map("deals")
 }
 
@@ -120,6 +126,7 @@ model Project {
 
   client Client @relation(fields: [client_id], references: [id], onDelete: Cascade)
 
+  @@index([client_id])
   @@map("projects")
 }
 
@@ -138,6 +145,10 @@ model Task {
   client Client? @relation(fields: [client_id], references: [id], onDelete: SetNull)
   deal   Deal?   @relation(fields: [deal_id], references: [id], onDelete: SetNull)
 
+  @@index([client_id])
+  @@index([deal_id])
+  @@index([due_date])
+  @@index([status])
   @@map("tasks")
 }
 
@@ -165,6 +176,7 @@ model Document {
 
   deal Deal @relation(fields: [deal_id], references: [id], onDelete: Cascade)
 
+  @@index([deal_id])
   @@map("documents")
 }
 
@@ -181,6 +193,8 @@ model Attachment {
   deal   Deal?   @relation(fields: [deal_id], references: [id], onDelete: Cascade)
   client Client? @relation(fields: [client_id], references: [id], onDelete: Cascade)
 
+  @@index([deal_id])
+  @@index([client_id])
   @@map("attachments")
 }
 
@@ -198,6 +212,9 @@ model Activity {
   deal   Deal?   @relation(fields: [deal_id], references: [id], onDelete: Cascade)
   client Client? @relation(fields: [client_id], references: [id], onDelete: Cascade)
 
+  @@index([deal_id])
+  @@index([client_id])
+  @@index([date])
   @@map("activities")
 }
 
@@ -212,6 +229,8 @@ model Event {
   created_by_id String?  @db.Uuid
   created_at    DateTime @default(now())
 
+  @@index([client_id])
+  @@index([date])
   @@map("events")
 }
 
