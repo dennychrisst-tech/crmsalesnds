@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
+import SearchableSelect from "./ui/SearchableSelect";
 import { Project, Client } from "@/types";
 import { PROJ_STATUS } from "@/lib/utils";
 
@@ -77,9 +78,12 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
         <input className={inputCls} value={form.name} onChange={e => set("name", e.target.value)} />
       </Field>
       <Field label="Client">
-        <select className={selectCls} value={form.client_id} onChange={e => set("client_id", e.target.value)}>
-          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <SearchableSelect
+          options={clients.map(c => ({ value: c.id, label: c.name }))}
+          value={form.client_id}
+          onChange={v => set("client_id", v)}
+          placeholder="Cari client…"
+        />
       </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Status">
@@ -124,12 +128,13 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
         </Field>
       </div>
       <Field label="Partner (opsional)">
-        <select className={selectCls} value={form.partner || ""} onChange={e => set("partner", e.target.value)}>
-          <option value="">— Tidak ada partner —</option>
-          {clients.filter(c => c.id !== form.client_id).map(c => (
-            <option key={c.id} value={c.name}>{c.name}</option>
-          ))}
-        </select>
+        <SearchableSelect
+          options={clients.filter(c => c.id !== form.client_id).map(c => ({ value: c.name, label: c.name }))}
+          value={form.partner || ""}
+          onChange={v => set("partner", v)}
+          placeholder="Cari partner…"
+          clearLabel="— Tidak ada partner —"
+        />
       </Field>
       <Field label="Catatan">
         <textarea className={textareaCls} value={form.notes} onChange={e => set("notes", e.target.value)} />

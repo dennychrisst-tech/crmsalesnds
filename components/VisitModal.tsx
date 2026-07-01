@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
+import SearchableSelect from "./ui/SearchableSelect";
 import { Visit, Client, Contact, Project, Task } from "@/types";
 import { VISIT_STATUS, todayStr, picList } from "@/lib/utils";
 
@@ -144,9 +145,12 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   return (
     <Modal open={open} onClose={onClose} title={`${isEdit ? "Edit" : "Jadwalkan"} Visit`}>
       <Field label="Client">
-        <select className={selectCls} value={form.client_id} onChange={e => handleClientChange(e.target.value)}>
-          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <SearchableSelect
+          options={clients.map(c => ({ value: c.id, label: c.name }))}
+          value={form.client_id}
+          onChange={handleClientChange}
+          placeholder="Cari client…"
+        />
       </Field>
 
       <Field label="Project (opsional)">

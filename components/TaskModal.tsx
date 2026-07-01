@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
+import SearchableSelect from "./ui/SearchableSelect";
 import { Task, Client, Deal } from "@/types";
 import { todayStr } from "@/lib/utils";
 
@@ -70,10 +71,13 @@ export default function TaskModal({ open, task, clients, deals, team, defaultAss
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Client (opsional)">
-          <select className={selectCls} value={form.client_id || ""} onChange={e => set("client_id", e.target.value || null)}>
-            <option value="">— Tidak ada —</option>
-            {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <SearchableSelect
+            options={clients.map(c => ({ value: c.id, label: c.name }))}
+            value={form.client_id || ""}
+            onChange={v => set("client_id", v || null)}
+            placeholder="Cari client…"
+            clearLabel="— Tidak ada —"
+          />
         </Field>
         <Field label="Project (opsional)">
           <select className={selectCls} value={form.deal_id || ""} onChange={e => set("deal_id", e.target.value || null)}>

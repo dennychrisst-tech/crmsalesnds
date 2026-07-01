@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
+import SearchableSelect from "./ui/SearchableSelect";
 import { CalendarEvent, Client } from "@/types";
 import { EVENT_TYPES, todayStr } from "@/lib/utils";
 
@@ -81,10 +82,13 @@ export default function EventModal({ open, event, preDate, team, clients, defaul
       </div>
 
       <Field label="Client (opsional)">
-        <select className={selectCls} value={form.client_id || ""} onChange={e => set("client_id", e.target.value || null)}>
-          <option value="">— Tidak terkait client —</option>
-          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <SearchableSelect
+          options={clients.map(c => ({ value: c.id, label: c.name }))}
+          value={form.client_id || ""}
+          onChange={v => set("client_id", v || null)}
+          placeholder="Cari client…"
+          clearLabel="— Tidak terkait client —"
+        />
       </Field>
 
       <Field label="Peserta (Tim Sales)">
