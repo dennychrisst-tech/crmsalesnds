@@ -29,8 +29,8 @@ body {
 
 /* Header */
 header.top {
-  display: flex; align-items: baseline; gap: 14px;
-  padding: 26px 0 18px; border-bottom: 2px solid var(--ink);
+  display: flex; align-items: baseline; gap: 14px; position: relative;
+  padding: 26px 100px 18px 0; border-bottom: 2px solid var(--ink);
   margin-bottom: 22px;
 }
 .header-brand { display: flex; align-items: center; gap: 10px; }
@@ -43,6 +43,7 @@ header.top {
 .live-clock-time { font-size: 13px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
 .live-clock-date { font-size: 11px; color: var(--ink-soft); white-space: nowrap; }
 .btn-logout {
+  position: absolute; top: 26px; right: 0;
   border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
   padding: 6px 14px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 600;
   transition: all .15s; white-space: nowrap;
@@ -494,15 +495,16 @@ tr.task-soon td { background: #fffbeb; }
 @media (max-width: 640px) {
   .app { padding: 0 10px calc(74px + env(safe-area-inset-bottom)); }
 
-  /* Header — wraps into rows: brand+tag / search (full width) / sync+admin+logout */
+  /* Header — wraps into rows: brand+tag (+ log out, top-right corner) / bell / search / admin */
   header.top {
-    flex-wrap: wrap; row-gap: 10px; padding: 14px 0 14px; margin-bottom: 14px;
+    flex-wrap: wrap; row-gap: 10px; padding: 14px 88px 14px 0; margin-bottom: 14px;
   }
   .header-brand svg { height: 32px; }
   .header-crm-tag { font-size: 9px; padding: 2px 6px; }
-  .gs-wrap { order: 3; flex: 1 1 100%; max-width: 100%; }
-  .rb-wrap { order: 4; }
-  .btn-admin, .btn-logout { order: 5; padding: 5px 10px; font-size: 11px; }
+  .rb-wrap { order: 3; }
+  .gs-wrap { order: 4; flex: 1 1 100%; max-width: 100%; }
+  .btn-admin { order: 5; padding: 5px 10px; font-size: 11px; }
+  .btn-logout { top: 14px; padding: 5px 10px; font-size: 11px; }
 
   /* Nav — replaced by fixed bottom nav on mobile */
   nav.tabs { display: none; }

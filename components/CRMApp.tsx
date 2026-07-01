@@ -93,15 +93,15 @@ export default function CRMApp() {
           </svg>
           <div className="header-crm-tag">Sales CRM</div>
         </div>
-        {!loading && <GlobalSearch data={data} onNavigate={setView} />}
         {!loading && (
           <RemindersBell data={data} currentUserName={currentProfile?.name ?? ""} isAdmin={isAdmin} onNavigate={setView} />
         )}
+        {!loading && <GlobalSearch data={data} onNavigate={setView} />}
         <LiveClock />
         {currentProfile && ["super_admin", "admin"].includes(currentProfile.role) && (
           <a href="/admin/users" className="btn-admin">Admin</a>
         )}
-        <button onClick={handleLogout} className="btn-logout">Keluar</button>
+        <button onClick={handleLogout} className="btn-logout">Log Out</button>
       </header>
 
       <nav className="tabs">
