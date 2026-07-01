@@ -78,6 +78,8 @@ export default function DealModal({
     try {
       await onAddActivity({ ...actForm, id: uuid(), deal_id: form.id });
       setActForm(emptyActivity(form.id));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Gagal menyimpan aktivitas.");
     } finally {
       setSaving(false);
     }
