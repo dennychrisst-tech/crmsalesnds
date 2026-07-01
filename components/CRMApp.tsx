@@ -56,7 +56,7 @@ export default function CRMApp() {
     router.replace("/login");
   }
   const {
-    data, loading, syncStatus, currentProfile,
+    data, loading, currentProfile,
     upsertClient, deleteClient,
     upsertContact, deleteContact,
     upsertVisit, deleteVisit,
@@ -98,7 +98,6 @@ export default function CRMApp() {
           <RemindersBell data={data} currentUserName={currentProfile?.name ?? ""} isAdmin={isAdmin} onNavigate={setView} />
         )}
         <LiveClock />
-        <div className="sync-status">{syncStatus}</div>
         {currentProfile && ["super_admin", "admin"].includes(currentProfile.role) && (
           <a href="/admin/users" className="btn-admin">Admin</a>
         )}
