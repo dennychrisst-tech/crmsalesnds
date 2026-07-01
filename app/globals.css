@@ -430,6 +430,7 @@ tr.task-soon td { background: #fffbeb; }
 
 /* Reminders Bell */
 .rb-wrap { position: relative; }
+.header-search-row { display: contents; }
 .rb-bell { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 9px; width: 36px; height: 36px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .rb-bell:hover { border-color: var(--brand); }
 .rb-badge { position: absolute; top: -5px; right: -5px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: var(--brand); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; line-height: 1; }
@@ -495,14 +496,16 @@ tr.task-soon td { background: #fffbeb; }
 @media (max-width: 640px) {
   .app { padding: 0 10px calc(74px + env(safe-area-inset-bottom)); }
 
-  /* Header — wraps into rows: brand+tag (+ log out, top-right corner) / bell / search / admin */
+  /* Header — wraps into rows: brand+tag (+ log out, top-right corner) / search+bell / admin */
   header.top {
     flex-wrap: wrap; row-gap: 10px; padding: 14px 88px 14px 0; margin-bottom: 14px;
   }
   .header-brand svg { height: 32px; }
   .header-crm-tag { font-size: 9px; padding: 2px 6px; }
-  .rb-wrap { order: 3; }
-  .gs-wrap { order: 4; flex: 1 1 100%; max-width: 100%; }
+  .live-clock { display: none; }
+  .header-search-row { display: flex; align-items: center; gap: 8px; order: 3; flex: 1 1 100%; max-width: 100%; }
+  .header-search-row .gs-wrap { flex: 1 1 auto; max-width: none; }
+  .header-search-row .rb-wrap { flex: 0 0 auto; }
   .btn-admin { order: 5; padding: 5px 10px; font-size: 11px; }
   .btn-logout { top: 14px; padding: 5px 10px; font-size: 11px; }
 
