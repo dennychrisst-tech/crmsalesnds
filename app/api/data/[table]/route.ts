@@ -64,10 +64,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
     projects: ["golive"],
   };
   for (const field of DATE_FIELDS[table] ?? []) {
-    if (body[field] && typeof body[field] === "string") {
-      // Accept "YYYY-MM-DD" or full ISO string
-      const d = new Date(body[field]);
-      body[field] = isNaN(d.getTime()) ? undefined : d;
+    if (typeof body[field] === "string") {
+      if (body[field] === "") {
+        body[field] = null;
+      } else {
+        // Accept "YYYY-MM-DD" or full ISO string
+        const d = new Date(body[field]);
+        body[field] = isNaN(d.getTime()) ? null : d;
+      }
     }
   }
 

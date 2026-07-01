@@ -142,21 +142,25 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
     const id = String(active.id);
     const stage = String(over.id);
 
-    if (id.startsWith(PROJECT_DRAG_PREFIX)) {
-      if (!(STAGES as readonly string[]).includes(stage)) return;
-      const project = projects.find(p => p.id === id.slice(PROJECT_DRAG_PREFIX.length));
-      if (!project) return;
-      await onSaveDeal({
-        id: uuid(), name: project.name, client_id: project.client_id, value: project.value,
-        stage: stage as Deal["stage"], deal_type: "", product: project.product, close_date: "",
-        notes: "", owner: currentUserName, win_loss_reason: "", competitor: "",
-        stage_updated_at: new Date().toISOString(),
-      });
-      return;
-    }
+    try {
+      if (id.startsWith(PROJECT_DRAG_PREFIX)) {
+        if (!(STAGES as readonly string[]).includes(stage)) return;
+        const project = projects.find(p => p.id === id.slice(PROJECT_DRAG_PREFIX.length));
+        if (!project) return;
+        await onSaveDeal({
+          id: uuid(), name: project.name, client_id: project.client_id, value: project.value,
+          stage: stage as Deal["stage"], deal_type: "", product: project.product, close_date: "",
+          notes: "", owner: currentUserName, win_loss_reason: "", competitor: "",
+          stage_updated_at: new Date().toISOString(),
+        });
+        return;
+      }
 
-    const deal = deals.find(d => d.id === id);
-    if (deal && deal.stage !== stage) await onUpdateStage(deal.id, stage);
+      const deal = deals.find(d => d.id === id);
+      if (deal && deal.stage !== stage) await onUpdateStage(deal.id, stage);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Gagal menyimpan perubahan.");
+    }
   }
 
   const dealDocuments = editDeal ? documents.filter(d => d.deal_id === editDeal.id) : [];
