@@ -102,7 +102,9 @@ export default function SearchableSelect({ options, value, onChange, placeholder
             </div>
           )}
           {filtered.length === 0 && !showCreate && (
-            <div className="px-3 py-2 text-sm text-[var(--ink-soft)]">Tidak ada hasil</div>
+            <div className="px-3 py-2 text-sm text-[var(--ink-soft)]">
+              {onCreate ? "Ketik nama untuk membuat baru…" : "Tidak ada hasil"}
+            </div>
           )}
           {filtered.map((o, i) => (
             <div
