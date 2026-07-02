@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
+import { Share2, Download } from "lucide-react";
 import { AppData } from "@/hooks/useData";
 import { fmtDate, todayStr, picList, picMatches } from "@/lib/utils";
 import { exportVisitReport } from "@/lib/export";
@@ -133,10 +134,10 @@ export default function VisitReport({ data }: Props) {
         <button className="btn btn-ghost btn-sm" onClick={expandAll}>Buka Semua</button>
         <button className="btn btn-ghost btn-sm" onClick={collapseAll}>Tutup Semua</button>
         <button className="btn btn-ghost btn-sm" onClick={() => shareToWhatsApp(buildShareText())}>
-          📤 Share WA
+          <Share2 size={13} /> Share WA
         </button>
         <button className="btn btn-ghost btn-sm" onClick={() => exportVisitReport(filtered, clientName)}>
-          ↓ Export CSV
+          <Download size={13} /> Export CSV
         </button>
       </div>
 

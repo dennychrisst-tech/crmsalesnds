@@ -10,6 +10,7 @@ import VisitModal from "./VisitModal";
 import EventModal from "./EventModal";
 import { exportVisits } from "@/lib/export";
 import { v4 as uuid } from "uuid";
+import { Download } from "lucide-react";
 
 const WFO_DRAG_PREFIX = "wfo:";
 
@@ -274,7 +275,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
             <option value="all">Semua Sales</option>
             {team.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
-          <button className="btn btn-ghost btn-sm" onClick={() => exportVisits(visits, id => clients.find(c => c.id === id)?.name || "—")}>↓ Export CSV</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => exportVisits(visits, id => clients.find(c => c.id === id)?.name || "—")}><Download size={13} /> Export CSV</button>
           {!isViewer && (
             <button className="btn btn-ghost" onClick={() => setShowWfoPanel(s => !s)}>
               {showWfoPanel ? "Tutup Panel WFO" : "🏠 Tandai WFO"}

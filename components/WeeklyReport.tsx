@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Share2, Download, User, Briefcase, FolderKanban } from "lucide-react";
 import { AppData } from "@/hooks/useData";
 import { Project } from "@/types";
 import { fmtIDR, fmtDate, fmtDateStr, picMatches, STAGE_COLOR } from "@/lib/utils";
@@ -83,8 +84,8 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
           <button className="cal-nav-btn" onClick={() => setOffset(o => o + 1)} disabled={offset >= 0}>›</button>
           {offset !== 0 && <button className="btn btn-ghost btn-sm" onClick={() => setOffset(0)}>Minggu Ini</button>}
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={() => shareToWhatsApp(buildShareText())}>📤 Share WA</button>
-        <button className="btn btn-ghost btn-sm" onClick={() => exportWeeklyReport(salesData, clientName, relatedDeal, label)}>↓ Export CSV</button>
+        <button className="btn btn-ghost btn-sm" onClick={() => shareToWhatsApp(buildShareText())}><Share2 size={13} /> Share WA</button>
+        <button className="btn btn-ghost btn-sm" onClick={() => exportWeeklyReport(salesData, clientName, relatedDeal, label)}><Download size={13} /> Export CSV</button>
       </div>
 
       <div className="kpis" style={{ marginBottom: 20 }}>
@@ -113,7 +114,7 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
       {salesData.map(s => (
         <div key={s.name} className="panel wr-sales-panel">
           <div className="wr-sales-header">
-            <div className="wr-sales-name">👤 {s.name}</div>
+            <div className="wr-sales-name"><User size={15} /> {s.name}</div>
             <div className="wr-sales-stats">
               <span>{s.visits.length} visit</span>
               <span>·</span>
@@ -154,7 +155,7 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
                             onClick={() => onOpenDeal(deal.id)}
                             title="Buka detail pipeline"
                           >
-                            💼 {deal.name} → {deal.stage}
+                            <Briefcase size={12} /> {deal.name} → {deal.stage}
                             {dealUpdatedThisWeek && " · update minggu ini"}
                           </span>
                         )}
@@ -165,7 +166,7 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
                             onClick={() => setDetailProject(p)}
                             title="Lihat detail project"
                           >
-                            🏗️ {p.name} · {p.status}
+                            <FolderKanban size={12} /> {p.name} · {p.status}
                           </span>
                         ))}
                       </div>

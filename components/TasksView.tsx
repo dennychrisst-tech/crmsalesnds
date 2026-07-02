@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Check } from "lucide-react";
 import { AppData } from "@/hooks/useData";
 import { Task, Client, Deal } from "@/types";
 import { fmtDate, todayStr, TASK_STATUS_COLOR } from "@/lib/utils";
@@ -131,7 +132,7 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
                       <span style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                         {t.status !== "Done" && (
                           <button className="btn btn-sm" title="Tandai selesai"
-                            onClick={() => onSaveTask({ ...t, status: "Done" })}>✓ Selesai</button>
+                            onClick={() => onSaveTask({ ...t, status: "Done" })}><Check size={13} /> Selesai</button>
                         )}
                         <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)}>Edit</button>
                       </span>
@@ -157,7 +158,7 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
                 {!isViewer && (
                   <div className="mcard-actions">
                     {t.status !== "Done" && (
-                      <button className="btn btn-sm" onClick={() => onSaveTask({ ...t, status: "Done" })}>✓ Selesai</button>
+                      <button className="btn btn-sm" onClick={() => onSaveTask({ ...t, status: "Done" })}><Check size={13} /> Selesai</button>
                     )}
                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)}>Edit</button>
                   </div>

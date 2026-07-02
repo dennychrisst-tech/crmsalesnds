@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Briefcase, CalendarDays, TrendingUp, type LucideIcon } from "lucide-react";
 
 const NDS_LOGO = (
   <svg viewBox="0 0 210 72" height="44" aria-label="NDS" xmlns="http://www.w3.org/2000/svg">
@@ -15,10 +16,10 @@ const NDS_LOGO = (
   </svg>
 );
 
-const FEATURES = [
-  { icon: "💼", title: "Pipeline Project", desc: "Kelola dan pantau progress setiap project dalam satu papan kanban." },
-  { icon: "📅", title: "Tracking Kunjungan", desc: "Catat setiap visit dan reschedule otomatis ke kalender tim." },
-  { icon: "📊", title: "Laporan Aktivitas", desc: "Ringkasan performa sales per periode dengan data real-time." },
+const FEATURES: { icon: LucideIcon; title: string; desc: string }[] = [
+  { icon: Briefcase, title: "Pipeline Project", desc: "Kelola dan pantau progress setiap project dalam satu papan kanban." },
+  { icon: CalendarDays, title: "Tracking Kunjungan", desc: "Catat setiap visit dan reschedule otomatis ke kalender tim." },
+  { icon: TrendingUp, title: "Laporan Aktivitas", desc: "Ringkasan performa sales per periode dengan data real-time." },
 ];
 
 export default function LoginPage() {
@@ -115,7 +116,7 @@ export default function LoginPage() {
                 background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.08)",
                 borderRadius: 12, padding: "12px 16px",
               }}>
-                <span style={{ fontSize: 18, flexShrink: 0 }}>{f.icon}</span>
+                <span style={{ flexShrink: 0, color: "#00AFA0", display: "inline-flex" }}><f.icon size={19} /></span>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{f.title}</div>
                   <div style={{ fontSize: 11.5, color: "rgba(255,255,255,.45)", lineHeight: 1.4, marginTop: 1 }}>{f.desc}</div>

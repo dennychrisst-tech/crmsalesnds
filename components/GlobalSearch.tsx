@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { Search } from "lucide-react";
 import { AppData } from "@/hooks/useData";
 import { ActiveView } from "@/types";
 
@@ -106,7 +107,7 @@ export default function GlobalSearch({ data, onNavigate, onOpenClient, onOpenDea
   return (
     <div ref={ref} className="gs-wrap">
       <div className="gs-input-wrap">
-        <span className="gs-icon">⌕</span>
+        <span className="gs-icon"><Search size={15} /></span>
         <input
           ref={inputRef}
           className="gs-input"

@@ -8,6 +8,7 @@ import { Deal, CRMDocument, Attachment, Activity, Project } from "@/types";
 import { STAGES, STAGE_COLOR, fmtIDR, todayStr } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 import { toast } from "./ui/Toast";
+import { Download, User } from "lucide-react";
 
 const PROJECT_DRAG_PREFIX = "project:";
 
@@ -68,7 +69,7 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer }: { deal: 
         {!isClosed && <AgingBadge days={days} />}
       </div>
       <div className="dc">{clientName}{deal.product ? ` · ${deal.product}` : ""}</div>
-      {deal.owner && <div className="dc">👤 {deal.owner}</div>}
+      {deal.owner && <div className="dc" style={{ display: "flex", alignItems: "center", gap: 4 }}><User size={11} /> {deal.owner}</div>}
       <div className="dv">{fmtIDR(deal.value)}</div>
       {!isViewer && (
         <div className="stage-move-wrap">
@@ -262,7 +263,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
     <section>
       <div className="toolbar">
         <span className="muted desktop-only">Tarik proyek atau kartu antar kolom untuk ubah stage.</span>
-        <button className="btn btn-ghost btn-sm" onClick={() => exportDeals(deals, clientName)}>↓ Export CSV</button>
+        <button className="btn btn-ghost btn-sm" onClick={() => exportDeals(deals, clientName)}><Download size={13} /> Export CSV</button>
         {!isViewer && (
           <button className="btn add-btn-desktop" onClick={() => setShowPanel(s => !s)}>
             {showPanel ? "Tutup Panel Proyek" : "+ Tambah dari Proyek"}

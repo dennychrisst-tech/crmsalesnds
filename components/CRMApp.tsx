@@ -1,6 +1,11 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  LayoutDashboard, Building2, CalendarDays, FolderKanban, Briefcase,
+  ListChecks, TrendingUp, ClipboardList, CalendarRange, MoreHorizontal,
+  type LucideIcon,
+} from "lucide-react";
 import { useData } from "@/hooks/useData";
 
 import { ActiveView } from "@/types";
@@ -18,16 +23,16 @@ import VisitReport from "./VisitReport";
 import WeeklyReport from "./WeeklyReport";
 import ToastHost from "./ui/Toast";
 
-const TABS: { id: ActiveView; label: string; icon: string }[] = [
-  { id: "dashboard",    label: "Dashboard",         icon: "📊" },
-  { id: "clients",     label: "Client",             icon: "🏢" },
-  { id: "calendar",    label: "Calendar Visit",     icon: "📅" },
-  { id: "projects",    label: "Project",            icon: "🏗️" },
-  { id: "pipeline",    label: "Pipeline",           icon: "💼" },
-  { id: "tasks",       label: "Tasks",              icon: "✅" },
-  { id: "summary",     label: "Summary Activity",   icon: "📈" },
-  { id: "visit-report",label: "Laporan Visit",      icon: "📋" },
-  { id: "weekly-report",label: "Laporan Mingguan",  icon: "🗓️" },
+const TABS: { id: ActiveView; label: string; icon: LucideIcon }[] = [
+  { id: "dashboard",    label: "Dashboard",         icon: LayoutDashboard },
+  { id: "clients",     label: "Client",             icon: Building2 },
+  { id: "calendar",    label: "Calendar Visit",     icon: CalendarDays },
+  { id: "projects",    label: "Project",            icon: FolderKanban },
+  { id: "pipeline",    label: "Pipeline",           icon: Briefcase },
+  { id: "tasks",       label: "Tasks",              icon: ListChecks },
+  { id: "summary",     label: "Summary Activity",   icon: TrendingUp },
+  { id: "visit-report",label: "Laporan Visit",      icon: ClipboardList },
+  { id: "weekly-report",label: "Laporan Mingguan",  icon: CalendarRange },
 ];
 
 // Bottom nav (mobile only) surfaces the 4 most-used views + a "Lainnya" sheet for the rest.
@@ -109,7 +114,7 @@ export default function CRMApp() {
       <nav className="tabs">
         {TABS.map(t => (
           <button key={t.id} className={view === t.id ? "active" : ""} onClick={() => setView(t.id)}>
-            <span className="tab-icon">{t.icon}</span>{t.label}
+            <span className="tab-icon"><t.icon size={15} /></span>{t.label}
           </button>
         ))}
       </nav>
@@ -118,12 +123,12 @@ export default function CRMApp() {
       <nav className="bottom-nav">
         {TABS.filter(t => PRIMARY_VIEWS.includes(t.id)).map(t => (
           <button key={t.id} className={view === t.id && !moreOpen ? "active" : ""} onClick={() => { setView(t.id); setMoreOpen(false); }}>
-            <span className="bottom-nav-icon">{t.icon}</span>
+            <span className="bottom-nav-icon"><t.icon size={20} /></span>
             <span className="bottom-nav-label">{t.label}</span>
           </button>
         ))}
         <button className={moreOpen || MORE_TABS.some(t => t.id === view) ? "active" : ""} onClick={() => setMoreOpen(o => !o)}>
-          <span className="bottom-nav-icon">⋯</span>
+          <span className="bottom-nav-icon"><MoreHorizontal size={20} /></span>
           <span className="bottom-nav-label">Lainnya</span>
         </button>
       </nav>
@@ -135,7 +140,7 @@ export default function CRMApp() {
             {MORE_TABS.map(t => (
               <button key={t.id} className={`more-sheet-item${view === t.id ? " active" : ""}`}
                 onClick={() => { setView(t.id); setMoreOpen(false); }}>
-                <span className="bottom-nav-icon">{t.icon}</span>{t.label}
+                <span className="bottom-nav-icon"><t.icon size={18} /></span>{t.label}
               </button>
             ))}
           </div>

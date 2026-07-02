@@ -10,6 +10,7 @@ import ContactModal from "./ContactModal";
 import VisitModal from "./VisitModal";
 import { exportClients } from "@/lib/export";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
+import { Download } from "lucide-react";
 
 interface Props {
   data: AppData;
@@ -217,7 +218,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
           <button className={viewMode === "detail" ? "active" : ""} onClick={() => setViewMode("detail")} title="Tampilan detail">☰ Detail</button>
           <button className={viewMode === "compact" ? "active" : ""} onClick={() => setViewMode("compact")} title="Tampilan tabel ringkas">▦ Tabel</button>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={() => exportClients(clients, openDealsCount)}>↓ Export CSV</button>
+        <button className="btn btn-ghost btn-sm" onClick={() => exportClients(clients, openDealsCount)}><Download size={13} /> Export CSV</button>
         {!isViewer && <button className="btn add-btn-desktop" onClick={() => { setEditClient(null); setClientModalOpen(true); }}>+ Client Baru</button>}
       </div>
 

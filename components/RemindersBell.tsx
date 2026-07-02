@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { Bell } from "lucide-react";
 import { AppData } from "@/hooks/useData";
 import { ActiveView } from "@/types";
 import { fmtDate, todayStr } from "@/lib/utils";
@@ -89,7 +90,7 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
   return (
     <div ref={ref} className="rb-wrap">
       <button ref={bellRef} className="rb-bell" onClick={toggle} title="Reminder" aria-label="Reminder">
-        🔔
+        <Bell size={17} />
         {reminders.length > 0 && (
           <span className="rb-badge" style={{ background: badgeColor || undefined }}>{reminders.length > 9 ? "9+" : reminders.length}</span>
         )}
