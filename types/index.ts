@@ -1,6 +1,7 @@
 export type Sector = "Banking" | "Multifinance" | "Insurance" | "Health Care" | "Industrial" | "Technology" | "Telekomunikasi" | "Infrastruktur" | "Transportasi" | "Energy" | "Lainnya";
 export type DealStage = "Cold Call" | "First Meeting" | "Discovery" | "Proposal" | "Negotiation" | "Pengumuman Pemenang" | "Contract" | "PO" | "Won" | "On Hold" | "Lost";
 export type VisitStatus = "Planned" | "Done" | "Cancel" | "Reschedule";
+export type EventStatus = VisitStatus; // same vocabulary: Planned/Done/Cancel/Reschedule
 export type ProjectStatus = "Initiation" | "In Progress" | "On Hold" | "Delivered" | "Closed";
 export type TaskStatus = "Open" | "Done";
 
@@ -153,6 +154,8 @@ export interface CalendarEvent {
   description: string;
   created_by: string;
   client_id?: string | null;
+  status: EventStatus;
+  followup_date?: string | null;
   created_by_id?: string;
   created_at?: string;
 }

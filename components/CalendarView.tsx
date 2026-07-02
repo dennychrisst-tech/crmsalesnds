@@ -120,13 +120,22 @@ function AgendaDayCard({
         })}
         {dayEvents.map(ev => {
           const isWfo = ev.type === "WFO";
+          const isCancel = !isWfo && ev.status === "Cancel";
+          const isReschedule = !isWfo && ev.status === "Reschedule";
+          const isDone = !isWfo && ev.status === "Done";
+          const statusNote = isCancel ? " · Dibatalkan"
+            : isReschedule ? ` · Reschedule${ev.followup_date ? " ke " + fmtDate(ev.followup_date) : ""}`
+            : isDone ? " · Selesai" : "";
           return (
-            <button key={ev.id} type="button" className="agenda-item" style={{ background: isWfo ? "var(--brand-soft)" : "var(--paper)", cursor: isWfo ? "default" : "pointer" }}
+            <button key={ev.id} type="button" className="agenda-item"
+              style={{ background: isWfo ? "var(--brand-soft)" : "var(--paper)", cursor: isWfo ? "default" : "pointer", opacity: (isCancel || isDone) ? 0.6 : 1 }}
               onClick={() => { if (!isWfo && !isViewer) onEditEvent(ev); }}>
               <span className="agenda-item-dot" style={{ background: isWfo ? "var(--brand)" : "var(--gold)" }} />
               <span>
-                <div className="agenda-item-title">{isWfo ? `🏠 WFO — ${ev.created_by || "—"}` : ev.title}</div>
-                {!isWfo && <div className="agenda-item-sub">{ev.type}{ev.created_by ? ` · ${ev.created_by}` : ""}</div>}
+                <div className="agenda-item-title" style={{ textDecoration: isCancel ? "line-through" : "none" }}>
+                  {isWfo ? `🏠 WFO — ${ev.created_by || "—"}` : ev.title}
+                </div>
+                {!isWfo && <div className="agenda-item-sub">{ev.type}{ev.created_by ? ` · ${ev.created_by}` : ""}{statusNote}</div>}
               </span>
             </button>
           );
@@ -167,12 +176,22 @@ function DayCell({
       })}
       {dayEvents.map(ev => {
         const isWfo = ev.type === "WFO";
+        const isCancel = !isWfo && ev.status === "Cancel";
+        const isReschedule = !isWfo && ev.status === "Reschedule";
+        const isDone = !isWfo && ev.status === "Done";
+        const statusNote = isCancel ? " · Dibatalkan"
+          : isReschedule ? ` · Reschedule${ev.followup_date ? " ke " + fmtDate(ev.followup_date) : ""}`
+          : isDone ? " · Selesai" : "";
         return (
           <div key={ev.id} className={`vpill ${isWfo ? "vpill-wfo" : "vpill-event"}`}
-            style={isWfo ? { cursor: "default" } : undefined}
+            style={{
+              cursor: isWfo ? "default" : "pointer",
+              opacity: (isCancel || isDone) ? 0.55 : 1,
+              textDecoration: isCancel ? "line-through" : "none",
+            }}
             onClick={isWfo ? undefined : e => { e.stopPropagation(); if (!isViewer) onEditEvent(ev); }}
-            title={isWfo ? `WFO: ${ev.created_by || "—"}` : ev.title}>
-            {isWfo ? `🏠 ${ev.created_by || "WFO"}` : ev.title}
+            title={isWfo ? `WFO: ${ev.created_by || "—"}` : `${ev.title}${statusNote}`}>
+            {isWfo ? `🏠 ${ev.created_by || "WFO"}` : `${isReschedule ? "↻ " : ""}${ev.title}`}
           </div>
         );
       })}
@@ -240,7 +259,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
     try {
       await onSaveEvent({
         id: uuid(), title: "Work From Office", date: ds, type: "WFO",
-        description: "", created_by: name, client_id: null,
+        description: "", created_by: name, client_id: null, status: "Planned",
       });
     } catch {
       // useData's mutation helpers already surface the failure via error toast.

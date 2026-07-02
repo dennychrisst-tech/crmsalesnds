@@ -38,7 +38,7 @@ const DATE_FIELDS: Partial<Record<TableKey, string[]>> = {
   projects: ["golive"],
   tasks: ["due_date"],
   activities: ["date"],
-  events: ["date"],
+  events: ["date", "followup_date"],
 };
 
 function d10(v: unknown): unknown {

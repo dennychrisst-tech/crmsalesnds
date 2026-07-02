@@ -4,7 +4,7 @@ import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import SearchableSelect from "./ui/SearchableSelect";
 import { CalendarEvent, Client } from "@/types";
-import { EVENT_TYPES, todayStr } from "@/lib/utils";
+import { EVENT_TYPES, EVENT_STATUS, todayStr } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -19,7 +19,10 @@ interface Props {
 }
 
 function emptyEvent(date?: string): CalendarEvent {
-  return { id: uuid(), title: "", date: date || todayStr(), type: "Meeting Online", description: "", created_by: "", client_id: null };
+  return {
+    id: uuid(), title: "", date: date || todayStr(), type: "Meeting Online", description: "",
+    created_by: "", client_id: null, status: "Planned", followup_date: null,
+  };
 }
 
 function parseMembers(s: string): string[] {
@@ -35,13 +38,20 @@ export default function EventModal({ open, event, preDate, team, clients, defaul
   const [form, setForm] = useState<CalendarEvent>(emptyEvent(preDate));
   const [selected, setSelected] = useState<string[]>([]);
 
+  // Re-init only when the modal opens or a different event is opened — not on
+  // every background poll (see VisitModal/ProjectModal for the same fix).
   useEffect(() => {
     const base = event || emptyEvent(preDate);
-    setForm({ ...base, client_id: base.client_id ?? null });
+    setForm({
+      ...base, client_id: base.client_id ?? null,
+      // Events saved before the status column existed come back with status undefined
+      status: base.status || "Planned", followup_date: base.followup_date ?? null,
+    });
     const members = parseMembers(base.created_by);
     // Auto-select current user when creating a new event
     setSelected(event ? members : (defaultMember && !members.includes(defaultMember) ? [defaultMember] : members));
-  }, [event, preDate, open, defaultMember]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event?.id, preDate, open]);
 
   const set = (k: keyof CalendarEvent, v: string | null) => setForm(f => ({ ...f, [k]: v }));
 
@@ -76,9 +86,22 @@ export default function EventModal({ open, event, preDate, team, clients, defaul
             {EVENT_TYPES.map(t => <option key={t}>{t}</option>)}
           </select>
         </Field>
+        <Field label="Status">
+          <select className={selectCls} value={form.status} onChange={e => set("status", e.target.value)}>
+            {EVENT_STATUS.map(s => <option key={s}>{s}</option>)}
+          </select>
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
         <Field label="Tanggal">
           <input type="date" className={inputCls} value={form.date} onChange={e => set("date", e.target.value)} />
         </Field>
+        {form.status === "Reschedule" && (
+          <Field label="Tanggal Baru">
+            <input type="date" className={inputCls} value={form.followup_date || ""} onChange={e => set("followup_date", e.target.value || null)} />
+          </Field>
+        )}
       </div>
 
       <Field label="Client (opsional)">

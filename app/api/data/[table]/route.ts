@@ -60,7 +60,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
     deals: ["close_date"],
     tasks: ["due_date"],
     activities: ["date"],
-    events: ["date"],
+    events: ["date", "followup_date"],
     projects: ["golive"],
   };
   for (const field of DATE_FIELDS[table] ?? []) {

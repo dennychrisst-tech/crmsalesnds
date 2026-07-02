@@ -225,15 +225,17 @@ model Activity {
 }
 
 model Event {
-  id            String   @id @default(uuid()) @db.Uuid
-  title         String   @default("")
-  date          DateTime @db.Date
-  type          String   @default("Meeting Online")
-  description   String   @default("")
-  created_by    String   @default("")
-  client_id     String?  @db.Uuid
-  created_by_id String?  @db.Uuid
-  created_at    DateTime @default(now())
+  id            String    @id @default(uuid()) @db.Uuid
+  title         String    @default("")
+  date          DateTime  @db.Date
+  type          String    @default("Meeting Online")
+  description   String    @default("")
+  created_by    String    @default("")
+  client_id     String?   @db.Uuid
+  status        String    @default("Planned")
+  followup_date DateTime? @db.Date
+  created_by_id String?   @db.Uuid
+  created_at    DateTime  @default(now())
 
   @@index([client_id])
   @@index([date])

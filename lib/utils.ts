@@ -14,6 +14,7 @@ export const CLIENT_STATUS_COLOR: Record<string, { bg: string; fg: string }> = {
   "Existing Inactive": { bg: "#F1EFE8", fg: "#5C5440" },
 };
 export const VISIT_STATUS = ["Planned", "Done", "Cancel", "Reschedule"] as const;
+export const EVENT_STATUS = VISIT_STATUS; // same vocabulary, reused for Event.status
 export const PROJ_STATUS = ["Initiation", "In Progress", "On Hold", "Delivered", "Closed"] as const;
 export const SECTORS = ["Banking", "Multifinance", "Insurance", "Health Care", "Industrial", "Technology", "Telekomunikasi", "Infrastruktur", "Transportasi", "Energy", "Lainnya"] as const;
 export const TEAM = ["Denny", "Dova", "Rio", "Cris"] as const;
