@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface ModalProps {
   open: boolean;
@@ -11,6 +11,10 @@ interface ModalProps {
 export default function Modal({ open, onClose, title, children }: ModalProps) {
   const ref = useRef<HTMLDivElement>(null);
   const mouseDownOnBackdrop = useRef(false);
+  // Swipe-down-to-close (mobile bottom-sheet gesture) — tracked only from the
+  // handle/title area so it never fights with scrolling the modal body.
+  const touchStartY = useRef<number | null>(null);
+  const [dragY, setDragY] = useState(0);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -20,14 +24,37 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
 
   if (!open) return null;
 
+  function onTouchStart(e: React.TouchEvent) {
+    touchStartY.current = e.touches[0].clientY;
+  }
+  function onTouchMove(e: React.TouchEvent) {
+    if (touchStartY.current === null) return;
+    const dy = e.touches[0].clientY - touchStartY.current;
+    if (dy > 0) setDragY(dy);
+  }
+  function onTouchEnd() {
+    if (dragY > 90) onClose();
+    setDragY(0);
+    touchStartY.current = null;
+  }
+
   return (
     <div
       className="fixed inset-0 bg-[rgba(11,27,43,.45)] flex items-end sm:items-start justify-center sm:p-10 z-50"
       onMouseDown={(e) => { mouseDownOnBackdrop.current = e.target === e.currentTarget; }}
       onClick={(e) => { if (e.target === e.currentTarget && mouseDownOnBackdrop.current) onClose(); }}
     >
-      <div ref={ref} className="bg-[var(--card)] w-full max-w-xl max-h-[92vh] sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-        <h3 className="text-lg font-bold p-4 sm:p-6 pb-3 sm:pb-4 flex-shrink-0">{title}</h3>
+      <div
+        ref={ref}
+        className="bg-[var(--card)] w-full max-w-xl max-h-[92dvh] sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        style={dragY > 0 ? { transform: `translateY(${dragY}px)` } : { transition: "transform .18s ease" }}
+      >
+        <div onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} className="flex-shrink-0">
+          <div className="flex justify-center pt-2 sm:hidden">
+            <div className="w-9 h-1 rounded-full bg-[var(--line)]" />
+          </div>
+          <h3 className="text-lg font-bold p-4 sm:p-6 pb-3 sm:pb-4">{title}</h3>
+        </div>
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6 min-h-0">
           {children}
         </div>

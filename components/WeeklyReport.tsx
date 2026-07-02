@@ -4,6 +4,7 @@ import { AppData } from "@/hooks/useData";
 import { Project } from "@/types";
 import { fmtIDR, fmtDate, fmtDateStr, picMatches, STAGE_COLOR } from "@/lib/utils";
 import { exportWeeklyReport } from "@/lib/export";
+import { shareToWhatsApp } from "@/lib/share";
 import Modal, { ModalActions } from "./ui/Modal";
 
 function getWeekRange(offset: number) {
@@ -51,6 +52,27 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
     return projects.filter(p => p.client_id === clientId);
   }
 
+  function buildShareText() {
+    const lines: string[] = [
+      "*Laporan Mingguan Sales NDS*",
+      `Periode: ${label}`,
+      "",
+      `Visit selesai: ${weekVisits.length} (${new Set(weekVisits.map(v => v.client_id)).size} client)`,
+      `Update pipeline: ${weekDealUpdates.length}`,
+      `Closed Won: ${weekWon.length}${weekWon.length ? ` — ${fmtIDR(weekWon.reduce((s, d) => s + d.value, 0))}` : ""}`,
+    ];
+    for (const s of salesData) {
+      if (!s.visits.length) continue;
+      lines.push("", `*${s.name}* — ${s.visits.length} visit`);
+      for (const v of s.visits) {
+        const summary = (v.summary || "").trim().replace(/\s+/g, " ");
+        const short = summary.length > 120 ? summary.slice(0, 117) + "…" : summary;
+        lines.push(`• ${fmtDate(v.date)} ${clientName(v.client_id)}${short ? ` — ${short}` : ""}`);
+      }
+    }
+    return lines.join("\n");
+  }
+
   return (
     <section>
       <div className="sum-header">
@@ -61,6 +83,7 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
           <button className="cal-nav-btn" onClick={() => setOffset(o => o + 1)} disabled={offset >= 0}>›</button>
           {offset !== 0 && <button className="btn btn-ghost btn-sm" onClick={() => setOffset(0)}>Minggu Ini</button>}
         </div>
+        <button className="btn btn-ghost btn-sm" onClick={() => shareToWhatsApp(buildShareText())}>📤 Share WA</button>
         <button className="btn btn-ghost btn-sm" onClick={() => exportWeeklyReport(salesData, clientName, relatedDeal, label)}>↓ Export CSV</button>
       </div>
 

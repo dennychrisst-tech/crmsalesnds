@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
 import { fmtDate, todayStr, picList, picMatches } from "@/lib/utils";
 import { exportVisitReport } from "@/lib/export";
+import { shareToWhatsApp } from "@/lib/share";
 
 interface Props { data: AppData; }
 
@@ -87,6 +88,23 @@ export default function VisitReport({ data }: Props) {
     (names.length ? names : ["—"]).forEach(name => { byPic[name] = (byPic[name] || 0) + 1; });
   });
 
+  function buildShareText() {
+    const monthLabel = filterMonth
+      ? new Date(filterMonth + "-01").toLocaleDateString("id-ID", { month: "long", year: "numeric" })
+      : "Semua bulan";
+    return [
+      `*Laporan Visit — ${monthLabel}*`,
+      ...(filterSales !== "all" ? [`Sales: ${filterSales}`] : []),
+      `Total: ${total} visit · ${grouped.length} client`,
+      "",
+      "*Per Sales:*",
+      ...Object.entries(byPic).sort((a, b) => b[1] - a[1]).map(([name, count]) => `• ${name}: ${count} visit`),
+      "",
+      "*Per Client:*",
+      ...grouped.map(([id, cvs]) => `• ${clientName(id)} — ${cvs.length} visit`),
+    ].join("\n");
+  }
+
   const thSt: React.CSSProperties = {
     padding: "8px 14px", textAlign: "left", fontSize: 11, fontWeight: 700,
     textTransform: "uppercase", letterSpacing: ".06em", color: "var(--ink-soft)",
@@ -114,6 +132,9 @@ export default function VisitReport({ data }: Props) {
         </select>
         <button className="btn btn-ghost btn-sm" onClick={expandAll}>Buka Semua</button>
         <button className="btn btn-ghost btn-sm" onClick={collapseAll}>Tutup Semua</button>
+        <button className="btn btn-ghost btn-sm" onClick={() => shareToWhatsApp(buildShareText())}>
+          📤 Share WA
+        </button>
         <button className="btn btn-ghost btn-sm" onClick={() => exportVisitReport(filtered, clientName)}>
           ↓ Export CSV
         </button>

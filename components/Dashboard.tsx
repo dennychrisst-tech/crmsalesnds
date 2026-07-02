@@ -327,23 +327,19 @@ export default function Dashboard({ data, onNavigate }: Props) {
         <SectionHeader title="Pipeline per Stage" icon="📊" accent={PANEL_ACCENTS.pipeline} action="Buka Pipeline" onClick={() => onNavigate("pipeline")} />
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {stageData.map(s => (
-            <div key={s.stage} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{
-                width: 96, fontSize: 11, fontWeight: 700, flexShrink: 0,
+            <div key={s.stage} className="funnel-row">
+              <div className="funnel-stage" style={{
                 color: STAGE_COLOR[s.stage] || "var(--brand)", background: `${STAGE_COLOR[s.stage] || "var(--brand)"}1A`,
-                borderRadius: 999, padding: "3px 10px", textAlign: "center",
               }}>{s.stage}</div>
-              <div style={{ flex: 1, background: "var(--line)", borderRadius: 999, height: 20, overflow: "hidden" }}>
-                <div style={{
+              <div className="funnel-track">
+                <div className="funnel-fill" style={{
                   width: `${(s.value / maxStageValue) * 100}%`,
                   background: STAGE_COLOR[s.stage] || "var(--brand)",
-                  height: "100%", borderRadius: 999,
-                  transition: "width .4s ease",
                   minWidth: s.count > 0 ? 4 : 0,
                 }} />
               </div>
-              <div style={{ width: 110, fontSize: 12, textAlign: "right", color: "var(--ink)", fontWeight: 700, flexShrink: 0 }}>{fmtIDR(s.value)}</div>
-              <div style={{ width: 50, fontSize: 12, textAlign: "right", color: "var(--ink-soft)", flexShrink: 0 }}>{s.count} project</div>
+              <div className="funnel-value">{fmtIDR(s.value)}</div>
+              <div className="funnel-count">{s.count} project</div>
             </div>
           ))}
         </div>

@@ -142,6 +142,17 @@ export function useData() {
     return () => clearInterval(interval);
   }, [load]);
 
+  // The poll above skips while hidden, so returning to the tab (or resuming the
+  // installed PWA from the background) could show stale data for up to 30s —
+  // refresh immediately instead.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [load]);
+
   // Mutations update local state directly from the server's response instead of
   // re-fetching all tables — that used to happen after every single save/delete.
   async function upsert(table: TableKey, record: Record<string, unknown>) {
