@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
@@ -25,6 +25,9 @@ interface Props {
   onCreateTask: (t: Task) => Promise<void>;
   onCreateDeal: (d: Deal) => Promise<void>;
   onSaveContact: (c: Contact) => Promise<void>;
+  // Deep-link: open this visit's detail modal on mount (e.g. from Summary Activity)
+  openVisitId?: string | null;
+  onOpenVisitHandled?: () => void;
 }
 
 const SALES_COLOR_PALETTE = [
@@ -177,7 +180,7 @@ function DayCell({
   );
 }
 
-export default function CalendarView({ data, currentUserName, isViewer, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask, onCreateDeal, onSaveContact }: Props) {
+export default function CalendarView({ data, currentUserName, isViewer, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask, onCreateDeal, onSaveContact, openVisitId, onOpenVisitHandled }: Props) {
   const { clients, contacts, visits, events, deals, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const salesLegend = Array.from(new Set([...team, ...visits.flatMap(v => picList(v.pic))])).sort((a, b) => a.localeCompare(b));
@@ -210,6 +213,14 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
 
   function openNewVisit(dateStr?: string) { setEditVisit(null); setPreClientId(undefined); setPreDate(dateStr); setVisitModal(true); }
   function openEditVisit(v: Visit) { setEditVisit(v); setPreClientId(undefined); setPreDate(undefined); setVisitModal(true); }
+
+  useEffect(() => {
+    if (!openVisitId) return;
+    const visit = visits.find(v => v.id === openVisitId);
+    if (visit) openEditVisit(visit);
+    onOpenVisitHandled?.();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openVisitId]);
   function openNewEvent(dateStr?: string) { setEditEvent(null); setPreDate(dateStr); setEventModal(true); }
   function openEditEvent(e: CalendarEvent) { setEditEvent(e); setPreDate(undefined); setEventModal(true); }
 

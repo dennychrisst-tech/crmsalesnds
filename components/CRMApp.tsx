@@ -44,6 +44,7 @@ export default function CRMApp() {
   const [view, setView] = useState<ActiveView>("dashboard");
   const [pendingClientId, setPendingClientId] = useState<string | null>(null);
   const [pendingDealId, setPendingDealId] = useState<string | null>(null);
+  const [pendingVisitId, setPendingVisitId] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
 
   function openClient(clientId: string) {
@@ -54,6 +55,11 @@ export default function CRMApp() {
   function openDeal(dealId: string) {
     setPendingDealId(dealId);
     setView("pipeline");
+  }
+
+  function openVisit(visitId: string) {
+    setPendingVisitId(visitId);
+    setView("calendar");
   }
 
   async function handleLogout() {
@@ -171,7 +177,8 @@ export default function CRMApp() {
                   <CalendarView data={data} currentUserName={currentUserName} isViewer={isViewer}
                     onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)}
                     onSaveEvent={ro(upsertEvent)} onDeleteEvent={ro(deleteEvent)}
-                    onCreateTask={ro(upsertTask)} onCreateDeal={ro(upsertDeal)} onSaveContact={ro(upsertContact)} />
+                    onCreateTask={ro(upsertTask)} onCreateDeal={ro(upsertDeal)} onSaveContact={ro(upsertContact)}
+                    openVisitId={pendingVisitId} onOpenVisitHandled={() => setPendingVisitId(null)} />
                 )}
                 {view === "clients" && (
                   <Clients data={data} currentUserName={currentUserName} isViewer={isViewer} onNavigate={setView}
@@ -198,7 +205,7 @@ export default function CRMApp() {
                 {view === "catalog" && (
                   <ProductsView data={data} isViewer={isViewer} onSaveProduct={ro(upsertProduct)} onDeleteProduct={ro(deleteProduct)} />
                 )}
-                {view === "summary" && <SummaryView data={data} />}
+                {view === "summary" && <SummaryView data={data} onOpenVisit={openVisit} />}
                 {view === "visit-report" && <VisitReport data={data} />}
                 {view === "weekly-report" && <WeeklyReport data={data} onOpenDeal={openDeal} />}
               </>

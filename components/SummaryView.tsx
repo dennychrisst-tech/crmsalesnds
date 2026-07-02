@@ -3,7 +3,10 @@ import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
 import { fmtIDR, fmtDate, picMatches, fmtDateStr } from "@/lib/utils";
 
-interface Props { data: AppData; }
+interface Props {
+  data: AppData;
+  onOpenVisit: (visitId: string) => void;
+}
 
 type Period = "week" | "month";
 
@@ -42,9 +45,10 @@ interface FeedItem {
   sub: string;
   who: string;
   type: "visit" | "task" | "activity" | "event" | "deal";
+  onClick?: () => void;
 }
 
-export default function SummaryView({ data }: Props) {
+export default function SummaryView({ data, onOpenVisit }: Props) {
   const { clients, deals, visits, tasks, activities, events, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [period, setPeriod] = useState<Period>("week");
@@ -79,6 +83,7 @@ export default function SummaryView({ data }: Props) {
       label: `Visit: ${clientName(v.client_id)}`,
       sub: [v.approach, v.purpose].filter(Boolean).join(" · ") || "—",
       who: v.pic || "—",
+      onClick: () => onOpenVisit(v.id),
     }));
 
     periodTasks.forEach(t => items.push({
@@ -211,7 +216,8 @@ export default function SummaryView({ data }: Props) {
             <div key={date} className="feed-day-group">
               <div className="feed-date-label">{fmtDate(date)}</div>
               {items.map((item, i) => (
-                <div key={i} className="feed-item">
+                <div key={i} className={`feed-item${item.onClick ? " feed-item-clickable" : ""}`}
+                  onClick={item.onClick} title={item.onClick ? "Buka detail visit" : undefined}>
                   <span className="feed-icon">{item.icon}</span>
                   <div className="feed-body">
                     <div className="feed-label">{item.label}</div>
