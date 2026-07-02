@@ -16,6 +16,7 @@ import RemindersBell from "./RemindersBell";
 import SummaryView from "./SummaryView";
 import VisitReport from "./VisitReport";
 import WeeklyReport from "./WeeklyReport";
+import ToastHost from "./ui/Toast";
 
 const TABS: { id: ActiveView; label: string; icon: string }[] = [
   { id: "dashboard",    label: "Dashboard",         icon: "📊" },
@@ -78,6 +79,7 @@ export default function CRMApp() {
 
   return (
     <div className="app">
+      <ToastHost />
       <header className="top">
         <div className="header-brand">
           <svg viewBox="0 0 210 72" height="44" aria-label="NDS – Nusantara Duta Solusindo" xmlns="http://www.w3.org/2000/svg">
@@ -93,7 +95,7 @@ export default function CRMApp() {
           <div className="header-crm-tag">Sales CRM</div>
         </div>
         <div className="header-search-row">
-          {!loading && <GlobalSearch data={data} onNavigate={setView} />}
+          {!loading && <GlobalSearch data={data} onNavigate={setView} onOpenClient={openClient} onOpenDeal={openDeal} />}
           {!loading && (
             <RemindersBell data={data} currentUserName={currentProfile?.name ?? ""} isAdmin={isAdmin} onNavigate={setView} />
           )}

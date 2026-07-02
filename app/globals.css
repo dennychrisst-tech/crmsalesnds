@@ -423,7 +423,11 @@ tr.task-soon td { background: #fffbeb; }
 .gs-clear { background: none; border: none; color: var(--ink-soft); cursor: pointer; font-size: 16px; padding: 0; }
 .gs-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); z-index: 100; max-height: 340px; overflow-y: auto; }
 .gs-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer; }
-.gs-item:hover { background: var(--paper); }
+.gs-item:hover, .gs-item-active { background: var(--paper); }
+.gs-kbd {
+  font-size: 10px; font-weight: 700; color: var(--ink-soft); border: 1px solid var(--line);
+  border-radius: 5px; padding: 1px 6px; white-space: nowrap; flex-shrink: 0;
+}
 .gs-type { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; }
 .gs-type-client { background: var(--brand-soft); color: var(--brand); }
 .gs-type-deal   { background: #FBF0DA; color: #9A6E12; }
@@ -496,6 +500,25 @@ tr.task-soon td { background: #fffbeb; }
 .catalog-name { font-size: 15px; font-weight: 800; }
 .catalog-desc { font-size: 12px; color: var(--ink-soft); margin-top: 6px; line-height: 1.4; }
 
+/* Toast notifications */
+.toast-host {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 200;
+  display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none;
+}
+.toast {
+  display: flex; align-items: center; gap: 14px; background: var(--ink); color: #fff;
+  font-size: 13px; font-weight: 600; padding: 10px 16px; border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(11,27,43,.3); pointer-events: auto;
+  max-width: min(92vw, 480px); animation: toast-in .18s ease;
+}
+.toast-error { background: var(--danger); }
+.toast-undo {
+  background: none; border: none; color: #5EEAD4; font-weight: 800; font-size: 13px;
+  cursor: pointer; padding: 0; font-family: inherit; flex-shrink: 0;
+}
+.toast-undo:hover { text-decoration: underline; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
 /* Dashboard pipeline funnel */
 .funnel-row { display: flex; align-items: center; gap: 10px; }
 .funnel-stage { width: 96px; font-size: 11px; font-weight: 700; flex-shrink: 0; border-radius: 999px; padding: 3px 10px; text-align: center; }
@@ -531,6 +554,10 @@ tr.task-soon td { background: #fffbeb; }
 
   /* Nav — replaced by fixed bottom nav on mobile */
   nav.tabs { display: none; }
+
+  /* Toast — sit above the bottom nav; Ctrl+K hint is desktop-only */
+  .toast-host { bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .gs-kbd { display: none; }
 
   .bottom-nav {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity, CalendarEvent, Profile } from "@/types";
 import { STAGES } from "@/lib/utils";
+import { toast } from "@/components/ui/Toast";
 
 export interface AppData {
   clients: Client[];
@@ -161,24 +162,43 @@ export function useData() {
 
   // Mutations update local state directly from the server's response instead of
   // re-fetching all tables — that used to happen after every single save/delete.
+  // Each one reports success/failure via toast; patch stays silent on success
+  // because its main caller (pipeline stage move) shows its own undo toast.
   async function upsert(table: TableKey, record: Record<string, unknown>) {
     if (!record.id) record.id = uuid();
-    const result = await api(`/api/data/${table}`, "POST", record);
-    const normalized = normalizeRow(table, result);
-    commit(prev => ({ ...prev, [table]: mergeRecord(prev[table], normalized) }));
-    return normalized;
+    try {
+      const result = await api(`/api/data/${table}`, "POST", record);
+      const normalized = normalizeRow(table, result);
+      commit(prev => ({ ...prev, [table]: mergeRecord(prev[table], normalized) }));
+      toast("Tersimpan");
+      return normalized;
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Gagal menyimpan", { type: "error" });
+      throw e;
+    }
   }
 
   async function remove(table: TableKey, id: string) {
-    await api(`/api/data/${table}/${id}`, "DELETE");
-    commit(prev => ({ ...prev, [table]: (prev[table] as { id: string }[]).filter(item => item.id !== id) }));
+    try {
+      await api(`/api/data/${table}/${id}`, "DELETE");
+      commit(prev => ({ ...prev, [table]: (prev[table] as { id: string }[]).filter(item => item.id !== id) }));
+      toast("Terhapus");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Gagal menghapus", { type: "error" });
+      throw e;
+    }
   }
 
   async function patch(table: TableKey, id: string, patchData: Record<string, unknown>) {
-    const result = await api(`/api/data/${table}/${id}`, "PATCH", patchData);
-    const normalized = normalizeRow(table, result);
-    commit(prev => ({ ...prev, [table]: mergeRecord(prev[table], normalized) }));
-    return normalized;
+    try {
+      const result = await api(`/api/data/${table}/${id}`, "PATCH", patchData);
+      const normalized = normalizeRow(table, result);
+      commit(prev => ({ ...prev, [table]: mergeRecord(prev[table], normalized) }));
+      return normalized;
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Gagal menyimpan", { type: "error" });
+      throw e;
+    }
   }
 
   function makeUpsert<T extends { id: string }>(table: TableKey) {

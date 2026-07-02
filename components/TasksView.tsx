@@ -126,7 +126,17 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
                   <td>{clientName(t.client_id)}</td>
                   <td>{dealName(t.deal_id)}</td>
                   <td>{statusBadge(t.status)}</td>
-                  <td>{!isViewer && <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)}>Edit</button>}</td>
+                  <td>
+                    {!isViewer && (
+                      <span style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                        {t.status !== "Done" && (
+                          <button className="btn btn-sm" title="Tandai selesai"
+                            onClick={() => onSaveTask({ ...t, status: "Done" })}>✓ Selesai</button>
+                        )}
+                        <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)}>Edit</button>
+                      </span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -146,6 +156,9 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
                 <div className="mcard-row"><span>Project</span><b>{dealName(t.deal_id)}</b></div>
                 {!isViewer && (
                   <div className="mcard-actions">
+                    {t.status !== "Done" && (
+                      <button className="btn btn-sm" onClick={() => onSaveTask({ ...t, status: "Done" })}>✓ Selesai</button>
+                    )}
                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)}>Edit</button>
                   </div>
                 )}

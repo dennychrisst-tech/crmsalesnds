@@ -7,6 +7,7 @@ import { AppData } from "@/hooks/useData";
 import { Deal, CRMDocument, Attachment, Activity, Project } from "@/types";
 import { STAGES, STAGE_COLOR, fmtIDR, todayStr } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
+import { toast } from "./ui/Toast";
 
 const PROJECT_DRAG_PREFIX = "project:";
 
@@ -185,6 +186,17 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
+  // Single path for every stage change (drag, picker menu, mobile list) so the
+  // undo toast is offered consistently.
+  async function moveStage(deal: Deal, stage: string) {
+    if (isViewer || deal.stage === stage) return;
+    const prevStage = deal.stage;
+    await onUpdateStage(deal.id, stage);
+    toast(`${deal.name} → ${stage}`, {
+      action: { label: "Undo", onClick: () => onUpdateStage(deal.id, prevStage) },
+    });
+  }
+
   const usedProjectKeys = new Set(deals.map(d => projectKey(d.name, d.client_id)));
   const availableProjects = projects.filter(p => !usedProjectKeys.has(projectKey(p.name, p.client_id)) && !pendingProjectIds.has(p.id));
 
@@ -218,7 +230,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
         if (!project) return;
         const key = projectKey(project.name, project.client_id);
         if (usedProjectKeys.has(key)) {
-          alert("Project ini sudah ada di pipeline.");
+          toast("Project ini sudah ada di pipeline.", { type: "error" });
           return;
         }
         setPendingProjectIds(prev => new Set(prev).add(projectId));
@@ -236,9 +248,9 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
       }
 
       const deal = deals.find(d => d.id === id);
-      if (deal && deal.stage !== stage) await onUpdateStage(deal.id, stage);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Gagal menyimpan perubahan.");
+      if (deal) await moveStage(deal, stage);
+    } catch {
+      // useData's mutation helpers already surface the failure via error toast.
     }
   }
 
@@ -288,7 +300,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
             ) : deals.filter(d => d.stage === mobileStage).map(d => (
               <DealCard key={d.id} deal={d} clientName={clientName(d.client_id)}
                 onClick={() => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}
-                onMoveStage={s => onUpdateStage(d.id, s)} isViewer={isViewer} />
+                onMoveStage={s => moveStage(d, s)} isViewer={isViewer} />
             ))}
           </div>
         ) : (
@@ -296,7 +308,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
             {STAGES.map(stage => (
               <Column key={stage} stage={stage} deals={deals.filter(d => d.stage === stage)}
                 clientName={clientName} onDealClick={d => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}
-                onMoveStage={(dealId, s) => onUpdateStage(dealId, s)} isViewer={isViewer} />
+                onMoveStage={(dealId, s) => { const d = deals.find(x => x.id === dealId); if (d) moveStage(d, s); }} isViewer={isViewer} />
             ))}
           </div>
         )}

@@ -82,8 +82,8 @@ export default function DealModal({
     try {
       await onAddActivity({ ...actForm, id: uuid(), deal_id: form.id });
       setActForm(emptyActivity(form.id));
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Gagal menyimpan aktivitas.");
+    } catch {
+      // useData's mutation helpers already surface the failure via error toast.
     } finally {
       setSaving(false);
     }

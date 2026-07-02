@@ -229,8 +229,8 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
         id: uuid(), title: "Work From Office", date: ds, type: "WFO",
         description: "", created_by: name, client_id: null,
       });
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Gagal menandai WFO.");
+    } catch {
+      // useData's mutation helpers already surface the failure via error toast.
     } finally {
       setPendingWfo(prev => { const next = new Set(prev); next.delete(key); return next; });
     }
