@@ -28,6 +28,8 @@ const QUERIES: Record<string, () => Promise<any>> = {
   attachments: () => prisma.attachment.findMany({ orderBy: { uploaded_at: "asc" } }),
   activities: () => prisma.activity.findMany({ orderBy: { created_at: "desc" } }),
   events: () => prisma.event.findMany({ orderBy: { date: "asc" } }),
+  talent_roles: () => prisma.talentRole.findMany({ orderBy: { created_at: "asc" } }),
+  talent_cvs: () => prisma.talentCV.findMany({ orderBy: { created_at: "asc" } }),
 };
 
 const ALL_TABLES = Object.keys(QUERIES);

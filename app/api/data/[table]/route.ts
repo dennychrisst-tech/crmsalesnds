@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
-type TableName = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events";
+type TableName = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles" | "talent_cvs";
 
-const ALLOWED: TableName[] = ["clients", "contacts", "visits", "deals", "projects", "tasks", "products", "documents", "attachments", "activities", "events"];
+const ALLOWED: TableName[] = ["clients", "contacts", "visits", "deals", "projects", "tasks", "products", "documents", "attachments", "activities", "events", "talent_roles", "talent_cvs"];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getModel(table: TableName): any {
@@ -12,6 +12,8 @@ function getModel(table: TableName): any {
     table === "documents" ? "document" :
     table === "activities" ? "activity" :
     table === "events" ? "event" :
+    table === "talent_roles" ? "talentRole" :
+    table === "talent_cvs" ? "talentCV" :
     table.slice(0, -1) // remove trailing 's'
   ];
 }
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
   // Handle BigInt fields
   if (body.value !== undefined) body.value = BigInt(body.value);
   if (body.file_size !== undefined) body.file_size = BigInt(body.file_size);
-  if (body.talent_ratecard !== undefined) body.talent_ratecard = BigInt(body.talent_ratecard);
+  if (body.ratecard !== undefined) body.ratecard = BigInt(body.ratecard);
 
   // Convert date strings to Date objects for Prisma DateTime @db.Date fields
   const DATE_FIELDS: Record<string, string[]> = {
@@ -62,7 +64,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
     tasks: ["due_date"],
     activities: ["date"],
     events: ["date", "followup_date"],
-    projects: ["golive", "talent_submit_cv_date", "talent_interview_date", "talent_hired_date", "talent_po_date"],
+    projects: ["golive"],
+    talent_roles: ["deadline"],
+    talent_cvs: ["submit_date", "interview_date", "hired_date", "po_date"],
   };
   for (const field of DATE_FIELDS[table] ?? []) {
     if (typeof body[field] === "string") {

@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
-type TableName = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events";
+type TableName = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles" | "talent_cvs";
 
-const ALLOWED: TableName[] = ["clients", "contacts", "visits", "deals", "projects", "tasks", "products", "documents", "attachments", "activities", "events"];
+const ALLOWED: TableName[] = ["clients", "contacts", "visits", "deals", "projects", "tasks", "products", "documents", "attachments", "activities", "events", "talent_roles", "talent_cvs"];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getModel(table: TableName): any {
@@ -12,6 +12,8 @@ function getModel(table: TableName): any {
     table === "documents" ? "document" :
     table === "activities" ? "activity" :
     table === "events" ? "event" :
+    table === "talent_roles" ? "talentRole" :
+    table === "talent_cvs" ? "talentCV" :
     table.slice(0, -1)
   ];
 }

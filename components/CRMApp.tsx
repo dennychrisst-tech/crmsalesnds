@@ -73,6 +73,8 @@ export default function CRMApp() {
     upsertVisit, deleteVisit,
     upsertDeal, deleteDeal, updateDealStage,
     upsertProject, deleteProject,
+    upsertTalentRole, deleteTalentRole,
+    upsertTalentCV, deleteTalentCV,
     upsertTask, deleteTask,
     upsertProduct, deleteProduct,
     upsertDocument, deleteDocument,
@@ -197,7 +199,10 @@ export default function CRMApp() {
                     openDealId={pendingDealId} onOpenDealHandled={() => setPendingDealId(null)} />
                 )}
                 {view === "projects" && (
-                  <Projects data={data} isViewer={isViewer} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)} onOpenClient={openClient} />
+                  <Projects data={data} isViewer={isViewer} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)}
+                    onSaveTalentRole={ro(upsertTalentRole)} onDeleteTalentRole={ro(deleteTalentRole)}
+                    onSaveTalentCV={ro(upsertTalentCV)} onDeleteTalentCV={ro(deleteTalentCV)}
+                    onOpenClient={openClient} />
                 )}
                 {view === "tasks" && (
                   <TasksView data={data} currentUserName={currentUserName} isViewer={isViewer} onSaveTask={ro(upsertTask)} onDeleteTask={ro(deleteTask)} onCreateDeal={ro(upsertDeal)} />

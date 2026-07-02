@@ -4,6 +4,8 @@ export type VisitStatus = "Planned" | "Done" | "Cancel" | "Reschedule";
 export type EventStatus = VisitStatus; // same vocabulary: Planned/Done/Cancel/Reschedule
 export type ProjectStatus = "Initiation" | "In Progress" | "On Hold" | "Delivered" | "Closed";
 export type TalentLevel = "Junior" | "Middle" | "Senior" | "Lead";
+export type TalentRoleStatus = "Active" | "Hold" | "Closed - Filled" | "Closed - Cancel";
+export type TalentCVStatus = "Submitted" | "Approved" | "Interview" | "Hired" | "Rejected";
 export type TaskStatus = "Open" | "Done";
 
 export interface PIC {
@@ -97,16 +99,37 @@ export interface Project {
   golive: string;
   notes: string;
   partner?: string;
-  // Talent (outsourcing/staffing) tracking — only meaningful when product === "Talent"
-  talent_role?: string;
-  talent_level?: string;
-  talent_ratecard?: number;
-  talent_pic?: string;
-  talent_candidate?: string;
-  talent_submit_cv_date?: string | null;
-  talent_interview_date?: string | null;
-  talent_hired_date?: string | null;
-  talent_po_date?: string | null;
+  created_by_id?: string;
+  created_at?: string;
+}
+
+// Talent (outsourcing/staffing) tracking — a Project with product === "Talent"
+// can have several open roles (TalentRole), each with its own CV pipeline
+// (TalentCV) so approve/reject counts are tracked per candidate, not per role.
+export interface TalentRole {
+  id: string;
+  project_id: string;
+  role_name: string;
+  level: string;
+  ratecard: number;
+  pic: string;
+  deadline?: string | null;
+  status: TalentRoleStatus;
+  notes: string;
+  created_by_id?: string;
+  created_at?: string;
+}
+
+export interface TalentCV {
+  id: string;
+  role_id: string;
+  candidate_name: string;
+  submit_date: string;
+  status: TalentCVStatus;
+  interview_date?: string | null;
+  hired_date?: string | null;
+  po_date?: string | null;
+  notes: string;
   created_by_id?: string;
   created_at?: string;
 }

@@ -36,6 +36,15 @@ export const VISIT_STATUS = ["Planned", "Done", "Cancel", "Reschedule"] as const
 export const EVENT_STATUS = VISIT_STATUS; // same vocabulary, reused for Event.status
 export const PROJ_STATUS = ["Initiation", "In Progress", "On Hold", "Delivered", "Closed"] as const;
 export const TALENT_LEVELS = ["Junior", "Middle", "Senior", "Lead"] as const;
+export const TALENT_ROLE_STATUS = ["Active", "Hold", "Closed - Filled", "Closed - Cancel"] as const;
+export const TALENT_CV_STATUS = ["Submitted", "Approved", "Interview", "Hired", "Rejected"] as const;
+export const TALENT_CV_STATUS_COLOR: Record<string, { bg: string; fg: string }> = {
+  Submitted: { bg: "#E2EAF0", fg: "#2A526E" },
+  Approved: { bg: "#DCFCE7", fg: "#15803D" },
+  Interview: { bg: "#EDE4FB", fg: "#6D28D9" },
+  Hired: { bg: "#DCFCE7", fg: "#0A6E5C" },
+  Rejected: { bg: "#FEE2E2", fg: "#991B1B" },
+};
 export const SECTORS = ["Banking", "Multifinance", "Insurance", "Health Care", "Industrial", "Technology", "Telekomunikasi", "Infrastruktur", "Transportasi", "Energy", "Lainnya"] as const;
 export const TEAM = ["Denny", "Dova", "Rio", "Cris"] as const;
 export const DOC_TYPES = ["RFI", "RFP/BRD", "Proposal Teknis", "Offering Letter", "Kontrak", "PO", "NDA", "Lainnya"] as const;
