@@ -8,6 +8,7 @@ import { Deal, CRMDocument, Attachment, Activity, Project } from "@/types";
 import { STAGES, STAGE_COLOR, fmtIDR, todayStr } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 import { toast } from "./ui/Toast";
+import Modal, { Field, ModalActions, inputCls, textareaCls } from "./ui/Modal";
 import { Download, User } from "lucide-react";
 
 const PROJECT_DRAG_PREFIX = "project:";
@@ -79,7 +80,7 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer }: { deal: 
           </button>
           {pickerOpen && (
             <div className="stage-move-menu" onClick={e => e.stopPropagation()}>
-              {STAGES.filter(s => s !== deal.stage).map(s => (
+              {[...STAGES, "Lost"].filter(s => s !== deal.stage).map(s => (
                 <button key={s} type="button" className="stage-move-item"
                   onClick={() => { onMoveStage(s); setPickerOpen(false); }}>{s}</button>
               ))}
@@ -155,6 +156,12 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   }, [openDealId]);
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
+  const [ownerFilter, setOwnerFilter] = useState("all");
+  const [showArchived, setShowArchived] = useState(false);
+  // Deal being dropped into Won/Lost — prompts for win/loss reason before saving
+  const [closing, setClosing] = useState<{ deal: Deal; stage: string } | null>(null);
+  const [closeReason, setCloseReason] = useState("");
+  const [closeCompetitor, setCloseCompetitor] = useState("");
   const [showPanel, setShowPanel] = useState(false);
   const [projectSearch, setProjectSearch] = useState("");
   const [pendingProjectIds, setPendingProjectIds] = useState<Set<string>>(new Set());
@@ -187,15 +194,55 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
+  // Closed deals older than 30 days move to the archive (hidden by default) so
+  // the Won column doesn't accumulate dead cards forever.
+  const archiveCutoff = (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString(); })();
+  const isArchived = (d: Deal) =>
+    (d.stage === "Won" || d.stage === "Lost") && (d.stage_updated_at || d.created_at || "") < archiveCutoff;
+
+  const ownedDeals = ownerFilter === "all" ? deals : deals.filter(d => d.owner === ownerFilter);
+  const archivedCount = ownedDeals.filter(isArchived).length;
+  const visibleDeals = showArchived ? ownedDeals : ownedDeals.filter(d => !isArchived(d));
+
   // Single path for every stage change (drag, picker menu, mobile list) so the
-  // undo toast is offered consistently.
+  // undo toast is offered consistently. Closing stages detour through the
+  // win/loss-reason prompt first.
   async function moveStage(deal: Deal, stage: string) {
     if (isViewer || deal.stage === stage) return;
+    if (stage === "Won" || stage === "Lost") {
+      setCloseReason(deal.win_loss_reason || "");
+      setCloseCompetitor(deal.competitor || "");
+      setClosing({ deal, stage });
+      return;
+    }
     const prevStage = deal.stage;
     await onUpdateStage(deal.id, stage);
     toast(`${deal.name} → ${stage}`, {
       action: { label: "Undo", onClick: () => onUpdateStage(deal.id, prevStage) },
     });
+  }
+
+  async function confirmClose(withReason: boolean) {
+    if (!closing) return;
+    const { deal, stage } = closing;
+    const prevStage = deal.stage;
+    setClosing(null);
+    try {
+      if (withReason) {
+        await onSaveDeal({
+          ...deal, stage: stage as Deal["stage"],
+          win_loss_reason: closeReason, competitor: closeCompetitor,
+          stage_updated_at: new Date().toISOString(),
+        });
+      } else {
+        await onUpdateStage(deal.id, stage);
+      }
+      toast(`${deal.name} → ${stage}`, {
+        action: { label: "Undo", onClick: () => onUpdateStage(deal.id, prevStage) },
+      });
+    } catch {
+      // useData's mutation helpers already surface the failure via error toast.
+    }
   }
 
   const usedProjectKeys = new Set(deals.map(d => projectKey(d.name, d.client_id)));
@@ -263,6 +310,16 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
     <section>
       <div className="toolbar">
         <span className="muted desktop-only">Tarik proyek atau kartu antar kolom untuk ubah stage.</span>
+        <select className="search" style={{ flex: "none", width: "auto" }}
+          value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)}>
+          <option value="all">Semua Sales</option>
+          {team.map(name => <option key={name} value={name}>{name}</option>)}
+        </select>
+        {archivedCount > 0 && (
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowArchived(s => !s)}>
+            {showArchived ? "Sembunyikan arsip" : `Arsip closed (${archivedCount})`}
+          </button>
+        )}
         <button className="btn btn-ghost btn-sm" onClick={() => exportDeals(deals, clientName)}><Download size={13} /> Export CSV</button>
         {!isViewer && (
           <button className="btn add-btn-desktop" onClick={() => setShowPanel(s => !s)}>
@@ -276,7 +333,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
       {isMobile && (
         <div className="pipeline-stage-tabs">
           {STAGES.map(stage => {
-            const count = deals.filter(d => d.stage === stage).length;
+            const count = visibleDeals.filter(d => d.stage === stage).length;
             const stageColor = STAGE_COLOR[stage] || "var(--brand)";
             return (
               <button key={stage} type="button"
@@ -296,9 +353,9 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
         )}
         {isMobile ? (
           <div className="pipeline-mobile-list">
-            {deals.filter(d => d.stage === mobileStage).length === 0 ? (
+            {visibleDeals.filter(d => d.stage === mobileStage).length === 0 ? (
               <div className="empty-state">Belum ada deal di stage ini.</div>
-            ) : deals.filter(d => d.stage === mobileStage).map(d => (
+            ) : visibleDeals.filter(d => d.stage === mobileStage).map(d => (
               <DealCard key={d.id} deal={d} clientName={clientName(d.client_id)}
                 onClick={() => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}
                 onMoveStage={s => moveStage(d, s)} isViewer={isViewer} />
@@ -307,7 +364,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
         ) : (
           <div ref={boardRef} className="board" style={boardHeight ? { height: boardHeight } : undefined}>
             {STAGES.map(stage => (
-              <Column key={stage} stage={stage} deals={deals.filter(d => d.stage === stage)}
+              <Column key={stage} stage={stage} deals={visibleDeals.filter(d => d.stage === stage)}
                 clientName={clientName} onDealClick={d => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}
                 onMoveStage={(dealId, s) => { const d = deals.find(x => x.id === dealId); if (d) moveStage(d, s); }} isViewer={isViewer} />
             ))}
@@ -329,6 +386,34 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
           )}
         </DragOverlay>
       </DndContext>
+      <Modal open={!!closing} onClose={() => setClosing(null)}
+        title={closing?.stage === "Lost" ? "Project Lost" : "Project Won"}>
+        {closing && (
+          <>
+            <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "0 0 14px", lineHeight: 1.5 }}>
+              <b>{closing.deal.name}</b> · {clientName(closing.deal.client_id)} — catat alasannya
+              supaya bisa dipakai saat review pipeline.
+            </p>
+            <Field label={`Alasan ${closing.stage}`}>
+              <textarea className={textareaCls} value={closeReason} autoFocus
+                onChange={e => setCloseReason(e.target.value)}
+                placeholder={`Kenapa project ini ${closing.stage}?`} />
+            </Field>
+            {closing.stage === "Lost" && (
+              <Field label="Kompetitor">
+                <input className={inputCls} value={closeCompetitor}
+                  onChange={e => setCloseCompetitor(e.target.value)}
+                  placeholder="Nama vendor / kompetitor yang menang" />
+              </Field>
+            )}
+            <ModalActions>
+              <button className="btn btn-ghost" onClick={() => confirmClose(false)}>Lewati</button>
+              <button className="btn" onClick={() => confirmClose(true)}>Simpan</button>
+            </ModalActions>
+          </>
+        )}
+      </Modal>
+
       <DealModal
         open={modalOpen} deal={editDeal} clients={clients} products={products} team={team} defaultOwner={currentUserName}
         documents={dealDocuments} attachments={dealAttachments} activities={dealActivities}
