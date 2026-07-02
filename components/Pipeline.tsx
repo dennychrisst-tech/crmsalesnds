@@ -121,6 +121,101 @@ function ProjectPanel({ projects, clientName, search, onSearchChange }: { projec
   );
 }
 
+// Compact Rupiah for the narrow funnel labels (fmtIDR's full "Rp 1.250.000.000"
+// doesn't fit 9 columns) — full value is still in the segment's tooltip.
+function fmtCompact(n: number): string {
+  if (n >= 1_000_000_000) return `Rp ${(n / 1_000_000_000).toLocaleString("id-ID", { maximumFractionDigits: 1 })} M`;
+  if (n >= 1_000_000) return `Rp ${(n / 1_000_000).toLocaleString("id-ID", { maximumFractionDigits: 1 })} Jt`;
+  if (n >= 1_000) return `Rp ${(n / 1_000).toLocaleString("id-ID", { maximumFractionDigits: 0 })} rb`;
+  return fmtIDR(n);
+}
+
+// Horizontal sales funnel — desktop only (see Pipeline's render). The shape of
+// each segment is driven by "cumulative reach" (deals currently at this stage
+// or any stage past it), which tapers correctly even though we only ever know
+// a deal's *current* stage, not its history. The number under each segment is
+// the stage's own current count/value, matching the kanban column below it.
+function PipelineFunnel({ deals, onStageClick }: { deals: Deal[]; onStageClick: (stage: string) => void }) {
+  const [hoverStage, setHoverStage] = useState<string | null>(null);
+  const funnelStages = STAGES.filter(s => s !== "On Hold");
+  const activeDeals = deals.filter(d => d.stage !== "Lost" && d.stage !== "On Hold");
+  const onHold = deals.filter(d => d.stage === "On Hold");
+  const lost = deals.filter(d => d.stage === "Lost");
+
+  if (activeDeals.length + onHold.length + lost.length === 0) return null;
+
+  const idx = (stage: string) => funnelStages.indexOf(stage as (typeof funnelStages)[number]);
+  const n = funnelStages.length;
+  const cumCount = funnelStages.map((_, i) => activeDeals.filter(d => idx(d.stage) >= i).length);
+  const ownCount = funnelStages.map(stage => activeDeals.filter(d => d.stage === stage).length);
+  const ownValue = funnelStages.map(stage => activeDeals.filter(d => d.stage === stage).reduce((s, d) => s + d.value, 0));
+  const maxCount = Math.max(cumCount[0], 1);
+  const wonIdx = idx("Won");
+  const winRate = cumCount[0] > 0 ? Math.round((cumCount[wonIdx] / cumCount[0]) * 100) : 0;
+
+  const W = 900, H = 120, colW = W / n, midY = H / 2, maxHalf = 48;
+
+  return (
+    <div className="pl-funnel">
+      <div className="pl-funnel-head">
+        <div className="pl-funnel-headline"><b>{activeDeals.length}</b> deal aktif di funnel</div>
+        <div className="pl-funnel-winrate">Win rate: <b style={{ color: "var(--brand)" }}>{winRate}%</b> ({cumCount[wonIdx]} Won dari {cumCount[0]})</div>
+      </div>
+
+      <svg viewBox={`0 0 ${W} ${H}`} className="pl-funnel-svg" preserveAspectRatio="none">
+        {funnelStages.map((stage, i) => {
+          const x0 = i * colW, x1 = (i + 1) * colW;
+          const leftH = (cumCount[i] / maxCount) * maxHalf;
+          const rightCount = i < n - 1 ? cumCount[i + 1] : cumCount[i];
+          const rightH = (rightCount / maxCount) * maxHalf;
+          const color = STAGE_COLOR[stage] || "var(--brand)";
+          const dimmed = !!hoverStage && hoverStage !== stage;
+          const points = `${x0},${midY - leftH} ${x1},${midY - rightH} ${x1},${midY + rightH} ${x0},${midY + leftH}`;
+          return (
+            <polygon key={stage} points={points} fill={color}
+              opacity={dimmed ? 0.35 : 1}
+              stroke="var(--card)" strokeWidth={2}
+              style={{ cursor: "pointer", transition: "opacity .15s" }}
+              onMouseEnter={() => setHoverStage(stage)}
+              onMouseLeave={() => setHoverStage(null)}
+              onClick={() => onStageClick(stage)}
+            >
+              <title>{`${stage}: ${ownCount[i]} deal saat ini (${fmtIDR(ownValue[i])}) · ${cumCount[i]} deal telah capai tahap ini`}</title>
+            </polygon>
+          );
+        })}
+      </svg>
+
+      <div className="pl-funnel-labels">
+        {funnelStages.map((stage, i) => (
+          <div key={stage} className={`pl-funnel-label${hoverStage === stage ? " pl-funnel-label-active" : ""}`}
+            onMouseEnter={() => setHoverStage(stage)} onMouseLeave={() => setHoverStage(null)}
+            onClick={() => onStageClick(stage)}>
+            <div className="pl-funnel-label-stage" style={{ color: STAGE_COLOR[stage] }}>{stage}</div>
+            <div className="pl-funnel-label-count">{ownCount[i]}</div>
+            <div className="pl-funnel-label-value">{ownValue[i] > 0 ? fmtCompact(ownValue[i]) : "—"}</div>
+          </div>
+        ))}
+      </div>
+
+      {(onHold.length > 0 || lost.length > 0) && (
+        <div className="pl-funnel-side">
+          {onHold.length > 0 && (
+            <span className="pl-funnel-chip pl-funnel-chip-hold" onClick={() => onStageClick("On Hold")}>
+              ⏸ {onHold.length} On Hold · {fmtCompact(onHold.reduce((s, d) => s + d.value, 0))}
+            </span>
+          )}
+          {lost.length > 0 && (
+            <span className="pl-funnel-chip pl-funnel-chip-lost">
+              ✕ {lost.length} Lost · {fmtCompact(lost.reduce((s, d) => s + d.value, 0))}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Column({ stage, deals, clientName, onDealClick, onMoveStage, isViewer }: { stage: string; deals: Deal[]; clientName: (id: string) => string; onDealClick: (d: Deal) => void; onMoveStage: (dealId: string, stage: string) => void; isViewer?: boolean }) {
   const { isOver, setNodeRef } = useDroppable({ id: stage });
   const val = deals.reduce((s, d) => s + d.value, 0);
@@ -178,7 +273,9 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
-  }, [showPanel]);
+  // Funnel height above the board shifts with these filters (side chips
+  // appear/disappear), which moves boardRef's top and must re-trigger a measure.
+  }, [showPanel, ownerFilter, showArchived]);
 
   // Mobile swaps the multi-column board (one huge card-column per screen, easy
   // to overshoot while swiping) for a stage-tab bar + a single vertical list.
@@ -203,6 +300,12 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   const ownedDeals = ownerFilter === "all" ? deals : deals.filter(d => d.owner === ownerFilter);
   const archivedCount = ownedDeals.filter(isArchived).length;
   const visibleDeals = showArchived ? ownedDeals : ownedDeals.filter(d => !isArchived(d));
+
+  // Funnel segments are clickable — scroll the board to that stage's column.
+  function scrollToStage(stage: string) {
+    const col = boardRef.current?.querySelector(`[data-stage="${CSS.escape(stage)}"]`);
+    col?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+  }
 
   // Single path for every stage change (drag, picker menu, mobile list) so the
   // undo toast is offered consistently. Closing stages detour through the
@@ -346,6 +449,8 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
           })}
         </div>
       )}
+
+      {!isMobile && <PipelineFunnel deals={visibleDeals} onStageClick={scrollToStage} />}
 
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         {showPanel && !isViewer && (

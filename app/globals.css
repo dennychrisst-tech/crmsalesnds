@@ -129,6 +129,23 @@ nav.tabs button.active::after {
 .panel h2 { margin: 0 0 14px; font-size: 15px; letter-spacing: -.2px; }
 .count { color: var(--ink-soft); font-weight: 500; font-size: 13px; }
 
+/* Pipeline sales funnel — horizontal, desktop only */
+.pl-funnel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px 12px; margin-bottom: 14px; box-shadow: var(--shadow); }
+.pl-funnel-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 10px; }
+.pl-funnel-headline, .pl-funnel-winrate { font-size: 13px; color: var(--ink-soft); }
+.pl-funnel-headline b, .pl-funnel-winrate b { color: var(--ink); }
+.pl-funnel-svg { width: 100%; height: 110px; display: block; }
+.pl-funnel-labels { display: flex; margin-top: 4px; }
+.pl-funnel-label { flex: 1; min-width: 0; text-align: center; padding: 5px 3px; border-radius: 8px; cursor: pointer; transition: background .15s; }
+.pl-funnel-label:hover, .pl-funnel-label-active { background: var(--paper); }
+.pl-funnel-label-stage { font-size: 9.5px; font-weight: 700; line-height: 1.25; margin-bottom: 3px; overflow-wrap: break-word; }
+.pl-funnel-label-count { font-size: 16px; font-weight: 800; color: var(--ink); line-height: 1; }
+.pl-funnel-label-value { font-size: 10px; color: var(--ink-soft); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-funnel-side { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.pl-funnel-chip { font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px; cursor: pointer; }
+.pl-funnel-chip-hold { background: #F1EFE8; color: #57534E; }
+.pl-funnel-chip-lost { background: #FEE2E2; color: #991B1B; cursor: default; }
+
 /* Pipeline board */
 .board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; min-height: 300px; }
 .board .col { flex: 0 0 260px; transition: flex-basis .2s ease; }
