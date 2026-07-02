@@ -11,11 +11,17 @@ interface Stats {
   recentActivities: { id: string; type: string; description: string; created_by: string; created_at: string }[];
 }
 
-const STAGE_ORDER = ["Cold Call", "First Meeting", "Discovery", "Proposal", "Negotiation", "Pengumuman Pemenang", "Contract", "PO", "Won", "On Hold", "Lost"];
+const STAGE_ORDER = [
+  "Approching", "Present Solution", "RFI", "RFP/BRD", "Clarification/Requirement",
+  "Proposal Teknis", "Presentasi Proposal", "POC/Demo", "Offering Letter",
+  "Proposal Clarification", "Negotiation", "Dealed", "PO", "Kontrak", "On Hold", "Dropped",
+];
 const STAGE_COLOR: Record<string, string> = {
-  "Cold Call": "#94A3B8", "First Meeting": "#60A5FA", Discovery: "#378ADD", Proposal: "#8B5CF6",
-  Negotiation: "#DB2777", "Pengumuman Pemenang": "#0D9488", Contract: "#D97706", PO: "#CA8A04",
-  Won: "#16A34A", "On Hold": "#78716C", Lost: "#DC2626",
+  Approching: "#94A3B8", "Present Solution": "#60A5FA", RFI: "#38BDF8", "RFP/BRD": "#6366F1",
+  "Clarification/Requirement": "#378ADD", "Proposal Teknis": "#8B5CF6", "Presentasi Proposal": "#C026D3",
+  "POC/Demo": "#E11D48", "Offering Letter": "#0D9488", "Proposal Clarification": "#F59E0B",
+  Negotiation: "#DB2777", Dealed: "#16A34A", PO: "#CA8A04", Kontrak: "#D97706",
+  "On Hold": "#78716C", Dropped: "#DC2626",
 };
 
 function formatIDR(n: number) {

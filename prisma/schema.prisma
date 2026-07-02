@@ -92,7 +92,7 @@ model Deal {
   name             String
   client_id        String    @db.Uuid
   value            BigInt    @default(0)
-  stage            String    @default("Lead")
+  stage            String    @default("Approching")
   deal_type        String    @default("")
   product          String    @default("")
   close_date       DateTime? @db.Date

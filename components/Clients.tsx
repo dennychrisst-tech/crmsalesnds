@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { Client, Contact, Visit, Deal, PIC, Activity, ActiveView } from "@/types";
-import { fmtDate, fmtIDR, isoWeekLabel, CLIENT_STATUS_COLOR, SECTORS } from "@/lib/utils";
+import { fmtDate, fmtIDR, isoWeekLabel, CLIENT_STATUS_COLOR, SECTORS, isClosedStage } from "@/lib/utils";
 import EmptyState from "./ui/EmptyState";
 import { VisitBadge } from "./ui/Badge";
 import ClientModal from "./ClientModal";
@@ -127,8 +127,8 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openClientId]);
 
-  const openDealsCount = (id: string) => deals.filter(d => d.client_id === id && d.stage !== "Won" && d.stage !== "Lost").length;
-  const openDealsValue = (id: string) => deals.filter(d => d.client_id === id && d.stage !== "Won" && d.stage !== "Lost").reduce((s, d) => s + d.value, 0);
+  const openDealsCount = (id: string) => deals.filter(d => d.client_id === id && !isClosedStage(d.stage)).length;
+  const openDealsValue = (id: string) => deals.filter(d => d.client_id === id && !isClosedStage(d.stage)).reduce((s, d) => s + d.value, 0);
 
   function toggleCollapsed(id: string) {
     setCollapsed(prev => {

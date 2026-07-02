@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
-import { fmtIDR, fmtDate, picMatches, fmtDateStr } from "@/lib/utils";
+import { fmtIDR, fmtDate, picMatches, fmtDateStr, isWonStage } from "@/lib/utils";
 
 interface Props {
   data: AppData;
@@ -67,8 +67,8 @@ export default function SummaryView({ data, onOpenVisit }: Props) {
   const periodActivities = activities.filter(a => inRange(a.date || a.created_at, start, end) && matchSales(a.created_by));
   const periodEvents   = events.filter(e => inRange(e.date, start, end) && matchSales(e.created_by));
   const periodDeals    = deals.filter(d => inRange(d.created_at, start, end) && matchSales(d.owner));
-  const wonDeals       = deals.filter(d => d.stage === "Won" && inRange(d.stage_updated_at || d.created_at, start, end) && matchSales(d.owner));
-  const lostDeals      = deals.filter(d => d.stage === "Lost" && inRange(d.stage_updated_at || d.created_at, start, end) && matchSales(d.owner));
+  const wonDeals       = deals.filter(d => isWonStage(d.stage) && inRange(d.stage_updated_at || d.created_at, start, end) && matchSales(d.owner));
+  const lostDeals      = deals.filter(d => d.stage === "Dropped" && inRange(d.stage_updated_at || d.created_at, start, end) && matchSales(d.owner));
   const doneTasks      = periodTasks.filter(t => t.status === "Done");
   const doneVisits     = periodVisits.filter(v => v.status === "Done");
   const wonValue       = wonDeals.reduce((s, d) => s + d.value, 0);

@@ -1,9 +1,28 @@
-export const STAGES = ["Cold Call", "First Meeting", "Discovery", "Proposal", "Negotiation", "Pengumuman Pemenang", "Contract", "PO", "Won", "On Hold"] as const;
+// Sequential pipeline funnel — mirrors the sales team's own Excel tracker.
+// "On Hold" and "Dropped" are deliberately NOT in this list: they're side
+// states a deal can be moved into from any point (see isClosedStage below),
+// not steps in the linear sequence.
+export const STAGES = [
+  "Approching", "Present Solution", "RFI", "RFP/BRD", "Clarification/Requirement",
+  "Proposal Teknis", "Presentasi Proposal", "POC/Demo", "Offering Letter",
+  "Proposal Clarification", "Negotiation", "Dealed", "PO", "Kontrak",
+] as const;
 export const STAGE_COLOR: Record<string, string> = {
-  "Cold Call": "#94A3B8", "First Meeting": "#60A5FA", Discovery: "#378ADD", Proposal: "#8B5CF6",
-  Negotiation: "#DB2777", "Pengumuman Pemenang": "#0D9488", Contract: "#D97706", PO: "#CA8A04",
-  Won: "#16A34A", "On Hold": "#78716C", Lost: "#DC2626",
+  Approching: "#94A3B8", "Present Solution": "#60A5FA", RFI: "#38BDF8", "RFP/BRD": "#6366F1",
+  "Clarification/Requirement": "#378ADD", "Proposal Teknis": "#8B5CF6", "Presentasi Proposal": "#C026D3",
+  "POC/Demo": "#E11D48", "Offering Letter": "#0D9488", "Proposal Clarification": "#F59E0B",
+  Negotiation: "#DB2777", Dealed: "#16A34A", PO: "#CA8A04", Kontrak: "#D97706",
+  "On Hold": "#78716C", Dropped: "#DC2626",
 };
+// Dealed/PO/Kontrak are all "won" — PO and Kontrak are post-win paperwork
+// stages, not a fresh win/loss determination. Dropped is the only "lost" stage.
+export const CLOSED_WON_STAGES = ["Dealed", "PO", "Kontrak"] as const;
+export function isWonStage(stage: string): boolean {
+  return (CLOSED_WON_STAGES as readonly string[]).includes(stage);
+}
+export function isClosedStage(stage: string): boolean {
+  return isWonStage(stage) || stage === "Dropped";
+}
 export const TASK_STATUS_COLOR: Record<string, { bg: string; fg: string }> = {
   Open: { bg: "#FEF3C7", fg: "#B45309" },
   Done: { bg: "#DCFCE7", fg: "#15803D" },
@@ -75,9 +94,13 @@ export function isoWeekLabel(dateStr: string): { key: string; label: string } {
 
 export function stageBadgeClass(stage: string): string {
   const map: Record<string, string> = {
-    "Cold Call": "badge-cold-call", "First Meeting": "badge-first-meeting", Discovery: "badge-discovery",
-    Proposal: "badge-proposal", Negotiation: "badge-negotiation", "Pengumuman Pemenang": "badge-pengumuman-pemenang",
-    Contract: "badge-contract", PO: "badge-po", Won: "badge-won", "On Hold": "badge-on-hold", Lost: "badge-lost",
+    Approching: "badge-approching", "Present Solution": "badge-present-solution", RFI: "badge-rfi",
+    "RFP/BRD": "badge-rfp-brd", "Clarification/Requirement": "badge-clarification-requirement",
+    "Proposal Teknis": "badge-proposal-teknis", "Presentasi Proposal": "badge-presentasi-proposal",
+    "POC/Demo": "badge-poc-demo", "Offering Letter": "badge-offering-letter",
+    "Proposal Clarification": "badge-proposal-clarification", Negotiation: "badge-negotiation",
+    Dealed: "badge-dealed", PO: "badge-po", Kontrak: "badge-kontrak",
+    "On Hold": "badge-on-hold", Dropped: "badge-dropped",
   };
   return map[stage] || "";
 }

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import { Deal, Client, Product, CRMDocument, Attachment, Activity } from "@/types";
-import { STAGES, DEAL_TYPES, ACTIVITY_TYPES, STAGE_COLOR, fmtDate, fmtIDR, todayStr } from "@/lib/utils";
+import { STAGES, DEAL_TYPES, ACTIVITY_TYPES, STAGE_COLOR, fmtDate, fmtIDR, todayStr, isWonStage } from "@/lib/utils";
 import DocumentTracker from "./DocumentTracker";
 import AttachmentSection from "./AttachmentSection";
 import SearchableSelect from "./ui/SearchableSelect";
@@ -31,7 +31,7 @@ interface Props {
 
 const emptyDeal = (clientId: string, defaultOwner = ""): Deal => ({
   id: uuid(), name: "", client_id: clientId, value: 0,
-  stage: "Cold Call", deal_type: "", product: "", close_date: "", notes: "",
+  stage: "Approching", deal_type: "", product: "", close_date: "", notes: "",
   owner: defaultOwner, win_loss_reason: "", competitor: "", stage_updated_at: new Date().toISOString(),
 });
 
@@ -94,7 +94,11 @@ export default function DealModal({
   }
 
   const tabCls = (t: string) => `modal-tab${tab === t ? " modal-tab-active" : ""}`;
-  const showWinLoss = form.stage === "Won" || form.stage === "Lost";
+  const showWinLoss = isWonStage(form.stage) || form.stage === "Dropped";
+  // PO/Kontrak are later paperwork steps on an already-Dealed deal, not a fresh
+  // win determination — keep the reason-field wording fixed to the moment it
+  // was actually captured (Dealed) instead of whichever stage the deal is at now.
+  const winLossLabel = form.stage === "Dropped" ? "Dropped" : "Dealed";
 
   return (
     <Modal open={open} onClose={onClose} title={isEdit ? (tab === "detail" ? "Detail Project" : "Edit Project") : "Tambah Project"}>
@@ -135,7 +139,7 @@ export default function DealModal({
           </div>
           {showWinLoss && form.win_loss_reason && (
             <div className="dd-block">
-              <div className="dd-label">Alasan {form.stage}</div>
+              <div className="dd-label">Alasan {winLossLabel}</div>
               <div className="dd-text">{form.win_loss_reason}</div>
             </div>
           )}
@@ -167,7 +171,7 @@ export default function DealModal({
               <select className={selectCls} value={form.stage} onChange={e => {
                 setForm(f => ({ ...f, stage: e.target.value as Deal["stage"], stage_updated_at: new Date().toISOString() }));
               }}>
-                {[...STAGES, "Lost"].map(s => <option key={s}>{s}</option>)}
+                {[...STAGES, "On Hold", "Dropped"].map(s => <option key={s}>{s}</option>)}
               </select>
             </Field>
             <Field label="Tipe Project">
@@ -209,8 +213,8 @@ export default function DealModal({
             <input className={inputCls} value={form.competitor || ""} onChange={e => set("competitor", e.target.value)} placeholder="Nama vendor / kompetitor yang terlibat" />
           </Field>
           {showWinLoss && (
-            <Field label={`Alasan ${form.stage}`}>
-              <textarea className={textareaCls} value={form.win_loss_reason} onChange={e => set("win_loss_reason", e.target.value)} placeholder={`Kenapa project ini ${form.stage}?`} />
+            <Field label={`Alasan ${winLossLabel}`}>
+              <textarea className={textareaCls} value={form.win_loss_reason} onChange={e => set("win_loss_reason", e.target.value)} placeholder={`Kenapa project ini ${winLossLabel}?`} />
             </Field>
           )}
           <Field label="Catatan">

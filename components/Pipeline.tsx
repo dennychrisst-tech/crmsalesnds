@@ -5,7 +5,7 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, u
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { Deal, CRMDocument, Attachment, Activity, Project } from "@/types";
-import { STAGES, STAGE_COLOR, fmtIDR, todayStr } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, todayStr, isClosedStage } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 import { toast } from "./ui/Toast";
 import Modal, { Field, ModalActions, inputCls, textareaCls } from "./ui/Modal";
@@ -52,7 +52,7 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer }: { deal: 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: deal.id });
   const style = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
   const days = agingDays(deal);
-  const isClosed = deal.stage === "Won" || deal.stage === "Lost";
+  const isClosed = isClosedStage(deal.stage);
   const stageColor = STAGE_COLOR[deal.stage] || "var(--brand)";
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -80,7 +80,7 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer }: { deal: 
           </button>
           {pickerOpen && (
             <div className="stage-move-menu" onClick={e => e.stopPropagation()}>
-              {[...STAGES, "Lost"].filter(s => s !== deal.stage).map(s => (
+              {[...STAGES, "On Hold", "Dropped"].filter(s => s !== deal.stage).map(s => (
                 <button key={s} type="button" className="stage-move-item"
                   onClick={() => { onMoveStage(s); setPickerOpen(false); }}>{s}</button>
               ))}
@@ -137,12 +137,12 @@ function fmtCompact(n: number): string {
 // the stage's own current count/value, matching the kanban column below it.
 function PipelineFunnel({ deals, onStageClick }: { deals: Deal[]; onStageClick: (stage: string) => void }) {
   const [hoverStage, setHoverStage] = useState<string | null>(null);
-  const funnelStages = STAGES.filter(s => s !== "On Hold");
-  const activeDeals = deals.filter(d => d.stage !== "Lost" && d.stage !== "On Hold");
+  const funnelStages = STAGES;
+  const activeDeals = deals.filter(d => d.stage !== "Dropped" && d.stage !== "On Hold");
   const onHold = deals.filter(d => d.stage === "On Hold");
-  const lost = deals.filter(d => d.stage === "Lost");
+  const dropped = deals.filter(d => d.stage === "Dropped");
 
-  if (activeDeals.length + onHold.length + lost.length === 0) return null;
+  if (activeDeals.length + onHold.length + dropped.length === 0) return null;
 
   const idx = (stage: string) => funnelStages.indexOf(stage as (typeof funnelStages)[number]);
   const n = funnelStages.length;
@@ -150,8 +150,8 @@ function PipelineFunnel({ deals, onStageClick }: { deals: Deal[]; onStageClick: 
   const ownCount = funnelStages.map(stage => activeDeals.filter(d => d.stage === stage).length);
   const ownValue = funnelStages.map(stage => activeDeals.filter(d => d.stage === stage).reduce((s, d) => s + d.value, 0));
   const maxCount = Math.max(cumCount[0], 1);
-  const wonIdx = idx("Won");
-  const winRate = cumCount[0] > 0 ? Math.round((cumCount[wonIdx] / cumCount[0]) * 100) : 0;
+  const dealedIdx = idx("Dealed");
+  const winRate = cumCount[0] > 0 ? Math.round((cumCount[dealedIdx] / cumCount[0]) * 100) : 0;
 
   const W = 900, H = 120, colW = W / n, midY = H / 2, maxHalf = 48;
 
@@ -159,7 +159,7 @@ function PipelineFunnel({ deals, onStageClick }: { deals: Deal[]; onStageClick: 
     <div className="pl-funnel">
       <div className="pl-funnel-head">
         <div className="pl-funnel-headline"><b>{activeDeals.length}</b> deal aktif di funnel</div>
-        <div className="pl-funnel-winrate">Win rate: <b style={{ color: "var(--brand)" }}>{winRate}%</b> ({cumCount[wonIdx]} Won dari {cumCount[0]})</div>
+        <div className="pl-funnel-winrate">Win rate: <b style={{ color: "var(--brand)" }}>{winRate}%</b> ({cumCount[dealedIdx]} Dealed dari {cumCount[0]})</div>
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} className="pl-funnel-svg" preserveAspectRatio="none">
@@ -198,16 +198,16 @@ function PipelineFunnel({ deals, onStageClick }: { deals: Deal[]; onStageClick: 
         ))}
       </div>
 
-      {(onHold.length > 0 || lost.length > 0) && (
+      {(onHold.length > 0 || dropped.length > 0) && (
         <div className="pl-funnel-side">
           {onHold.length > 0 && (
             <span className="pl-funnel-chip pl-funnel-chip-hold" onClick={() => onStageClick("On Hold")}>
               ⏸ {onHold.length} On Hold · {fmtCompact(onHold.reduce((s, d) => s + d.value, 0))}
             </span>
           )}
-          {lost.length > 0 && (
-            <span className="pl-funnel-chip pl-funnel-chip-lost">
-              ✕ {lost.length} Lost · {fmtCompact(lost.reduce((s, d) => s + d.value, 0))}
+          {dropped.length > 0 && (
+            <span className="pl-funnel-chip pl-funnel-chip-lost" onClick={() => onStageClick("Dropped")}>
+              ✕ {dropped.length} Dropped · {fmtCompact(dropped.reduce((s, d) => s + d.value, 0))}
             </span>
           )}
         </div>
@@ -292,14 +292,18 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
   // Closed deals older than 30 days move to the archive (hidden by default) so
-  // the Won column doesn't accumulate dead cards forever.
+  // the Dealed/PO/Kontrak/Dropped columns don't accumulate dead cards forever.
   const archiveCutoff = (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString(); })();
   const isArchived = (d: Deal) =>
-    (d.stage === "Won" || d.stage === "Lost") && (d.stage_updated_at || d.created_at || "") < archiveCutoff;
+    isClosedStage(d.stage) && (d.stage_updated_at || d.created_at || "") < archiveCutoff;
 
   const ownedDeals = ownerFilter === "all" ? deals : deals.filter(d => d.owner === ownerFilter);
   const archivedCount = ownedDeals.filter(isArchived).length;
   const visibleDeals = showArchived ? ownedDeals : ownedDeals.filter(d => !isArchived(d));
+
+  // On Hold always gets a column (deals parked there aren't "closed", so they're
+  // never archived); Dropped only appears once the archive toggle reveals it.
+  const boardStages = showArchived ? [...STAGES, "On Hold", "Dropped"] : [...STAGES, "On Hold"];
 
   // Funnel segments are clickable — scroll the board to that stage's column.
   function scrollToStage(stage: string) {
@@ -308,11 +312,12 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   }
 
   // Single path for every stage change (drag, picker menu, mobile list) so the
-  // undo toast is offered consistently. Closing stages detour through the
-  // win/loss-reason prompt first.
+  // undo toast is offered consistently. Only Dealed/Dropped are a fresh win/loss
+  // determination (prompted for a reason) — PO/Kontrak are just later paperwork
+  // steps on a deal that's already Dealed, so they skip the prompt.
   async function moveStage(deal: Deal, stage: string) {
     if (isViewer || deal.stage === stage) return;
-    if (stage === "Won" || stage === "Lost") {
+    if (stage === "Dealed" || stage === "Dropped") {
       setCloseReason(deal.win_loss_reason || "");
       setCloseCompetitor(deal.competitor || "");
       setClosing({ deal, stage });
@@ -435,7 +440,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
 
       {isMobile && (
         <div className="pipeline-stage-tabs">
-          {STAGES.map(stage => {
+          {boardStages.map(stage => {
             const count = visibleDeals.filter(d => d.stage === stage).length;
             const stageColor = STAGE_COLOR[stage] || "var(--brand)";
             return (
@@ -468,7 +473,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
           </div>
         ) : (
           <div ref={boardRef} className="board" style={boardHeight ? { height: boardHeight } : undefined}>
-            {STAGES.map(stage => (
+            {boardStages.map(stage => (
               <Column key={stage} stage={stage} deals={visibleDeals.filter(d => d.stage === stage)}
                 clientName={clientName} onDealClick={d => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}
                 onMoveStage={(dealId, s) => { const d = deals.find(x => x.id === dealId); if (d) moveStage(d, s); }} isViewer={isViewer} />
@@ -492,7 +497,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
         </DragOverlay>
       </DndContext>
       <Modal open={!!closing} onClose={() => setClosing(null)}
-        title={closing?.stage === "Lost" ? "Project Lost" : "Project Won"}>
+        title={closing?.stage === "Dropped" ? "Project Dropped" : "Project Dealed"}>
         {closing && (
           <>
             <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "0 0 14px", lineHeight: 1.5 }}>
@@ -504,7 +509,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
                 onChange={e => setCloseReason(e.target.value)}
                 placeholder={`Kenapa project ini ${closing.stage}?`} />
             </Field>
-            {closing.stage === "Lost" && (
+            {closing.stage === "Dropped" && (
               <Field label="Kompetitor">
                 <input className={inputCls} value={closeCompetitor}
                   onChange={e => setCloseCompetitor(e.target.value)}

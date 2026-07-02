@@ -217,14 +217,16 @@ export function useData() {
   async function upsertVisit(v: Visit) {
     await upsert("visits", v as unknown as Record<string, unknown>);
 
-    // Advance the linked deal to First Meeting if it's still earlier in the pipeline.
+    // Advance the linked deal to Present Solution if it's still earlier in the
+    // pipeline (visit approach "First Meeting" is a Visit-side label, distinct
+    // from the Deal stage vocabulary — it just marks the first client contact).
     if (v.approach === "First Meeting" && v.deal_id) {
       const deal = dataRef.current.deals.find(d => d.id === v.deal_id);
       if (deal) {
         const stageOrder = STAGES.indexOf(deal.stage as typeof STAGES[number]);
-        const firstMeetingOrder = STAGES.indexOf("First Meeting");
-        if (stageOrder !== -1 && stageOrder < firstMeetingOrder) {
-          await patch("deals", deal.id, { stage: "First Meeting", stage_updated_at: new Date().toISOString() });
+        const presentSolutionOrder = STAGES.indexOf("Present Solution");
+        if (stageOrder !== -1 && stageOrder < presentSolutionOrder) {
+          await patch("deals", deal.id, { stage: "Present Solution", stage_updated_at: new Date().toISOString() });
         }
       }
     }

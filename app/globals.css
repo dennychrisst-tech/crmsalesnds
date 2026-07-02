@@ -258,17 +258,22 @@ tr:hover td { background: var(--paper); }
 
 /* Badges */
 .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
-.badge-cold-call { background: #EAE6DA; color: #5C5440; }
-.badge-first-meeting { background: #DCEAFE; color: #1D4ED8; }
-.badge-discovery { background: #E2EAF0; color: #2A526E; }
-.badge-proposal { background: #EDE4FB; color: #6D28D9; }
+.badge-approching { background: #EAE6DA; color: #5C5440; }
+.badge-present-solution { background: #DCEAFE; color: #1D4ED8; }
+.badge-rfi { background: #E0F2FE; color: #075985; }
+.badge-rfp-brd { background: #E0E7FF; color: #4338CA; }
+.badge-clarification-requirement { background: #E2EAF0; color: #2A526E; }
+.badge-proposal-teknis { background: #EDE4FB; color: #6D28D9; }
+.badge-presentasi-proposal { background: #FAE8FF; color: #A21CAF; }
+.badge-poc-demo { background: #FFE4E6; color: #BE123C; }
+.badge-offering-letter { background: #CCFBF1; color: #0F766E; }
+.badge-proposal-clarification { background: #FEF3C7; color: #B45309; }
 .badge-negotiation { background: #F6E4D6; color: #9A4E1E; }
-.badge-pengumuman-pemenang { background: #CCFBF1; color: #0F766E; }
-.badge-contract { background: #FBF0DA; color: #9A6E12; }
+.badge-dealed { background: var(--brand-soft); color: var(--brand); }
 .badge-po { background: #FBF3D6; color: #92730C; }
-.badge-won { background: var(--brand-soft); color: var(--brand); }
+.badge-kontrak { background: #FBF0DA; color: #9A6E12; }
 .badge-on-hold { background: #E7E5E4; color: #57534E; }
-.badge-lost { background: #EFE2E2; color: var(--lost); }
+.badge-dropped { background: #EFE2E2; color: var(--lost); }
 .st-planned { background: #E2EAF0; color: #2A526E; }
 .st-done { background: var(--brand-soft); color: var(--brand); }
 .st-followup { background: #FBF0DA; color: #9A6E12; }

@@ -63,7 +63,7 @@ export default function TaskModal({ open, task, clients, contacts, deals, team, 
     const id = uuid();
     await onCreateDeal({
       id, name, client_id: form.client_id, value: 0,
-      stage: "Cold Call", deal_type: "", product: "", close_date: "",
+      stage: "Approching", deal_type: "", product: "", close_date: "",
       notes: "", owner: picList(form.assigned_to)[0] || "", win_loss_reason: "", competitor: "",
       stage_updated_at: new Date().toISOString(),
     });

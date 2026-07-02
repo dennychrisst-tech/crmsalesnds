@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Share2, Download, User, Briefcase, FolderKanban } from "lucide-react";
 import { AppData } from "@/hooks/useData";
 import { Project } from "@/types";
-import { fmtIDR, fmtDate, fmtDateStr, picMatches, STAGE_COLOR } from "@/lib/utils";
+import { fmtIDR, fmtDate, fmtDateStr, picMatches, STAGE_COLOR, isWonStage } from "@/lib/utils";
 import { exportWeeklyReport } from "@/lib/export";
 import { shareToWhatsApp } from "@/lib/share";
 import Modal, { ModalActions } from "./ui/Modal";
@@ -36,7 +36,7 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
 
   const weekVisits = visits.filter(v => v.status === "Done" && inRange(v.date, start, end));
   const weekDealUpdates = deals.filter(d => d.stage_updated_at && inRange(d.stage_updated_at, start, end));
-  const weekWon = weekDealUpdates.filter(d => d.stage === "Won");
+  const weekWon = weekDealUpdates.filter(d => isWonStage(d.stage));
   const activeSales = new Set(weekVisits.flatMap(v => v.pic ? v.pic.split(",").map(s => s.trim()) : []));
 
   const salesData = team.map(name => {

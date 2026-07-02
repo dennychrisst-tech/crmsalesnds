@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
 import { ActiveView } from "@/types";
-import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches, fmtDateStr } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches, fmtDateStr, isWonStage, isClosedStage } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import EmptyState from "./ui/EmptyState";
 
@@ -171,9 +171,9 @@ export default function Dashboard({ data, onNavigate }: Props) {
   const filteredTasks = tasks.filter(t => bySales(t.assigned_to));
 
   // Deals
-  const openDeals   = filteredDeals.filter(d => d.stage !== "Won" && d.stage !== "Lost");
-  const wonDeals    = filteredDeals.filter(d => d.stage === "Won");
-  const lostDeals   = filteredDeals.filter(d => d.stage === "Lost");
+  const openDeals   = filteredDeals.filter(d => !isClosedStage(d.stage));
+  const wonDeals    = filteredDeals.filter(d => isWonStage(d.stage));
+  const lostDeals   = filteredDeals.filter(d => d.stage === "Dropped");
   const closedTotal = wonDeals.length + lostDeals.length;
   const winRate     = closedTotal > 0 ? Math.round((wonDeals.length / closedTotal) * 100) : null;
   const wonValue    = wonDeals.reduce((s, d) => s + d.value, 0);
@@ -188,7 +188,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
     .sort((a, b) => (a.close_date || "").localeCompare(b.close_date || ""));
 
   // Pipeline per stage
-  const stageData = STAGES.filter(s => s !== "Won").map(stage => {
+  const stageData = STAGES.filter(s => !isWonStage(s)).map(stage => {
     const sd = openDeals.filter(d => d.stage === stage);
     return { stage, count: sd.length, value: sd.reduce((s, d) => s + d.value, 0) };
   });
