@@ -125,7 +125,7 @@ function Column({ stage, deals, clientName, onDealClick, onMoveStage, isViewer }
   const val = deals.reduce((s, d) => s + d.value, 0);
   const stageColor = STAGE_COLOR[stage] || "var(--brand)";
   return (
-    <div ref={setNodeRef} className={`col${isOver ? " over" : ""}`} data-stage={stage} style={{ borderTop: `3px solid ${stageColor}` }}>
+    <div ref={setNodeRef} className={`col${isOver ? " over" : ""}${deals.length === 0 ? " col-empty" : ""}`} data-stage={stage} style={{ borderTop: `3px solid ${stageColor}` }}>
       <div className="col-head">
         <h3 style={{ color: stageColor }}>{stage}</h3>
         <div className="colval">{deals.length} · {fmtIDR(val)}</div>
