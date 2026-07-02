@@ -500,6 +500,10 @@ tr.task-soon td { background: #fffbeb; }
 @media (max-width: 640px) {
   .app { padding: 0 10px calc(74px + env(safe-area-inset-bottom)); }
 
+  /* iOS Safari auto-zooms (and stays zoomed) when a focused form control has
+     font-size < 16px — !important so it also beats Tailwind utilities and inline styles. */
+  input, select, textarea { font-size: 16px !important; }
+
   /* Header — wraps into rows: brand+tag (+ log out, top-right corner) / search+clock+bell / admin */
   header.top {
     flex-wrap: wrap; row-gap: 10px; padding: 14px 88px 14px 0; margin-bottom: 14px;

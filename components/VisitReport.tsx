@@ -175,9 +175,9 @@ export default function VisitReport({ data }: Props) {
                   <span style={{ fontSize: 14, color: "var(--ink-soft)" }}>{isCollapsed ? "▼" : "▲"}</span>
                 </div>
 
-                {/* Visit rows */}
+                {/* Visit rows — table on desktop, stacked cards on mobile (see globals.css) */}
                 {!isCollapsed && (
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <table className="data-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid var(--line)" }}>
                         <th style={thSt}>Tanggal</th>
@@ -275,6 +275,43 @@ export default function VisitReport({ data }: Props) {
                       ))}
                     </tbody>
                   </table>
+                )}
+
+                {!isCollapsed && (
+                  <div className="mobile-cards" style={{ padding: 10 }}>
+                    {cvs.map(v => (
+                      <div key={v.id} className="mcard" style={{ cursor: "pointer" }} onClick={() => toggleExpand(v.id)}>
+                        <div className="mcard-head">
+                          <div className="mcard-title">{fmtDate(v.date)}</div>
+                          <span style={{
+                            background: "var(--bg)", border: "1px solid var(--line)",
+                            borderRadius: 5, padding: "2px 8px", fontSize: 11, fontWeight: 700, flexShrink: 0,
+                          }}>{v.pic || "—"}</span>
+                        </div>
+                        <div className="mcard-row"><span>Jenis Approach</span><b>{v.approach || "—"}</b></div>
+                        <div className="mcard-row"><span>Tujuan Visit</span><b>{v.purpose || "—"}</b></div>
+                        <div className="mcard-row"><span>PIC Client</span><b>{v.pic_client || "—"}</b></div>
+                        <div className="mcard-row"><span>Jabatan</span><b>{v.jabatan || "—"}</b></div>
+                        {expanded === v.id && (
+                          <div style={{ marginTop: 4 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 6 }}>
+                              Summary / Hasil Pertemuan
+                            </div>
+                            <div style={{
+                              fontSize: 13, color: "var(--ink)", lineHeight: 1.6,
+                              background: "var(--bg)", border: "1px solid var(--line)",
+                              borderRadius: 8, padding: "10px 12px", whiteSpace: "pre-wrap",
+                            }}>
+                              {v.summary || <span style={{ fontStyle: "italic", color: "var(--ink-soft)" }}>Belum ada summary.</span>}
+                            </div>
+                          </div>
+                        )}
+                        <div style={{ fontSize: 11, fontWeight: 600, color: "var(--brand)", textAlign: "center", marginTop: 2 }}>
+                          {expanded === v.id ? "▲ Tutup summary" : "▼ Lihat summary"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             );
