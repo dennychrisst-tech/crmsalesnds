@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
-type TableName = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles";
+type TableName = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles" | "revenue_targets" | "revenue_lines" | "revenue_opportunities";
 
-const ALLOWED: TableName[] = ["clients", "contacts", "visits", "deals", "projects", "tasks", "products", "documents", "attachments", "activities", "events", "talent_roles"];
+const ALLOWED: TableName[] = ["clients", "contacts", "visits", "deals", "projects", "tasks", "products", "documents", "attachments", "activities", "events", "talent_roles", "revenue_targets", "revenue_lines", "revenue_opportunities"];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getModel(table: TableName): any {
@@ -13,6 +13,9 @@ function getModel(table: TableName): any {
     table === "activities" ? "activity" :
     table === "events" ? "event" :
     table === "talent_roles" ? "talentRole" :
+    table === "revenue_targets" ? "revenueTarget" :
+    table === "revenue_lines" ? "revenueLine" :
+    table === "revenue_opportunities" ? "revenueOpportunity" :
     table.slice(0, -1)
   ];
 }

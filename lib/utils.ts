@@ -37,6 +37,30 @@ export const EVENT_STATUS = VISIT_STATUS; // same vocabulary, reused for Event.s
 export const PROJ_STATUS = ["Initiation", "In Progress", "On Hold", "Delivered", "Closed"] as const;
 export const TALENT_LEVELS = ["Junior", "Middle", "Senior", "Lead"] as const;
 export const TALENT_ROLE_STATUS = ["Open", "Close"] as const;
+export const REVENUE_LINE_CATEGORIES = ["Project", "Maintenance", "Other"] as const;
+export const REVENUE_MILESTONE_STATUS = ["Paid", "Billed", "To be billed", "Can't be billed this year"] as const;
+// Matches the forecast sheet's legend: green/blue/yellow/red for Paid/Billed/
+// to-be-billed/can't-be-billed.
+export const REVENUE_MILESTONE_STATUS_COLOR: Record<string, { bg: string; fg: string }> = {
+  Paid: { bg: "#DCFCE7", fg: "#15803D" },
+  Billed: { bg: "#DBEAFE", fg: "#1D4ED8" },
+  "To be billed": { bg: "#FEF3C7", fg: "#B45309" },
+  "Can't be billed this year": { bg: "#FEE2E2", fg: "#991B1B" },
+};
+// H/M/L opportunity category — H = segera closing, M = proses sudah lebih
+// serius, L = masih lama (per the forecast sheet's own legend).
+export const REVENUE_OPP_CATEGORIES = ["H", "M", "L"] as const;
+export const REVENUE_OPP_CATEGORY_COLOR: Record<string, { bg: string; fg: string }> = {
+  H: { bg: "#DCFCE7", fg: "#15803D" },
+  M: { bg: "#FEF3C7", fg: "#B45309" },
+  L: { bg: "#EAE6DA", fg: "#5C5440" },
+};
+export const REVENUE_OPP_STATUS = ["Active", "Hold", "Drop"] as const;
+export const REVENUE_OPP_STATUS_COLOR: Record<string, { bg: string; fg: string }> = {
+  Active: { bg: "#DCFCE7", fg: "#15803D" },
+  Hold: { bg: "#FEF3C7", fg: "#B45309" },
+  Drop: { bg: "#FEE2E2", fg: "#991B1B" },
+};
 export const SECTORS = ["Banking", "Multifinance", "Insurance", "Health Care", "Industrial", "Technology", "Telekomunikasi", "Infrastruktur", "Transportasi", "Energy", "Lainnya"] as const;
 export const TEAM = ["Denny", "Dova", "Rio", "Cris"] as const;
 export const DOC_TYPES = ["RFI", "RFP/BRD", "Proposal Teknis", "Offering Letter", "Kontrak", "PO", "NDA", "Lainnya"] as const;

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   LayoutDashboard, Building2, CalendarDays, FolderKanban, Briefcase,
-  ListChecks, TrendingUp, ClipboardList, CalendarRange, MoreHorizontal,
+  ListChecks, TrendingUp, ClipboardList, CalendarRange, Wallet, MoreHorizontal,
   type LucideIcon,
 } from "lucide-react";
 import { useData } from "@/hooks/useData";
@@ -21,6 +21,7 @@ import RemindersBell from "./RemindersBell";
 import SummaryView from "./SummaryView";
 import VisitReport from "./VisitReport";
 import WeeklyReport from "./WeeklyReport";
+import RevenueForecastView from "./RevenueForecastView";
 import ToastHost from "./ui/Toast";
 
 const TABS: { id: ActiveView; label: string; icon: LucideIcon }[] = [
@@ -33,6 +34,7 @@ const TABS: { id: ActiveView; label: string; icon: LucideIcon }[] = [
   { id: "summary",     label: "Summary Activity",   icon: TrendingUp },
   { id: "visit-report",label: "Laporan Visit",      icon: ClipboardList },
   { id: "weekly-report",label: "Laporan Mingguan",  icon: CalendarRange },
+  { id: "revenue-forecast", label: "Revenue Forecast", icon: Wallet },
 ];
 
 // Bottom nav (mobile only) surfaces the 4 most-used views + a "Lainnya" sheet for the rest.
@@ -74,6 +76,9 @@ export default function CRMApp() {
     upsertDeal, deleteDeal, updateDealStage,
     upsertProject, deleteProject,
     upsertTalentRole, deleteTalentRole,
+    upsertRevenueTarget,
+    upsertRevenueLine, deleteRevenueLine,
+    upsertRevenueOpportunity, deleteRevenueOpportunity,
     upsertTask, deleteTask,
     upsertProduct, deleteProduct,
     upsertDocument, deleteDocument,
@@ -211,6 +216,12 @@ export default function CRMApp() {
                 {view === "summary" && <SummaryView data={data} onOpenVisit={openVisit} />}
                 {view === "visit-report" && <VisitReport data={data} />}
                 {view === "weekly-report" && <WeeklyReport data={data} onOpenDeal={openDeal} />}
+                {view === "revenue-forecast" && (
+                  <RevenueForecastView data={data} isViewer={isViewer}
+                    onSaveTarget={ro(upsertRevenueTarget)}
+                    onSaveLine={ro(upsertRevenueLine)} onDeleteLine={ro(deleteRevenueLine)}
+                    onSaveOpportunity={ro(upsertRevenueOpportunity)} onDeleteOpportunity={ro(deleteRevenueOpportunity)} />
+                )}
               </>
             );
           })()}

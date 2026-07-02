@@ -278,3 +278,66 @@ model AppSetting {
 
   @@map("app_settings")
 }
+
+// Revenue Forecast — company-wide annual target vs. contracted-revenue vs.
+// opportunity-pipeline tracker (mirrors the team's yearly forecast workbook).
+model RevenueTarget {
+  id               String   @id @default(uuid()) @db.Uuid
+  year             Int      @unique
+  target_revenue   BigInt   @default(0)
+  total_mandays    Int      @default(0)
+  mandays_per_year Int      @default(0)
+  rate             BigInt   @default(0)
+  resource_count   Int      @default(0)
+  created_by_id    String?  @db.Uuid
+  created_at       DateTime @default(now())
+
+  @@map("revenue_targets")
+}
+
+// One row per contracted line item (Project / Maintenance / Other), grouping
+// its invoicing milestones. Milestones (label/percent/amount/target month/
+// status) are stored as JSON since they're always read and edited together
+// with their parent line, not queried independently — no separate table needed.
+model RevenueLine {
+  id            String   @id @default(uuid()) @db.Uuid
+  year          Int
+  category      String   @default("Project")
+  project_name  String
+  pic           String   @default("")
+  milestones    Json     @default("[]")
+  notes         String   @default("")
+  created_by_id String?  @db.Uuid
+  created_at    DateTime @default(now())
+
+  @@index([year])
+  @@map("revenue_lines")
+}
+
+// Pipeline of unclosed revenue opportunities — status tracks whether it's
+// still Active, put on Hold, or Dropped (each with its own reason).
+model RevenueOpportunity {
+  id                          String    @id @default(uuid()) @db.Uuid
+  year                        Int
+  project_name                String
+  pic                         String    @default("")
+  category                    String    @default("L")
+  amount                      BigInt    @default(0)
+  target_closing_date         DateTime? @db.Date
+  team                        String    @default("")
+  pmo                         String    @default("")
+  plan                        String    @default("")
+  product                     String    @default("")
+  potentially_billed_amount   BigInt    @default(0)
+  potentially_billed_percent  Int       @default(0)
+  presales                    String    @default("")
+  sales                       String    @default("")
+  status                      String    @default("Active")
+  reason                      String    @default("")
+  notes                       String    @default("")
+  created_by_id               String?   @db.Uuid
+  created_at                  DateTime  @default(now())
+
+  @@index([year])
+  @@map("revenue_opportunities")
+}

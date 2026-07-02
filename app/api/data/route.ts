@@ -29,6 +29,9 @@ const QUERIES: Record<string, () => Promise<any>> = {
   activities: () => prisma.activity.findMany({ orderBy: { created_at: "desc" } }),
   events: () => prisma.event.findMany({ orderBy: { date: "asc" } }),
   talent_roles: () => prisma.talentRole.findMany({ orderBy: { created_at: "asc" } }),
+  revenue_targets: () => prisma.revenueTarget.findMany({ orderBy: { year: "asc" } }),
+  revenue_lines: () => prisma.revenueLine.findMany({ orderBy: { created_at: "asc" } }),
+  revenue_opportunities: () => prisma.revenueOpportunity.findMany({ orderBy: { created_at: "asc" } }),
 };
 
 const ALL_TABLES = Object.keys(QUERIES);

@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
-type TableName = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles";
+type TableName = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles" | "revenue_targets" | "revenue_lines" | "revenue_opportunities";
 
-const ALLOWED: TableName[] = ["clients", "contacts", "visits", "deals", "projects", "tasks", "products", "documents", "attachments", "activities", "events", "talent_roles"];
+const ALLOWED: TableName[] = ["clients", "contacts", "visits", "deals", "projects", "tasks", "products", "documents", "attachments", "activities", "events", "talent_roles", "revenue_targets", "revenue_lines", "revenue_opportunities"];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getModel(table: TableName): any {
@@ -13,6 +13,9 @@ function getModel(table: TableName): any {
     table === "activities" ? "activity" :
     table === "events" ? "event" :
     table === "talent_roles" ? "talentRole" :
+    table === "revenue_targets" ? "revenueTarget" :
+    table === "revenue_lines" ? "revenueLine" :
+    table === "revenue_opportunities" ? "revenueOpportunity" :
     table.slice(0, -1) // remove trailing 's'
   ];
 }
@@ -55,6 +58,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
   if (body.value !== undefined) body.value = BigInt(body.value);
   if (body.file_size !== undefined) body.file_size = BigInt(body.file_size);
   if (body.ratecard !== undefined) body.ratecard = BigInt(body.ratecard);
+  if (body.target_revenue !== undefined) body.target_revenue = BigInt(body.target_revenue);
+  if (table === "revenue_targets" && body.rate !== undefined) body.rate = BigInt(body.rate);
+  if (body.amount !== undefined) body.amount = BigInt(body.amount);
+  if (body.potentially_billed_amount !== undefined) body.potentially_billed_amount = BigInt(body.potentially_billed_amount);
 
   // Convert date strings to Date objects for Prisma DateTime @db.Date fields
   const DATE_FIELDS: Record<string, string[]> = {
@@ -65,6 +72,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
     events: ["date", "followup_date"],
     projects: ["golive"],
     talent_roles: ["deadline"],
+    revenue_opportunities: ["target_closing_date"],
   };
   for (const field of DATE_FIELDS[table] ?? []) {
     if (typeof body[field] === "string") {

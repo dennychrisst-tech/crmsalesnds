@@ -6,6 +6,10 @@ export type ProjectStatus = "Initiation" | "In Progress" | "On Hold" | "Delivere
 export type TalentLevel = "Junior" | "Middle" | "Senior" | "Lead";
 export type TalentRoleStatus = "Open" | "Close";
 export type TaskStatus = "Open" | "Done";
+export type RevenueLineCategory = "Project" | "Maintenance" | "Other";
+export type RevenueMilestoneStatus = "Paid" | "Billed" | "To be billed" | "Can't be billed this year";
+export type RevenueOppCategory = "H" | "M" | "L";
+export type RevenueOppStatus = "Active" | "Hold" | "Drop";
 
 export interface PIC {
   name: string;
@@ -185,7 +189,65 @@ export interface CalendarEvent {
   created_at?: string;
 }
 
-export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects" | "tasks" | "catalog" | "summary" | "visit-report" | "weekly-report";
+export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects" | "tasks" | "catalog" | "summary" | "visit-report" | "weekly-report" | "revenue-forecast";
+
+// Revenue Forecast — annual target vs. contracted revenue vs. opportunity
+// pipeline (mirrors the team's yearly forecast workbook).
+export interface RevenueMilestone {
+  id: string;
+  label: string;
+  percent: number;
+  amount: number;
+  target_month: string | null; // "YYYY-MM"
+  status: RevenueMilestoneStatus;
+}
+
+export interface RevenueTarget {
+  id: string;
+  year: number;
+  target_revenue: number;
+  total_mandays: number;
+  mandays_per_year: number;
+  rate: number;
+  resource_count: number;
+  created_by_id?: string;
+  created_at?: string;
+}
+
+export interface RevenueLine {
+  id: string;
+  year: number;
+  category: RevenueLineCategory;
+  project_name: string;
+  pic: string;
+  milestones: RevenueMilestone[];
+  notes: string;
+  created_by_id?: string;
+  created_at?: string;
+}
+
+export interface RevenueOpportunity {
+  id: string;
+  year: number;
+  project_name: string;
+  pic: string;
+  category: RevenueOppCategory;
+  amount: number;
+  target_closing_date?: string | null;
+  team: string;
+  pmo: string;
+  plan: string;
+  product: string;
+  potentially_billed_amount: number;
+  potentially_billed_percent: number;
+  presales: string;
+  sales: string;
+  status: RevenueOppStatus;
+  reason: string;
+  notes: string;
+  created_by_id?: string;
+  created_at?: string;
+}
 
 export type UserRole = "super_admin" | "admin" | "employee" | "viewer";
 

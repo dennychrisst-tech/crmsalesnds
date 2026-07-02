@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
-import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity, CalendarEvent, Profile, TalentRole } from "@/types";
+import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity, CalendarEvent, Profile, TalentRole, RevenueTarget, RevenueLine, RevenueOpportunity } from "@/types";
 import { STAGES } from "@/lib/utils";
 import { toast } from "@/components/ui/Toast";
 
@@ -21,16 +21,19 @@ export interface AppData {
   // Named to match the table key exactly (like every other AppData field) since
   // load() indexes this object generically via next[tableKey].
   talent_roles: TalentRole[];
+  revenue_targets: RevenueTarget[];
+  revenue_lines: RevenueLine[];
+  revenue_opportunities: RevenueOpportunity[];
 }
 
-type TableKey = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles";
+type TableKey = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles" | "revenue_targets" | "revenue_lines" | "revenue_opportunities";
 
 // Fetched immediately on mount — needed by the header (search/reminders) and/or
 // most views, so the app can't usefully render without them.
 const CORE_TABLES: TableKey[] = ["clients", "contacts", "deals", "tasks", "visits", "projects"];
 // Fetched right after CORE resolves, in the background — mostly deal-detail-modal
 // and Calendar/catalog specific, not needed for the app's first paint.
-const LAZY_TABLES: TableKey[] = ["products", "documents", "attachments", "activities", "events", "talent_roles"];
+const LAZY_TABLES: TableKey[] = ["products", "documents", "attachments", "activities", "events", "talent_roles", "revenue_targets", "revenue_lines", "revenue_opportunities"];
 const ALL_TABLES: TableKey[] = [...CORE_TABLES, ...LAZY_TABLES];
 
 // Prisma returns full ISO timestamps, but <input type="date"> and date logic
@@ -43,6 +46,7 @@ const DATE_FIELDS: Partial<Record<TableKey, string[]>> = {
   activities: ["date"],
   events: ["date", "followup_date"],
   talent_roles: ["deadline"],
+  revenue_opportunities: ["target_closing_date"],
 };
 
 function d10(v: unknown): unknown {
@@ -90,6 +94,7 @@ const EMPTY_DATA: AppData = {
   clients: [], contacts: [], visits: [], deals: [], projects: [],
   tasks: [], products: [], documents: [], attachments: [], activities: [], events: [],
   profiles: [], talent_roles: [],
+  revenue_targets: [], revenue_lines: [], revenue_opportunities: [],
 };
 
 export function useData() {
@@ -268,6 +273,15 @@ export function useData() {
   const upsertTalentRole = makeUpsert<TalentRole>("talent_roles");
   const deleteTalentRole = makeRemove("talent_roles");
 
+  const upsertRevenueTarget = makeUpsert<RevenueTarget>("revenue_targets");
+  const deleteRevenueTarget = makeRemove("revenue_targets");
+
+  const upsertRevenueLine = makeUpsert<RevenueLine>("revenue_lines");
+  const deleteRevenueLine = makeRemove("revenue_lines");
+
+  const upsertRevenueOpportunity = makeUpsert<RevenueOpportunity>("revenue_opportunities");
+  const deleteRevenueOpportunity = makeRemove("revenue_opportunities");
+
   const upsertTask = makeUpsert<Task>("tasks");
   const deleteTask = makeRemove("tasks");
 
@@ -327,6 +341,9 @@ export function useData() {
     upsertDeal, deleteDeal, updateDealStage,
     upsertProject, deleteProject,
     upsertTalentRole, deleteTalentRole,
+    upsertRevenueTarget, deleteRevenueTarget,
+    upsertRevenueLine, deleteRevenueLine,
+    upsertRevenueOpportunity, deleteRevenueOpportunity,
     upsertTask, deleteTask,
     upsertProduct, deleteProduct,
     upsertDocument, deleteDocument,
