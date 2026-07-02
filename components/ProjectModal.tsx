@@ -45,7 +45,10 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
     const { category, sub } = parseProduct(base.product || "");
     setProductCat(category);
     setIbmSub(sub);
-  }, [project, clients, open]);
+  // Re-init only when the modal opens or a different project is opened — the
+  // clients array is replaced by background polling and must not wipe edits.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.id, open]);
 
   const set = (k: keyof Project, v: string | number) => setForm(f => ({ ...f, [k]: v }));
 

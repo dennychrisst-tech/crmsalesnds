@@ -87,8 +87,11 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       setTab("edit");
       setTask({ title: "", due_date: "", assigned_to: "", notes: "" });
     }
+  // Re-init only when the modal opens or a different visit is opened — the
+  // clients/contacts arrays are replaced by background polling and must not
+  // wipe a summary that's being typed.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visit, preClientId, preDate, clients, open, defaultPic]);
+  }, [visit?.id, preClientId, preDate, open]);
 
   const set = (k: keyof Visit, v: string | null) => setForm(f => ({ ...f, [k]: v }));
   const setT = (k: keyof TaskDraft, v: string) => setTask(t => ({ ...t, [k]: v }));

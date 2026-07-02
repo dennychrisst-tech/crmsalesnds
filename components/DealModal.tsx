@@ -52,12 +52,16 @@ export default function DealModal({
   const [actForm, setActForm] = useState(emptyActivity(deal?.id || ""));
   const [saving, setSaving] = useState(false);
 
+  // Re-init only when the modal opens or a different deal is opened — NOT when
+  // background polling replaces the data arrays, which would wipe in-progress
+  // edits and kick the user back to the detail tab mid-typing.
   useEffect(() => {
     const d = deal || emptyDeal("", defaultOwner);
     setForm(d);
     setActForm(emptyActivity(d.id));
     setTab(deal ? "detail" : "info");
-  }, [deal, clients, open]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deal?.id, open]);
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
