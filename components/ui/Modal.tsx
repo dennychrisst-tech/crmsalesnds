@@ -40,7 +40,7 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
 
   return (
     <div
-      className="modal-backdrop fixed inset-0 bg-[rgba(11,27,43,.45)] flex items-end sm:items-start justify-center sm:p-10 z-50"
+      className="modal-backdrop fixed inset-0 bg-[rgba(11,27,43,.45)] flex items-end sm:items-start justify-center sm:p-10 z-[90]"
       onMouseDown={(e) => { mouseDownOnBackdrop.current = e.target === e.currentTarget; }}
       onClick={(e) => { if (e.target === e.currentTarget && mouseDownOnBackdrop.current) onClose(); }}
     >
