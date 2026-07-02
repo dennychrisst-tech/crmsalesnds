@@ -3,7 +3,7 @@ import { useState } from "react";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
-import { Visit, CalendarEvent, Task, Deal } from "@/types";
+import { Visit, CalendarEvent, Task, Deal, Contact } from "@/types";
 import { fmtDate, todayStr, picList, picMatches } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import VisitModal from "./VisitModal";
@@ -24,6 +24,7 @@ interface Props {
   onDeleteEvent: (id: string) => Promise<void>;
   onCreateTask: (t: Task) => Promise<void>;
   onCreateDeal: (d: Deal) => Promise<void>;
+  onSaveContact: (c: Contact) => Promise<void>;
 }
 
 const SALES_COLOR_PALETTE = [
@@ -176,7 +177,7 @@ function DayCell({
   );
 }
 
-export default function CalendarView({ data, currentUserName, isViewer, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask, onCreateDeal }: Props) {
+export default function CalendarView({ data, currentUserName, isViewer, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask, onCreateDeal, onSaveContact }: Props) {
   const { clients, contacts, visits, events, deals, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const salesLegend = Array.from(new Set([...team, ...visits.flatMap(v => picList(v.pic))])).sort((a, b) => a.localeCompare(b));
@@ -400,7 +401,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
       </div>
 
       <VisitModal open={visitModal} visit={editVisit} preClientId={preClientId} preDate={preDate} clients={clients} contacts={contacts} deals={deals} team={team} defaultPic={currentUserName}
-        onSave={handleSaveVisit} onDelete={onDeleteVisit} onCreateTask={onCreateTask} onCreateDeal={onCreateDeal} onClose={() => setVisitModal(false)} />
+        onSave={handleSaveVisit} onDelete={onDeleteVisit} onCreateTask={onCreateTask} onCreateDeal={onCreateDeal} onSaveContact={onSaveContact} onClose={() => setVisitModal(false)} />
       <EventModal open={eventModal} event={editEvent} preDate={preDate} team={team} clients={clients} defaultMember={currentUserName}
         onSave={onSaveEvent} onDelete={onDeleteEvent} onClose={() => setEventModal(false)} />
     </section>

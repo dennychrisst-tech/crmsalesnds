@@ -21,6 +21,8 @@ interface Props {
   onDelete: (id: string) => Promise<void>;
   onCreateTask?: (t: Task) => Promise<void>;
   onCreateDeal?: (d: Deal) => Promise<void>;
+  // Keeps the contact's jabatan in the Client menu in sync when it's edited here
+  onSaveContact?: (c: Contact) => Promise<void>;
   onClose: () => void;
 }
 
@@ -40,7 +42,7 @@ function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit
   };
 }
 
-export default function VisitModal({ open, visit, preClientId, preDate, clients, contacts, deals, team, defaultPic = "", onSave, onDelete, onCreateTask, onCreateDeal, onClose }: Props) {
+export default function VisitModal({ open, visit, preClientId, preDate, clients, contacts, deals, team, defaultPic = "", onSave, onDelete, onCreateTask, onCreateDeal, onSaveContact, onClose }: Props) {
   const isEdit = !!visit;
   const [form, setForm] = useState<Visit>(emptyVisit("", defaultPic));
   const [tab, setTab] = useState<"detail" | "edit">("edit");
@@ -65,9 +67,11 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   useEffect(() => {
     if (visit) {
       const date = visit.date || todayStr();
+      const matchingContact = contacts.find(c => c.client_id === visit.client_id && c.name === visit.pic_client);
       const restored: Visit = {
         ...visit,
-        jabatan: visit.jabatan ?? "",
+        // Old visits without a jabatan fall back to the contact's title from the Client menu
+        jabatan: visit.jabatan || matchingContact?.title || "",
         deal_id: visit.deal_id ?? null,
         project: visit.project ?? null,
         followup_date: visit.followup_date ?? null,
@@ -75,8 +79,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       setForm(restored);
       const [a = "", b = ""] = picList(visit.pic);
       setPic1(a); setPic2(b);
-      const hasMatchingContact = contacts.some(c => c.client_id === visit.client_id && c.name === visit.pic_client);
-      setManualPic(!!visit.pic_client && !hasMatchingContact);
+      setManualPic(!!visit.pic_client && !matchingContact);
       setTab("detail");
       if (visit.status === "Done") setTask(buildDefaultTask(restored));
     } else {
@@ -124,7 +127,8 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
 
   function handleContactChange(name: string) {
     const contact = clientContacts.find(c => c.name === name);
-    setForm(f => ({ ...f, pic_client: name, jabatan: contact?.title || f.jabatan }));
+    // Jabatan follows the selected contact — don't carry the previous contact's title over
+    setForm(f => ({ ...f, pic_client: name, jabatan: contact?.title || "" }));
   }
 
   function handleStatusChange(status: Visit["status"]) {
@@ -139,6 +143,13 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
     if (!form.client_id) { alert("Client wajib dipilih."); return; }
     if (!form.date) { alert("Tanggal approach wajib diisi."); return; }
     await onSave(form);
+    // Jabatan edited here flows back to the contact in the Client menu, so both
+    // stay one source of truth.
+    const jabatan = (form.jabatan || "").trim();
+    const contact = clientContacts.find(c => c.name === form.pic_client);
+    if (onSaveContact && contact && jabatan && jabatan !== contact.title) {
+      await onSaveContact({ ...contact, title: jabatan });
+    }
     if (isDone && onCreateTask && task.title.trim()) {
       await onCreateTask({
         id: uuid(),

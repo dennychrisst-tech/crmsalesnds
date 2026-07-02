@@ -463,7 +463,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
       <ContactModal open={contactModalOpen} contact={editContact} clientId={contactClientId}
         onSave={onSaveContact} onDelete={onDeleteContact} onClose={() => setContactModalOpen(false)} />
       <VisitModal open={visitModalOpen} visit={editVisit} preClientId={preClientId} clients={clients} contacts={contacts} deals={deals} team={team} defaultPic={currentUserName}
-        onSave={onSaveVisit} onDelete={onDeleteVisit} onCreateDeal={onCreateDeal} onClose={() => setVisitModalOpen(false)} />
+        onSave={onSaveVisit} onDelete={onDeleteVisit} onCreateDeal={onCreateDeal} onSaveContact={onSaveContact} onClose={() => setVisitModalOpen(false)} />
     </section>
   );
 }
