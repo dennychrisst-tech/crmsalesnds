@@ -35,7 +35,7 @@ const ALL_TABLES: TableKey[] = [...CORE_TABLES, ...LAZY_TABLES];
 const DATE_FIELDS: Partial<Record<TableKey, string[]>> = {
   visits: ["date", "followup_date"],
   deals: ["close_date"],
-  projects: ["golive"],
+  projects: ["golive", "talent_submit_cv_date", "talent_interview_date", "talent_hired_date", "talent_po_date"],
   tasks: ["due_date"],
   activities: ["date"],
   events: ["date", "followup_date"],

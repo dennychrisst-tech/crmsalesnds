@@ -129,6 +129,18 @@ model Project {
   created_by_id String?   @db.Uuid
   created_at    DateTime  @default(now())
 
+  // Talent (outsourcing/staffing) tracking — only populated when product = "Talent".
+  // Reuses status/value/golive/notes/client_id above instead of duplicating them.
+  talent_role            String?
+  talent_level           String?
+  talent_ratecard        BigInt?   @default(0)
+  talent_pic             String?   @default("")
+  talent_candidate       String?   @default("")
+  talent_submit_cv_date  DateTime? @db.Date
+  talent_interview_date  DateTime? @db.Date
+  talent_hired_date      DateTime? @db.Date
+  talent_po_date         DateTime? @db.Date
+
   client Client @relation(fields: [client_id], references: [id], onDelete: Cascade)
 
   @@index([client_id])

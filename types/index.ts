@@ -3,6 +3,7 @@ export type DealStage = "Cold Call" | "First Meeting" | "Discovery" | "Proposal"
 export type VisitStatus = "Planned" | "Done" | "Cancel" | "Reschedule";
 export type EventStatus = VisitStatus; // same vocabulary: Planned/Done/Cancel/Reschedule
 export type ProjectStatus = "Initiation" | "In Progress" | "On Hold" | "Delivered" | "Closed";
+export type TalentLevel = "Junior" | "Middle" | "Senior" | "Lead";
 export type TaskStatus = "Open" | "Done";
 
 export interface PIC {
@@ -96,6 +97,16 @@ export interface Project {
   golive: string;
   notes: string;
   partner?: string;
+  // Talent (outsourcing/staffing) tracking — only meaningful when product === "Talent"
+  talent_role?: string;
+  talent_level?: string;
+  talent_ratecard?: number;
+  talent_pic?: string;
+  talent_candidate?: string;
+  talent_submit_cv_date?: string | null;
+  talent_interview_date?: string | null;
+  talent_hired_date?: string | null;
+  talent_po_date?: string | null;
   created_by_id?: string;
   created_at?: string;
 }

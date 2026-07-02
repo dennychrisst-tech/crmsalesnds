@@ -16,6 +16,7 @@ export const CLIENT_STATUS_COLOR: Record<string, { bg: string; fg: string }> = {
 export const VISIT_STATUS = ["Planned", "Done", "Cancel", "Reschedule"] as const;
 export const EVENT_STATUS = VISIT_STATUS; // same vocabulary, reused for Event.status
 export const PROJ_STATUS = ["Initiation", "In Progress", "On Hold", "Delivered", "Closed"] as const;
+export const TALENT_LEVELS = ["Junior", "Middle", "Senior", "Lead"] as const;
 export const SECTORS = ["Banking", "Multifinance", "Insurance", "Health Care", "Industrial", "Technology", "Telekomunikasi", "Infrastruktur", "Transportasi", "Energy", "Lainnya"] as const;
 export const TEAM = ["Denny", "Dova", "Rio", "Cris"] as const;
 export const DOC_TYPES = ["RFI", "RFP/BRD", "Proposal Teknis", "Offering Letter", "Kontrak", "PO", "NDA", "Lainnya"] as const;

@@ -53,6 +53,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
   // Handle BigInt fields
   if (body.value !== undefined) body.value = BigInt(body.value);
   if (body.file_size !== undefined) body.file_size = BigInt(body.file_size);
+  if (body.talent_ratecard !== undefined) body.talent_ratecard = BigInt(body.talent_ratecard);
 
   // Convert date strings to Date objects for Prisma DateTime @db.Date fields
   const DATE_FIELDS: Record<string, string[]> = {
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
     tasks: ["due_date"],
     activities: ["date"],
     events: ["date", "followup_date"],
-    projects: ["golive"],
+    projects: ["golive", "talent_submit_cv_date", "talent_interview_date", "talent_hired_date", "talent_po_date"],
   };
   for (const field of DATE_FIELDS[table] ?? []) {
     if (typeof body[field] === "string") {
