@@ -17,7 +17,7 @@ interface Props {
 
 function emptyRole(projectId: string): TalentRole {
   return {
-    id: uuid(), project_id: projectId, name: "", role_name: "", level: "", ratecard: 0, pic: "",
+    id: uuid(), project_id: projectId, role_name: "", level: "", ratecard: 0, pic: "",
     deadline: null, status: "Open", req_cv: 0, cv_submitted: 0, cv_reject: 0, cv_not_response: 0, po_issued: 0, notes: "",
   };
 }
@@ -64,10 +64,6 @@ export default function TalentRoleModal({ open, role, projectId, team, onSave, o
 
   return (
     <Modal open={open} onClose={onClose} title={isEdit ? "Edit Requisition" : "Tambah Requisition"}>
-      <Field label="Name Project">
-        <textarea className={textareaCls} value={form.name} onChange={e => set("name", e.target.value)}
-          placeholder="Mis. RE: Kebutuhan Kandidat OS Fullstack - Testing Onsite Jakarta&#10;- catatan proses/log tanggal…" />
-      </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Role">
           <input className={inputCls} value={form.role_name} onChange={e => set("role_name", e.target.value)} placeholder="Mis. Fullstack Developer" />

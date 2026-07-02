@@ -109,7 +109,6 @@ export interface Project {
 export interface TalentRole {
   id: string;
   project_id: string;
-  name: string;
   role_name: string;
   level: string;
   ratecard: number;

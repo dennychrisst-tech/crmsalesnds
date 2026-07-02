@@ -143,7 +143,6 @@ model Project {
 model TalentRole {
   id              String    @id @default(uuid()) @db.Uuid
   project_id      String    @db.Uuid
-  name            String    @default("") // "Name Project" in the Excel — batch title + running log
   role_name       String
   level           String    @default("")
   ratecard        BigInt    @default(0)

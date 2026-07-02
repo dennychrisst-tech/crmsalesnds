@@ -57,7 +57,6 @@ export default function TalentManageModal({ open, project, roles, team, onSaveRo
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 14 }}>{r.role_name}{r.level ? ` · ${r.level}` : ""}</div>
-                      {r.name && <div style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 2, whiteSpace: "pre-wrap" }}>{r.name.split("\n")[0]}</div>}
                       <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 2 }}>
                         {r.ratecard ? `${fmtIDR(r.ratecard)}/bln` : "—"}
                         {r.pic ? ` · PIC: ${r.pic}` : ""}
