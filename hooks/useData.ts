@@ -59,6 +59,12 @@ async function api(path: string, method = "GET", body?: unknown) {
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
+  if (res.status === 401) {
+    // Session expired (JWT is valid for 24h) — force logout. The 30s poll goes
+    // through here too, so an idle open tab/PWA lands on /login within ~30s.
+    window.location.replace("/login");
+    throw new Error("Sesi berakhir, silakan login ulang");
+  }
   if (!res.ok) {
     const json = await res.json().catch(() => ({}));
     throw new Error(json.error || `HTTP ${res.status}`);

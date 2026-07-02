@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 
 export const COOKIE_NAME = "crm_session";
-const EXPIRY = "7d";
+const EXPIRY = "1d";
 
 function getSecret() {
   const secret = process.env.JWT_SECRET;

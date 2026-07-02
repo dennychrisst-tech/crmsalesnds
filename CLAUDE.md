@@ -66,7 +66,7 @@ ON CONFLICT (key) DO NOTHING;
 
 - **Database:** Supabase PostgreSQL (digunakan sebagai plain PostgreSQL saja — tanpa Supabase Auth)
 - **ORM:** Prisma 7 dengan `@prisma/adapter-pg` + `pg` Pool
-- **Auth:** Custom JWT (`jose`) + bcrypt, cookie `crm_session` (HTTP-only, 7 hari)
+- **Auth:** Custom JWT (`jose`) + bcrypt, cookie `crm_session` (HTTP-only, 1×24 jam — client auto-redirect ke /login saat API balas 401)
 - **File storage:** Supabase Storage bucket `crm-attachments`
 - **Deploy:** Vercel — build command: `prisma generate && next build`
 - **Middleware:** `proxy.ts` (bukan `middleware.ts`) — protects all non-API routes
