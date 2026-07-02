@@ -35,11 +35,15 @@ body {
 
 .app { width: 100%; margin: 0 auto; padding: 0 20px 80px; }
 
-/* Header */
+/* Header — dark teal-to-navy gradient, echoing the login page's brand panel.
+   Only this bar is dark; the data-heavy work area below stays on the light
+   --paper background for readability during long sessions. */
 header.top {
   display: flex; align-items: center; gap: 14px; position: relative;
-  padding: 26px 100px 18px 0; border-bottom: 2px solid var(--ink);
-  margin-bottom: 22px;
+  padding: 24px 100px 20px 24px; margin-bottom: 22px;
+  background: linear-gradient(145deg, #0A6E5C 0%, #0B2540 55%, #081624 100%);
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(8,22,36,.22);
 }
 .header-brand { display: flex; align-items: center; gap: 10px; }
 .header-crm-tag {
@@ -48,18 +52,18 @@ header.top {
   align-self: center;
 }
 .btn-logout {
-  position: absolute; top: 26px; right: 0;
-  border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+  position: absolute; top: 24px; right: 16px;
+  border: 1px solid rgba(255,255,255,.28); background: rgba(255,255,255,.06); color: rgba(255,255,255,.75);
   padding: 6px 14px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 600;
   transition: all .15s; white-space: nowrap;
 }
-.btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+.btn-logout:hover { border-color: #F87171; color: #FCA5A5; background: rgba(178,58,58,.18); }
 .btn-admin {
-  border: 1px solid var(--brand); background: transparent; color: var(--brand);
+  border: 1px solid rgba(255,255,255,.32); background: rgba(255,255,255,.06); color: #fff;
   padding: 6px 14px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 600;
   transition: all .15s; white-space: nowrap; text-decoration: none;
 }
-.btn-admin:hover { background: var(--brand); color: #fff; }
+.btn-admin:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* Nav */
 nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 24px; }
@@ -599,7 +603,7 @@ tr.task-soon td { background: #fffbeb; }
 
   /* Header — wraps into rows: brand+tag (+ log out, top-right corner) / search+clock+bell / admin */
   header.top {
-    flex-wrap: wrap; row-gap: 10px; padding: 14px 88px 14px 0; margin-bottom: 14px;
+    flex-wrap: wrap; row-gap: 10px; padding: 14px 84px 14px 14px; border-radius: 14px; margin-bottom: 14px;
   }
   .header-brand svg { height: 32px; }
   .header-crm-tag { font-size: 9px; padding: 2px 6px; }
@@ -612,7 +616,7 @@ tr.task-soon td { background: #fffbeb; }
   .header-search-row .gs-input { min-width: 0; }
   .header-search-row .rb-wrap { flex: 0 0 auto; }
   .btn-admin { order: 5; padding: 5px 10px; font-size: 11px; }
-  .btn-logout { top: 14px; padding: 5px 10px; font-size: 11px; }
+  .btn-logout { top: 14px; right: 14px; padding: 5px 10px; font-size: 11px; }
 
   /* Nav — replaced by fixed bottom nav on mobile */
   nav.tabs { display: none; }
