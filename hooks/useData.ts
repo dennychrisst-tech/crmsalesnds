@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
-import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity, CalendarEvent, Profile, TalentRole, TalentCV } from "@/types";
+import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity, CalendarEvent, Profile, TalentRole } from "@/types";
 import { STAGES } from "@/lib/utils";
 import { toast } from "@/components/ui/Toast";
 
@@ -21,17 +21,16 @@ export interface AppData {
   // Named to match the table key exactly (like every other AppData field) since
   // load() indexes this object generically via next[tableKey].
   talent_roles: TalentRole[];
-  talent_cvs: TalentCV[];
 }
 
-type TableKey = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles" | "talent_cvs";
+type TableKey = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles";
 
 // Fetched immediately on mount — needed by the header (search/reminders) and/or
 // most views, so the app can't usefully render without them.
 const CORE_TABLES: TableKey[] = ["clients", "contacts", "deals", "tasks", "visits", "projects"];
 // Fetched right after CORE resolves, in the background — mostly deal-detail-modal
 // and Calendar/catalog specific, not needed for the app's first paint.
-const LAZY_TABLES: TableKey[] = ["products", "documents", "attachments", "activities", "events", "talent_roles", "talent_cvs"];
+const LAZY_TABLES: TableKey[] = ["products", "documents", "attachments", "activities", "events", "talent_roles"];
 const ALL_TABLES: TableKey[] = [...CORE_TABLES, ...LAZY_TABLES];
 
 // Prisma returns full ISO timestamps, but <input type="date"> and date logic
@@ -44,7 +43,6 @@ const DATE_FIELDS: Partial<Record<TableKey, string[]>> = {
   activities: ["date"],
   events: ["date", "followup_date"],
   talent_roles: ["deadline"],
-  talent_cvs: ["submit_date", "interview_date", "hired_date", "po_date"],
 };
 
 function d10(v: unknown): unknown {
@@ -91,7 +89,7 @@ function mergeRecord(list: any[], record: any): any[] {
 const EMPTY_DATA: AppData = {
   clients: [], contacts: [], visits: [], deals: [], projects: [],
   tasks: [], products: [], documents: [], attachments: [], activities: [], events: [],
-  profiles: [], talent_roles: [], talent_cvs: [],
+  profiles: [], talent_roles: [],
 };
 
 export function useData() {
@@ -270,9 +268,6 @@ export function useData() {
   const upsertTalentRole = makeUpsert<TalentRole>("talent_roles");
   const deleteTalentRole = makeRemove("talent_roles");
 
-  const upsertTalentCV = makeUpsert<TalentCV>("talent_cvs");
-  const deleteTalentCV = makeRemove("talent_cvs");
-
   const upsertTask = makeUpsert<Task>("tasks");
   const deleteTask = makeRemove("tasks");
 
@@ -332,7 +327,6 @@ export function useData() {
     upsertDeal, deleteDeal, updateDealStage,
     upsertProject, deleteProject,
     upsertTalentRole, deleteTalentRole,
-    upsertTalentCV, deleteTalentCV,
     upsertTask, deleteTask,
     upsertProduct, deleteProduct,
     upsertDocument, deleteDocument,

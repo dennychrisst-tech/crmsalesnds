@@ -1,32 +1,31 @@
 "use client";
 import { useState } from "react";
 import { AppData } from "@/hooks/useData";
-import { Project, TalentRole, TalentCV, PIC } from "@/types";
+import { Project, TalentRole, PIC } from "@/types";
 import { fmtIDR, fmtDate } from "@/lib/utils";
 import ProjectModal from "./ProjectModal";
 import TalentManageModal from "./TalentManageModal";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
 
-// Compact "at a glance" summary for a Talent row — how many roles are open and
-// how the submitted CVs are trending (approved vs rejected). Shared between
-// the desktop table cell and the mobile card.
-function TalentSummary({ roles, cvs }: { roles: TalentRole[]; cvs: TalentCV[] }) {
-  if (!roles.length) return <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 4 }}>Belum ada role.</div>;
-  const roleIds = new Set(roles.map(r => r.id));
-  const roleCvs = cvs.filter(cv => roleIds.has(cv.role_id));
-  const approved = roleCvs.filter(cv => cv.status === "Approved" || cv.status === "Interview" || cv.status === "Hired").length;
-  const rejected = roleCvs.filter(cv => cv.status === "Rejected").length;
+// Compact "at a glance" summary for a Talent row — aggregates each role's own
+// count fields (matching the team's Excel tracker columns) across the project.
+// Shared between the desktop table cell and the mobile card.
+function TalentSummary({ roles }: { roles: TalentRole[] }) {
+  if (!roles.length) return <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 4 }}>Belum ada requisition.</div>;
+  const submitted = roles.reduce((s, r) => s + r.cv_submitted, 0);
+  const rejected = roles.reduce((s, r) => s + r.cv_reject, 0);
+  const poIssued = roles.reduce((s, r) => s + r.po_issued, 0);
   return (
     <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 4, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-      <span>👤 {roles.length} role · {roleCvs.length} CV</span>
-      {approved > 0 && (
-        <span style={{ fontSize: 10.5, fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: "#DCFCE7", color: "#15803D" }}>
-          {approved} Approved
+      <span>👤 {roles.length} requisition · {submitted} CV</span>
+      {poIssued > 0 && (
+        <span style={{ fontSize: 10.5, fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: "var(--brand-soft)", color: "var(--brand)" }}>
+          {poIssued} PO Issued
         </span>
       )}
       {rejected > 0 && (
         <span style={{ fontSize: 10.5, fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: "#FEE2E2", color: "#991B1B" }}>
-          {rejected} Rejected
+          {rejected} Reject
         </span>
       )}
     </div>
@@ -40,16 +39,14 @@ interface Props {
   onDeleteProject: (id: string) => Promise<void>;
   onSaveTalentRole: (r: TalentRole) => Promise<void>;
   onDeleteTalentRole: (id: string) => Promise<void>;
-  onSaveTalentCV: (cv: TalentCV) => Promise<void>;
-  onDeleteTalentCV: (id: string) => Promise<void>;
   onOpenClient: (clientId: string) => void;
 }
 
 export default function Projects({
   data, isViewer, onSaveProject, onDeleteProject,
-  onSaveTalentRole, onDeleteTalentRole, onSaveTalentCV, onDeleteTalentCV, onOpenClient,
+  onSaveTalentRole, onDeleteTalentRole, onOpenClient,
 }: Props) {
-  const { clients, projects, profiles, talent_roles, talent_cvs } = data;
+  const { clients, projects, profiles, talent_roles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
   const [salesFilter, setSalesFilter] = useState("all");
@@ -125,7 +122,7 @@ export default function Projects({
                 <tr key={p.id}>
                   <td>
                     <b>{p.name}</b><br /><span className="muted" style={{ fontSize: 11 }}>{p.notes}</span>
-                    {p.product === "Talent" && <TalentSummary roles={projectRoles} cvs={talent_cvs} />}
+                    {p.product === "Talent" && <TalentSummary roles={projectRoles} />}
                   </td>
                   <td>{clientName(p.client_id)}</td>
                   <td>
@@ -173,7 +170,7 @@ export default function Projects({
                     <span className="chip">{p.status}</span>
                   </div>
                   {p.notes && <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{p.notes}</div>}
-                  {p.product === "Talent" && <TalentSummary roles={projectRoles} cvs={talent_cvs} />}
+                  {p.product === "Talent" && <TalentSummary roles={projectRoles} />}
                   <div className="mcard-row"><span>Client</span><b>{clientName(p.client_id)}</b></div>
                   {p.partner && (
                     <div className="mcard-row">
@@ -206,9 +203,8 @@ export default function Projects({
       <TalentManageModal
         open={talentModalOpen} project={talentProject}
         roles={talentProject ? talent_roles.filter(r => r.project_id === talentProject.id) : []}
-        cvs={talent_cvs} team={team}
+        team={team}
         onSaveRole={onSaveTalentRole} onDeleteRole={onDeleteTalentRole}
-        onSaveCV={onSaveTalentCV} onDeleteCV={onDeleteTalentCV}
         onClose={() => setTalentModalOpen(false)}
       />
     </section>

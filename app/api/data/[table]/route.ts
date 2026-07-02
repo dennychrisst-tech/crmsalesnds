@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
-type TableName = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles" | "talent_cvs";
+type TableName = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles";
 
-const ALLOWED: TableName[] = ["clients", "contacts", "visits", "deals", "projects", "tasks", "products", "documents", "attachments", "activities", "events", "talent_roles", "talent_cvs"];
+const ALLOWED: TableName[] = ["clients", "contacts", "visits", "deals", "projects", "tasks", "products", "documents", "attachments", "activities", "events", "talent_roles"];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getModel(table: TableName): any {
@@ -13,7 +13,6 @@ function getModel(table: TableName): any {
     table === "activities" ? "activity" :
     table === "events" ? "event" :
     table === "talent_roles" ? "talentRole" :
-    table === "talent_cvs" ? "talentCV" :
     table.slice(0, -1) // remove trailing 's'
   ];
 }
@@ -66,7 +65,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
     events: ["date", "followup_date"],
     projects: ["golive"],
     talent_roles: ["deadline"],
-    talent_cvs: ["submit_date", "interview_date", "hired_date", "po_date"],
   };
   for (const field of DATE_FIELDS[table] ?? []) {
     if (typeof body[field] === "string") {

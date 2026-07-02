@@ -17,9 +17,22 @@ interface Props {
 
 function emptyRole(projectId: string): TalentRole {
   return {
-    id: uuid(), project_id: projectId, role_name: "", level: "", ratecard: 0, pic: "",
-    deadline: null, status: "Active", notes: "",
+    id: uuid(), project_id: projectId, name: "", role_name: "", level: "", ratecard: 0, pic: "",
+    deadline: null, status: "Open", req_cv: 0, cv_submitted: 0, cv_reject: 0, cv_not_response: 0, po_issued: 0, notes: "",
   };
+}
+
+// Number input bound directly to a numeric field — the count columns
+// (Req CV / CV Submitted / CV Reject / CV Not Response / PO Issued) are all
+// small non-negative integers, so a plain number input is enough (unlike
+// ratecard, which needs the Rupiah-formatted display treatment).
+function CountField({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
+  return (
+    <Field label={label}>
+      <input type="number" min={0} className={inputCls} value={value || ""}
+        onChange={e => onChange(Math.max(0, parseInt(e.target.value, 10) || 0))} placeholder="0" />
+    </Field>
+  );
 }
 
 export default function TalentRoleModal({ open, role, projectId, team, onSave, onDelete, onClose }: Props) {
@@ -35,25 +48,36 @@ export default function TalentRoleModal({ open, role, projectId, team, onSave, o
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role?.id, open]);
 
-  const set = (k: keyof TalentRole, v: string | null) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k: keyof TalentRole, v: string | number | null) => setForm(f => ({ ...f, [k]: v }));
 
   async function handleSave() {
-    if (!form.role_name.trim()) { alert("Nama role wajib diisi."); return; }
+    if (!form.role_name.trim()) { alert("Role wajib diisi."); return; }
     await onSave(form);
     onClose();
   }
 
   async function handleDelete() {
-    if (!confirm("Hapus role ini beserta seluruh CV di dalamnya?")) return;
+    if (!confirm("Hapus batch requisition ini?")) return;
     await onDelete(form.id);
     onClose();
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? "Edit Role" : "Tambah Role"}>
-      <Field label="Nama Role">
-        <input className={inputCls} value={form.role_name} onChange={e => set("role_name", e.target.value)} placeholder="Mis. Java Developer" />
+    <Modal open={open} onClose={onClose} title={isEdit ? "Edit Requisition" : "Tambah Requisition"}>
+      <Field label="Name Project">
+        <textarea className={textareaCls} value={form.name} onChange={e => set("name", e.target.value)}
+          placeholder="Mis. RE: Kebutuhan Kandidat OS Fullstack - Testing Onsite Jakarta&#10;- catatan proses/log tanggal…" />
       </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Role">
+          <input className={inputCls} value={form.role_name} onChange={e => set("role_name", e.target.value)} placeholder="Mis. Fullstack Developer" />
+        </Field>
+        <Field label="Status">
+          <select className={selectCls} value={form.status} onChange={e => set("status", e.target.value)}>
+            {TALENT_ROLE_STATUS.map(s => <option key={s}>{s}</option>)}
+          </select>
+        </Field>
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Level">
           <select className={selectCls} value={form.level} onChange={e => set("level", e.target.value)}>
@@ -61,9 +85,10 @@ export default function TalentRoleModal({ open, role, projectId, team, onSave, o
             {TALENT_LEVELS.map(l => <option key={l}>{l}</option>)}
           </select>
         </Field>
-        <Field label="Status">
-          <select className={selectCls} value={form.status} onChange={e => set("status", e.target.value)}>
-            {TALENT_ROLE_STATUS.map(s => <option key={s}>{s}</option>)}
+        <Field label="PIC / Recruiter">
+          <select className={selectCls} value={form.pic} onChange={e => set("pic", e.target.value)}>
+            <option value="">— Pilih —</option>
+            {team.map(t => <option key={t}>{t}</option>)}
           </select>
         </Field>
       </div>
@@ -86,18 +111,29 @@ export default function TalentRoleModal({ open, role, projectId, team, onSave, o
             />
           </div>
         </Field>
-        <Field label="PIC / Recruiter">
-          <select className={selectCls} value={form.pic} onChange={e => set("pic", e.target.value)}>
-            <option value="">— Pilih —</option>
-            {team.map(t => <option key={t}>{t}</option>)}
-          </select>
+        <Field label="Deadline">
+          <input type="date" className={inputCls} value={form.deadline || ""} onChange={e => set("deadline", e.target.value || null)} />
         </Field>
       </div>
-      <Field label="Deadline">
-        <input type="date" className={inputCls} value={form.deadline || ""} onChange={e => set("deadline", e.target.value || null)} />
-      </Field>
-      <Field label="Catatan (opsional)">
-        <textarea className={textareaCls} value={form.notes} onChange={e => set("notes", e.target.value)} />
+
+      <div style={{ background: "var(--paper)", border: "1px solid var(--line)", borderRadius: 10, padding: 12, marginBottom: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--ink-soft)", marginBottom: 10 }}>
+          Jumlah
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <CountField label="Req CV" value={form.req_cv} onChange={n => set("req_cv", n)} />
+          <CountField label="CV Submitted" value={form.cv_submitted} onChange={n => set("cv_submitted", n)} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <CountField label="CV Reject" value={form.cv_reject} onChange={n => set("cv_reject", n)} />
+          <CountField label="CV Not Response / Not Avail" value={form.cv_not_response} onChange={n => set("cv_not_response", n)} />
+        </div>
+        <CountField label="PO Issued" value={form.po_issued} onChange={n => set("po_issued", n)} />
+      </div>
+
+      <Field label="Note">
+        <textarea className={textareaCls} value={form.notes} onChange={e => set("notes", e.target.value)}
+          placeholder="Penjelasan hasil, nama kandidat yang PO Issued, dll." />
       </Field>
       <ModalActions>
         {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}

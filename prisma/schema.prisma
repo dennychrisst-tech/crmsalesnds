@@ -137,46 +137,32 @@ model Project {
 }
 
 // Talent (outsourcing/staffing) tracking — a Project with product = "Talent" can
-// have several open roles, each with its own CV pipeline (see TalentCV below).
+// have several requisition batches ("rows" in the team's Excel tracker), each
+// for one role. CV outcomes are tallied as counts (matching the Excel columns)
+// rather than individual candidate records.
 model TalentRole {
-  id            String    @id @default(uuid()) @db.Uuid
-  project_id    String    @db.Uuid
-  role_name     String
-  level         String    @default("")
-  ratecard      BigInt    @default(0)
-  pic           String    @default("")
-  deadline      DateTime? @db.Date
-  status        String    @default("Active")
-  notes         String    @default("")
-  created_by_id String?   @db.Uuid
-  created_at    DateTime  @default(now())
+  id              String    @id @default(uuid()) @db.Uuid
+  project_id      String    @db.Uuid
+  name            String    @default("") // "Name Project" in the Excel — batch title + running log
+  role_name       String
+  level           String    @default("")
+  ratecard        BigInt    @default(0)
+  pic             String    @default("")
+  deadline        DateTime? @db.Date
+  status          String    @default("Open")
+  req_cv          Int       @default(0)
+  cv_submitted    Int       @default(0)
+  cv_reject       Int       @default(0)
+  cv_not_response Int       @default(0)
+  po_issued       Int       @default(0)
+  notes           String    @default("")
+  created_by_id   String?   @db.Uuid
+  created_at      DateTime  @default(now())
 
-  project Project    @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  cvs     TalentCV[]
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
 
   @@index([project_id])
   @@map("talent_roles")
-}
-
-// One row per candidate CV submitted for a role — status tracks the client's
-// screening decision (Submitted -> Approved/Rejected -> Interview -> Hired).
-model TalentCV {
-  id             String    @id @default(uuid()) @db.Uuid
-  role_id        String    @db.Uuid
-  candidate_name String
-  submit_date    DateTime  @db.Date
-  status         String    @default("Submitted")
-  interview_date DateTime? @db.Date
-  hired_date     DateTime? @db.Date
-  po_date        DateTime? @db.Date
-  notes          String    @default("")
-  created_by_id  String?   @db.Uuid
-  created_at     DateTime  @default(now())
-
-  role TalentRole @relation(fields: [role_id], references: [id], onDelete: Cascade)
-
-  @@index([role_id])
-  @@map("talent_cvs")
 }
 
 model Task {

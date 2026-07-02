@@ -74,7 +74,6 @@ export default function CRMApp() {
     upsertDeal, deleteDeal, updateDealStage,
     upsertProject, deleteProject,
     upsertTalentRole, deleteTalentRole,
-    upsertTalentCV, deleteTalentCV,
     upsertTask, deleteTask,
     upsertProduct, deleteProduct,
     upsertDocument, deleteDocument,
@@ -201,7 +200,6 @@ export default function CRMApp() {
                 {view === "projects" && (
                   <Projects data={data} isViewer={isViewer} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)}
                     onSaveTalentRole={ro(upsertTalentRole)} onDeleteTalentRole={ro(deleteTalentRole)}
-                    onSaveTalentCV={ro(upsertTalentCV)} onDeleteTalentCV={ro(deleteTalentCV)}
                     onOpenClient={openClient} />
                 )}
                 {view === "tasks" && (

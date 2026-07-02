@@ -2,63 +2,62 @@
 import { useState } from "react";
 import Modal, { ModalActions } from "./ui/Modal";
 import TalentRoleModal from "./TalentRoleModal";
-import TalentCVModal from "./TalentCVModal";
-import { Project, TalentRole, TalentCV } from "@/types";
+import { Project, TalentRole } from "@/types";
 import { fmtIDR, fmtDate } from "@/lib/utils";
 
 interface Props {
   open: boolean;
   project: Project | null;
   roles: TalentRole[];
-  cvs: TalentCV[];
   team: string[];
   onSaveRole: (r: TalentRole) => Promise<void>;
   onDeleteRole: (id: string) => Promise<void>;
-  onSaveCV: (cv: TalentCV) => Promise<void>;
-  onDeleteCV: (id: string) => Promise<void>;
   onClose: () => void;
 }
 
-const ROLE_STATUS_STYLE: Record<string, { bg: string; fg: string }> = {
-  Active: { bg: "#DCFCE7", fg: "#15803D" },
-  Hold: { bg: "#FEF3C7", fg: "#B45309" },
-  "Closed - Filled": { bg: "var(--brand-soft)", fg: "var(--brand)" },
-  "Closed - Cancel": { bg: "#FEE2E2", fg: "#991B1B" },
+const STATUS_STYLE: Record<string, { bg: string; fg: string }> = {
+  Open: { bg: "#DCFCE7", fg: "#15803D" },
+  Close: { bg: "#E7E5E4", fg: "#57534E" },
 };
 
-export default function TalentManageModal({ open, project, roles, cvs, team, onSaveRole, onDeleteRole, onSaveCV, onDeleteCV, onClose }: Props) {
+function CountChip({ label, value, tone }: { label: string; value: number; tone?: "warn" | "danger" | "brand" }) {
+  if (!value) return null;
+  const style = tone === "danger" ? { bg: "#FEE2E2", fg: "#991B1B" }
+    : tone === "warn" ? { bg: "#FEF3C7", fg: "#B45309" }
+    : tone === "brand" ? { bg: "var(--brand-soft)", fg: "var(--brand)" }
+    : { bg: "var(--paper)", fg: "var(--ink-soft)" };
+  return (
+    <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: style.bg, color: style.fg }}>
+      {value} {label}
+    </span>
+  );
+}
+
+export default function TalentManageModal({ open, project, roles, team, onSaveRole, onDeleteRole, onClose }: Props) {
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<TalentRole | null>(null);
-  const [cvModalOpen, setCvModalOpen] = useState(false);
-  const [cvRole, setCvRole] = useState<TalentRole | null>(null);
 
   if (!project) return null;
 
   function openNewRole() { setEditingRole(null); setRoleModalOpen(true); }
   function openEditRole(r: TalentRole) { setEditingRole(r); setRoleModalOpen(true); }
-  function openCVs(r: TalentRole) { setCvRole(r); setCvModalOpen(true); }
-
-  async function handleDeleteRole(id: string) {
-    await onDeleteRole(id);
-  }
 
   return (
     <>
       <Modal open={open} onClose={onClose} title={`Talent: ${project.name}`}>
         {!roles.length ? (
-          <div className="empty-state" style={{ marginBottom: 14 }}>Belum ada role di project ini.</div>
+          <div className="empty-state" style={{ marginBottom: 14 }}>Belum ada requisition di project ini.</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
             {roles.map(r => {
-              const roleCvs = cvs.filter(cv => cv.role_id === r.id);
-              const approved = roleCvs.filter(cv => cv.status === "Approved" || cv.status === "Interview" || cv.status === "Hired").length;
-              const rejected = roleCvs.filter(cv => cv.status === "Rejected").length;
-              const statusStyle = ROLE_STATUS_STYLE[r.status] || { bg: "#EAE6DA", fg: "#5C5440" };
+              const statusStyle = STATUS_STYLE[r.status] || { bg: "#EAE6DA", fg: "#5C5440" };
               return (
-                <div key={r.id} style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10, padding: 12 }}>
+                <div key={r.id} style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10, padding: 12, cursor: "pointer" }}
+                  onClick={() => openEditRole(r)}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 14 }}>{r.role_name}{r.level ? ` · ${r.level}` : ""}</div>
+                      {r.name && <div style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 2, whiteSpace: "pre-wrap" }}>{r.name.split("\n")[0]}</div>}
                       <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 2 }}>
                         {r.ratecard ? `${fmtIDR(r.ratecard)}/bln` : "—"}
                         {r.pic ? ` · PIC: ${r.pic}` : ""}
@@ -70,24 +69,14 @@ export default function TalentManageModal({ open, project, roles, cvs, team, onS
                     </span>
                   </div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "var(--paper)", border: "1px solid var(--line)", color: "var(--ink-soft)" }}>
-                      {roleCvs.length} CV
-                    </span>
-                    {approved > 0 && (
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "#DCFCE7", color: "#15803D" }}>
-                        {approved} Approved
-                      </span>
-                    )}
-                    {rejected > 0 && (
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "#FEE2E2", color: "#991B1B" }}>
-                        {rejected} Rejected
-                      </span>
-                    )}
+                    <CountChip label="Req CV" value={r.req_cv} />
+                    <CountChip label="Submitted" value={r.cv_submitted} />
+                    <CountChip label="Reject" value={r.cv_reject} tone="danger" />
+                    <CountChip label="Not Response" value={r.cv_not_response} tone="warn" />
+                    <CountChip label="PO Issued" value={r.po_issued} tone="brand" />
                   </div>
                   <div style={{ display: "flex", gap: 8, marginTop: 10, justifyContent: "flex-end" }}>
-                    <button className="btn btn-ghost btn-sm" onClick={() => openCVs(r)}>Kelola CV ({roleCvs.length})</button>
-                    <button className="btn btn-ghost btn-sm" onClick={() => openEditRole(r)}>Edit</button>
-                    <button className="btn btn-danger btn-sm" onClick={() => handleDeleteRole(r.id)}>Hapus</button>
+                    <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openEditRole(r); }}>Edit</button>
                   </div>
                 </div>
               );
@@ -95,7 +84,7 @@ export default function TalentManageModal({ open, project, roles, cvs, team, onS
           </div>
         )}
 
-        <button className="btn" onClick={openNewRole}>+ Tambah Role</button>
+        <button className="btn" onClick={openNewRole}>+ Tambah Requisition</button>
 
         <ModalActions>
           <button className="btn btn-ghost" onClick={onClose}>Tutup</button>
@@ -105,11 +94,6 @@ export default function TalentManageModal({ open, project, roles, cvs, team, onS
       <TalentRoleModal
         open={roleModalOpen} role={editingRole} projectId={project.id} team={team}
         onSave={onSaveRole} onDelete={onDeleteRole} onClose={() => setRoleModalOpen(false)}
-      />
-
-      <TalentCVModal
-        open={cvModalOpen} role={cvRole} cvs={cvRole ? cvs.filter(cv => cv.role_id === cvRole.id) : []}
-        onSave={onSaveCV} onDelete={onDeleteCV} onClose={() => setCvModalOpen(false)}
       />
     </>
   );
