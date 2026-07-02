@@ -127,7 +127,7 @@ export default function LoginPage() {
 
         {/* Bottom: Copyright */}
         <div style={{ position: "absolute", bottom: 28, fontSize: 11, color: "rgba(255,255,255,.25)" }}>
-          © 2025 PT Nusantara Duta Solusindo
+          © {new Date().getFullYear()} PT Nusantara Duta Solusindo
         </div>
       </div>
 
@@ -282,7 +282,7 @@ export default function LoginPage() {
 
           <div style={{ marginTop: 40, paddingTop: 24, borderTop: "1px solid #D8D3C6" }}>
             <p style={{ fontSize: 11, color: "#94A3B8", textAlign: "center", margin: 0 }}>
-              © 2025 PT Nusantara Duta Solusindo · Internal use only
+              © {new Date().getFullYear()} PT Nusantara Duta Solusindo · Internal use only
             </p>
           </div>
         </div>

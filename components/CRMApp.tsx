@@ -143,7 +143,18 @@ export default function CRMApp() {
       )}
 
       {loading ? (
-        <div className="empty-state">Memuat data…</div>
+        /* Skeleton mirrors the Dashboard layout (default view) while data loads */
+        <div aria-label="Memuat data…" aria-busy="true">
+          <div className="skeleton sk-bar" />
+          <div className="kpis">
+            {Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton sk-kpi" />)}
+          </div>
+          <div className="skeleton sk-panel" />
+          <div className="grid2">
+            <div className="skeleton sk-panel" />
+            <div className="skeleton sk-panel" />
+          </div>
+        </div>
       ) : (
         <>
           {(() => {
