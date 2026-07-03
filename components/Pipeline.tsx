@@ -48,8 +48,12 @@ interface Props {
   onOpenDealHandled?: () => void;
 }
 
-function DealCard({ deal, clientName, onClick, onMoveStage, isViewer }: { deal: Deal; clientName: string; onClick: () => void; onMoveStage: (stage: string) => void; isViewer?: boolean }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: deal.id });
+// draggable=false on mobile's plain vertical list — dnd-kit's pointer listeners
+// otherwise capture every touch-scroll gesture over a card as a drag attempt,
+// fighting the page's own scroll. The desktop kanban board still drags normally;
+// mobile already has the "Pindah stage" button as its touch alternative to drag.
+function DealCard({ deal, clientName, onClick, onMoveStage, isViewer, draggable = true }: { deal: Deal; clientName: string; onClick: () => void; onMoveStage: (stage: string) => void; isViewer?: boolean; draggable?: boolean }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: deal.id, disabled: !draggable });
   const style = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
   const days = agingDays(deal);
   const isClosed = isClosedStage(deal.stage);
@@ -58,7 +62,7 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer }: { deal: 
   const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes}
+    <div ref={draggable ? setNodeRef : undefined} {...(draggable ? { ...listeners, ...attributes } : {})}
       style={{ ...style, borderLeft: `3px solid ${stageColor}`, borderRight: ownerColor ? `3px solid ${ownerColor}` : undefined }}
       className="deal" onClick={onClick}>
       <div className="deal-top">
@@ -484,7 +488,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
             ) : visibleDeals.filter(d => d.stage === mobileStage).map(d => (
               <DealCard key={d.id} deal={d} clientName={clientName(d.client_id)}
                 onClick={() => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}
-                onMoveStage={s => moveStage(d, s)} isViewer={isViewer} />
+                onMoveStage={s => moveStage(d, s)} isViewer={isViewer} draggable={false} />
             ))}
           </div>
         ) : (
