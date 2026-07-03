@@ -52,8 +52,11 @@ interface Props {
 // otherwise capture every touch-scroll gesture over a card as a drag attempt,
 // fighting the page's own scroll. The desktop kanban board still drags normally;
 // mobile already has the "Pindah stage" button as its touch alternative to drag.
-function DealCard({ deal, clientName, onClick, onMoveStage, isViewer, draggable = true }: { deal: Deal; clientName: string; onClick: () => void; onMoveStage: (stage: string) => void; isViewer?: boolean; draggable?: boolean }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: deal.id, disabled: !draggable });
+function DealCard({ deal, clientName, onClick, onMoveStage, isViewer, draggable = true, selectMode = false, selected = false, onToggleSelect }: {
+  deal: Deal; clientName: string; onClick: () => void; onMoveStage: (stage: string) => void; isViewer?: boolean; draggable?: boolean;
+  selectMode?: boolean; selected?: boolean; onToggleSelect?: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: deal.id, disabled: !draggable || selectMode });
   const style = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
   const days = agingDays(deal);
   const isClosed = isClosedStage(deal.stage);
@@ -62,9 +65,13 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer, draggable 
   const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
-    <div ref={draggable ? setNodeRef : undefined} {...(draggable ? { ...listeners, ...attributes } : {})}
+    <div ref={draggable && !selectMode ? setNodeRef : undefined} {...(draggable && !selectMode ? { ...listeners, ...attributes } : {})}
       style={{ ...style, borderLeft: `3px solid ${stageColor}`, borderRight: ownerColor ? `3px solid ${ownerColor}` : undefined }}
-      className="deal" onClick={onClick}>
+      className={`deal${selected ? " deal-selected" : ""}`} onClick={() => selectMode ? onToggleSelect?.() : onClick()}>
+      {selectMode && (
+        <input type="checkbox" className="deal-select-checkbox" checked={selected}
+          onChange={() => onToggleSelect?.()} onClick={e => e.stopPropagation()} />
+      )}
       <div className="deal-top">
         <div className="dn">{deal.name}</div>
         {!isClosed && <AgingBadge days={days} />}
@@ -77,7 +84,7 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer, draggable 
         </div>
       )}
       <div className="dv">{fmtIDR(deal.value)}</div>
-      {!isViewer && (
+      {!isViewer && !selectMode && (
         <div className="stage-move-wrap">
           <button type="button" className="btn btn-ghost btn-sm stage-move-btn"
             onClick={e => { e.stopPropagation(); setPickerOpen(o => !o); }}>
@@ -225,8 +232,11 @@ function PipelineFunnel({ deals, onStageClick }: { deals: Deal[]; onStageClick: 
   );
 }
 
-function Column({ stage, deals, clientName, onDealClick, onMoveStage, isViewer }: { stage: string; deals: Deal[]; clientName: (id: string) => string; onDealClick: (d: Deal) => void; onMoveStage: (dealId: string, stage: string) => void; isViewer?: boolean }) {
-  const { isOver, setNodeRef } = useDroppable({ id: stage });
+function Column({ stage, deals, clientName, onDealClick, onMoveStage, isViewer, selectMode, selectedIds, onToggleSelect }: {
+  stage: string; deals: Deal[]; clientName: (id: string) => string; onDealClick: (d: Deal) => void; onMoveStage: (dealId: string, stage: string) => void; isViewer?: boolean;
+  selectMode?: boolean; selectedIds?: Set<string>; onToggleSelect?: (id: string) => void;
+}) {
+  const { isOver, setNodeRef } = useDroppable({ id: stage, disabled: selectMode });
   const val = deals.reduce((s, d) => s + d.value, 0);
   const stageColor = STAGE_COLOR[stage] || "var(--brand)";
   return (
@@ -238,7 +248,8 @@ function Column({ stage, deals, clientName, onDealClick, onMoveStage, isViewer }
       <div className="col-list">
         {deals.map(d => (
           <DealCard key={d.id} deal={d} clientName={clientName(d.client_id)} onClick={() => onDealClick(d)}
-            onMoveStage={s => onMoveStage(d.id, s)} isViewer={isViewer} />
+            onMoveStage={s => onMoveStage(d.id, s)} isViewer={isViewer}
+            selectMode={selectMode} selected={selectedIds?.has(d.id)} onToggleSelect={() => onToggleSelect?.(d.id)} />
         ))}
       </div>
     </div>
@@ -269,6 +280,9 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   const [showPanel, setShowPanel] = useState(false);
   const [projectSearch, setProjectSearch] = useState("");
   const [pendingProjectIds, setPendingProjectIds] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
 
@@ -337,6 +351,51 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
     toast(`${deal.name} → ${stage}`, {
       action: { label: "Undo", onClick: () => onUpdateStage(deal.id, prevStage) },
     });
+  }
+
+  function toggleSelectMode() {
+    setSelectMode(s => !s);
+    setSelectedIds(new Set());
+  }
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  // Bulk moves skip the Dealed/Dropped reason prompt (that flow is per-deal,
+  // one modal at a time) — users can still add a reason later by editing an
+  // individual deal. Kept simple since bulk actions are mainly for
+  // quarter-end cleanup (moving several stale deals at once).
+  async function bulkMoveStage(stage: string) {
+    const ids = [...selectedIds];
+    if (!ids.length) return;
+    setBulkBusy(true);
+    try {
+      for (const id of ids) await onUpdateStage(id, stage);
+      toast(`${ids.length} deal dipindah ke ${stage}`);
+    } finally {
+      setBulkBusy(false);
+      setSelectedIds(new Set());
+      setSelectMode(false);
+    }
+  }
+
+  async function bulkDelete() {
+    const ids = [...selectedIds];
+    if (!ids.length) return;
+    if (!confirm(`Hapus ${ids.length} deal terpilih? Tindakan ini tidak bisa dibatalkan.`)) return;
+    setBulkBusy(true);
+    try {
+      for (const id of ids) await onDeleteDeal(id);
+      toast(`${ids.length} deal dihapus`);
+    } finally {
+      setBulkBusy(false);
+      setSelectedIds(new Set());
+      setSelectMode(false);
+    }
   }
 
   async function confirmClose(withReason: boolean) {
@@ -439,6 +498,11 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
         )}
         <button className="btn btn-ghost btn-sm" onClick={() => exportDeals(deals, clientName)}><Download size={13} /> Export Excel</button>
         {!isViewer && (
+          <button className="btn btn-ghost btn-sm" onClick={toggleSelectMode}>
+            {selectMode ? "Batal Pilih" : "Pilih Banyak"}
+          </button>
+        )}
+        {!isViewer && (
           <button className="btn add-btn-desktop" onClick={() => setShowPanel(s => !s)}>
             {showPanel ? "Tutup Panel Proyek" : "+ Tambah dari Proyek"}
           </button>
@@ -488,7 +552,8 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
             ) : visibleDeals.filter(d => d.stage === mobileStage).map(d => (
               <DealCard key={d.id} deal={d} clientName={clientName(d.client_id)}
                 onClick={() => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}
-                onMoveStage={s => moveStage(d, s)} isViewer={isViewer} draggable={false} />
+                onMoveStage={s => moveStage(d, s)} isViewer={isViewer} draggable={false}
+                selectMode={selectMode} selected={selectedIds.has(d.id)} onToggleSelect={() => toggleSelect(d.id)} />
             ))}
           </div>
         ) : (
@@ -496,7 +561,8 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
             {boardStages.map(stage => (
               <Column key={stage} stage={stage} deals={visibleDeals.filter(d => d.stage === stage)}
                 clientName={clientName} onDealClick={d => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}
-                onMoveStage={(dealId, s) => { const d = deals.find(x => x.id === dealId); if (d) moveStage(d, s); }} isViewer={isViewer} />
+                onMoveStage={(dealId, s) => { const d = deals.find(x => x.id === dealId); if (d) moveStage(d, s); }} isViewer={isViewer}
+                selectMode={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect} />
             ))}
           </div>
         )}
@@ -516,6 +582,20 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
           )}
         </DragOverlay>
       </DndContext>
+
+      {selectMode && (
+        <div className="pipeline-bulk-bar">
+          <span className="pipeline-bulk-count">{selectedIds.size} dipilih</span>
+          <select disabled={!selectedIds.size || bulkBusy}
+            onChange={e => { const v = e.target.value; if (v) bulkMoveStage(v); e.target.value = ""; }} defaultValue="">
+            <option value="" disabled>Pindah ke stage…</option>
+            {[...STAGES, "On Hold", "Dropped"].map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <button className="btn btn-danger btn-sm" disabled={!selectedIds.size || bulkBusy} onClick={bulkDelete}>Hapus</button>
+          <button className="btn btn-ghost btn-sm" onClick={toggleSelectMode} style={{ color: "#fff", borderColor: "rgba(255,255,255,.4)" }}>Selesai</button>
+        </div>
+      )}
+
       <Modal open={!!closing} onClose={() => setClosing(null)}
         title={closing?.stage === "Dropped" ? "Project Dropped" : "Project Dealed"}>
         {closing && (
