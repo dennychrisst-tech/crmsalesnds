@@ -5,7 +5,7 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, u
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { Deal, CRMDocument, Attachment, Activity, Project } from "@/types";
-import { STAGES, STAGE_COLOR, fmtIDR, todayStr, isClosedStage } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, todayStr, isClosedStage, colorForSales } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 import { toast } from "./ui/Toast";
 import Modal, { Field, ModalActions, inputCls, textareaCls } from "./ui/Modal";
@@ -54,6 +54,7 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer }: { deal: 
   const days = agingDays(deal);
   const isClosed = isClosedStage(deal.stage);
   const stageColor = STAGE_COLOR[deal.stage] || "var(--brand)";
+  const ownerColor = deal.owner ? colorForSales(deal.owner).bg : null;
   const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
@@ -64,13 +65,20 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer }: { deal: 
   }, [pickerOpen]);
 
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes} style={{ ...style, borderLeft: `3px solid ${stageColor}` }} className="deal" onClick={onClick}>
+    <div ref={setNodeRef} {...listeners} {...attributes}
+      style={{ ...style, borderLeft: `3px solid ${stageColor}`, borderRight: ownerColor ? `3px solid ${ownerColor}` : undefined }}
+      className="deal" onClick={onClick}>
       <div className="deal-top">
         <div className="dn">{deal.name}</div>
         {!isClosed && <AgingBadge days={days} />}
       </div>
       <div className="dc">{clientName}{deal.product ? ` · ${deal.product}` : ""}</div>
-      {deal.owner && <div className="dc" style={{ display: "flex", alignItems: "center", gap: 4 }}><User size={11} /> {deal.owner}</div>}
+      {deal.owner && (
+        <div className="dc" style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <span style={{ width: 7, height: 7, borderRadius: "50%", flex: "none", background: colorForSales(deal.owner).bg }} />
+          <User size={11} /> {deal.owner}
+        </div>
+      )}
       <div className="dv">{fmtIDR(deal.value)}</div>
       {!isViewer && (
         <div className="stage-move-wrap">
@@ -437,6 +445,17 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
       </div>
 
       {!isViewer && <button className="fab" onClick={() => setShowPanel(s => !s)} aria-label="Tambah dari Proyek">+</button>}
+
+      {team.length > 0 && (
+        <div className="cal-legend">
+          {team.map(name => (
+            <span key={name} className="cal-legend-item">
+              <span className="cal-dot" style={{ background: colorForSales(name).bg, border: "1px solid rgba(0,0,0,0.15)" }} />
+              {name}
+            </span>
+          ))}
+        </div>
+      )}
 
       {isMobile && (
         <div className="pipeline-stage-tabs">

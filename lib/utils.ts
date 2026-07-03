@@ -63,6 +63,29 @@ export const REVENUE_OPP_STATUS_COLOR: Record<string, { bg: string; fg: string }
 };
 export const SECTORS = ["Banking", "Multifinance", "Insurance", "Health Care", "Industrial", "Technology", "Telekomunikasi", "Infrastruktur", "Transportasi", "Energy", "Lainnya"] as const;
 export const TEAM = ["Denny", "Dova", "Rio", "Cris"] as const;
+
+// Deterministic name -> color mapping so a salesperson keeps the same color
+// everywhere (Calendar visit pills, Pipeline deal cards) without a lookup table.
+export const SALES_COLOR_PALETTE = [
+  { bg: "#2563EB", fg: "#FFFFFF" },
+  { bg: "#16A34A", fg: "#FFFFFF" },
+  { bg: "#F59E0B", fg: "#1F2937" },
+  { bg: "#DB2777", fg: "#FFFFFF" },
+  { bg: "#7C3AED", fg: "#FFFFFF" },
+  { bg: "#0D9488", fg: "#FFFFFF" },
+  { bg: "#E11D48", fg: "#FFFFFF" },
+  { bg: "#EA580C", fg: "#FFFFFF" },
+  { bg: "#0891B2", fg: "#FFFFFF" },
+  { bg: "#65A30D", fg: "#FFFFFF" },
+  { bg: "#9333EA", fg: "#FFFFFF" },
+  { bg: "#CA8A04", fg: "#1F2937" },
+];
+export function colorForSales(name: string) {
+  const key = name || "—";
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  return SALES_COLOR_PALETTE[hash % SALES_COLOR_PALETTE.length];
+}
 export const DOC_TYPES = ["RFI", "RFP/BRD", "Proposal Teknis", "Offering Letter", "Kontrak", "PO", "NDA", "Lainnya"] as const;
 export const DOC_STATUSES = ["Draft", "Sent", "Received", "Approved", "Rejected"] as const;
 export const PRODUCT_CATEGORIES = ["ECM / BPM", "AI / Analytics", "Security", "Cloud", "Managed Service", "Outsourcing", "Lainnya"] as const;

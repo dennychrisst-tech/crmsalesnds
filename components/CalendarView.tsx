@@ -4,7 +4,7 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, u
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { Visit, CalendarEvent, Task, Deal, Contact } from "@/types";
-import { fmtDate, todayStr, picList, picMatches } from "@/lib/utils";
+import { fmtDate, todayStr, picList, picMatches, colorForSales } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import VisitModal from "./VisitModal";
 import EventModal from "./EventModal";
@@ -28,28 +28,6 @@ interface Props {
   // Deep-link: open this visit's detail modal on mount (e.g. from Summary Activity)
   openVisitId?: string | null;
   onOpenVisitHandled?: () => void;
-}
-
-const SALES_COLOR_PALETTE = [
-  { bg: "#2563EB", fg: "#FFFFFF" },
-  { bg: "#16A34A", fg: "#FFFFFF" },
-  { bg: "#F59E0B", fg: "#1F2937" },
-  { bg: "#DB2777", fg: "#FFFFFF" },
-  { bg: "#7C3AED", fg: "#FFFFFF" },
-  { bg: "#0D9488", fg: "#FFFFFF" },
-  { bg: "#E11D48", fg: "#FFFFFF" },
-  { bg: "#EA580C", fg: "#FFFFFF" },
-  { bg: "#0891B2", fg: "#FFFFFF" },
-  { bg: "#65A30D", fg: "#FFFFFF" },
-  { bg: "#9333EA", fg: "#FFFFFF" },
-  { bg: "#CA8A04", fg: "#1F2937" },
-];
-
-function colorForSales(name: string) {
-  const key = name || "—";
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
-  return SALES_COLOR_PALETTE[hash % SALES_COLOR_PALETTE.length];
 }
 
 function WfoChip({ name }: { name: string }) {
