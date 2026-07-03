@@ -437,7 +437,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
             {showArchived ? "Sembunyikan arsip" : `Arsip closed (${archivedCount})`}
           </button>
         )}
-        <button className="btn btn-ghost btn-sm" onClick={() => exportDeals(deals, clientName)}><Download size={13} /> Export CSV</button>
+        <button className="btn btn-ghost btn-sm" onClick={() => exportDeals(deals, clientName)}><Download size={13} /> Export Excel</button>
         {!isViewer && (
           <button className="btn add-btn-desktop" onClick={() => setShowPanel(s => !s)}>
             {showPanel ? "Tutup Panel Proyek" : "+ Tambah dari Proyek"}

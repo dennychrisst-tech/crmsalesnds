@@ -85,7 +85,7 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
           {offset !== 0 && <button className="btn btn-ghost btn-sm" onClick={() => setOffset(0)}>Minggu Ini</button>}
         </div>
         <button className="btn btn-ghost btn-sm" onClick={() => shareToWhatsApp(buildShareText())}><Share2 size={13} /> Share WA</button>
-        <button className="btn btn-ghost btn-sm" onClick={() => exportWeeklyReport(salesData, clientName, relatedDeal, label)}><Download size={13} /> Export CSV</button>
+        <button className="btn btn-ghost btn-sm" onClick={() => exportWeeklyReport(salesData, clientName, relatedDeal, label)}><Download size={13} /> Export Excel</button>
       </div>
 
       <div className="kpis" style={{ marginBottom: 20 }}>

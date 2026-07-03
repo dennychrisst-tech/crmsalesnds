@@ -137,7 +137,7 @@ export default function VisitReport({ data }: Props) {
           <Share2 size={13} /> Share WA
         </button>
         <button className="btn btn-ghost btn-sm" onClick={() => exportVisitReport(filtered, clientName)}>
-          <Download size={13} /> Export CSV
+          <Download size={13} /> Export Excel
         </button>
       </div>
 

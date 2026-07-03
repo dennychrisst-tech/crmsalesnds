@@ -365,7 +365,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
             <option value="all">Semua Sales</option>
             {team.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
-          <button className="btn btn-ghost btn-sm" onClick={() => exportVisits(visits, id => clients.find(c => c.id === id)?.name || "—")}><Download size={13} /> Export CSV</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => exportVisits(visits, id => clients.find(c => c.id === id)?.name || "—")}><Download size={13} /> Export Excel</button>
           {!isViewer && (
             <button className="btn btn-ghost" onClick={() => setShowWfoPanel(s => !s)}>
               {showWfoPanel ? "Tutup Panel WFO" : "🏢 Tandai WFO"}
