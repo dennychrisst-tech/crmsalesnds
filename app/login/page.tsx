@@ -115,7 +115,7 @@ export default function LoginPage() {
 
       {/* ── Right: Form panel ── */}
       <div className="lp-form" style={{
-        flex: 1, background: "#F2F0E9",
+        flex: 1, background: "#EEF2F1",
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: "48px 40px",
       }}>
@@ -278,7 +278,7 @@ export default function LoginPage() {
           }
           .lp-mobile-hero { display: flex !important; flex: 1; min-height: 160px; }
           .lp-form-card {
-            background: #F2F0E9;
+            background: #EEF2F1;
             border-radius: 20px 20px 0 0;
             margin-top: auto;
             padding: 32px 24px 44px;
