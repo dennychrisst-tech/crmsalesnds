@@ -306,6 +306,7 @@ th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: v
 /* Column headers stay visible while scrolling long lists (sticks to the
    nearest scroll container: viewport on desktop, modal body inside modals) */
 thead th { position: sticky; top: 0; background: var(--card); z-index: 2; }
+td { transition: background .12s; }
 tr:hover td { background: var(--paper); }
 
 /* Badges */
@@ -336,15 +337,18 @@ tr:hover td { background: var(--paper); }
   border: none; background: var(--brand); color: #fff; padding: 9px 16px; border-radius: 9px;
   cursor: pointer; font-weight: 700; font-size: 13px; font-family: inherit; white-space: nowrap;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  transition: filter .15s, transform .1s ease;
 }
 .btn:hover { filter: brightness(1.08); }
+.btn:active { transform: scale(.97); }
 .btn-ghost { background: transparent; color: var(--brand); border: 1px solid var(--brand); }
 .btn-sm { padding: 5px 10px; font-size: 12px; }
 .btn-danger { background: var(--danger); color: #fff; border: none; }
 
 /* Toolbar */
 .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
-.search { flex: 1; min-width: 180px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); font-size: 13px; font-family: inherit; }
+.search { flex: 1; min-width: 180px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); font-size: 13px; font-family: inherit; transition: border-color .15s, box-shadow .15s; }
+.search:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--accent-soft); }
 
 /* Utilities */
 .empty-state { text-align: center; color: var(--ink-soft); padding: 30px; font-size: 13px; }
