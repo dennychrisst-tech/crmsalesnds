@@ -71,9 +71,10 @@ nav.tabs button {
   display: flex; align-items: center; gap: 5px;
   border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
   padding: 9px 16px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 600;
-  transition: all .15s; position: relative;
+  transition: all .15s, transform .12s ease; position: relative;
 }
-nav.tabs button:hover { border-color: var(--brand); color: var(--brand); }
+nav.tabs button:hover { border-color: var(--brand); color: var(--brand); transform: translateY(-1px); }
+nav.tabs button:active { transform: translateY(0) scale(.96); }
 nav.tabs button.active {
   background: var(--ink); color: #fff; border-color: var(--ink);
   box-shadow: 0 2px 8px rgba(11,27,43,.18);
@@ -91,22 +92,29 @@ nav.tabs button.active::after {
   display: flex; align-items: center; gap: 5px;
   border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
   padding: 9px 14px 9px 16px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 600;
-  transition: all .15s; font-family: inherit;
+  transition: all .15s, transform .12s ease; font-family: inherit;
 }
-.nav-dropdown-trigger:hover { border-color: var(--brand); color: var(--brand); }
+.nav-dropdown-trigger:hover { border-color: var(--brand); color: var(--brand); transform: translateY(-1px); }
+.nav-dropdown-trigger:active { transform: translateY(0) scale(.96); }
 .nav-dropdown-trigger.active {
   background: var(--ink); color: #fff; border-color: var(--ink);
   box-shadow: 0 2px 8px rgba(11,27,43,.18);
+}
+@keyframes navDropdownIn {
+  from { opacity: 0; transform: translateY(-6px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .nav-dropdown-menu {
   position: absolute; top: calc(100% + 6px); left: 0; z-index: 50; min-width: 190px;
   background: var(--card); border: 1px solid var(--line); border-radius: 12px;
   box-shadow: 0 8px 24px rgba(11,27,43,.16); padding: 6px; display: flex; flex-direction: column; gap: 2px;
+  transform-origin: top left; animation: navDropdownIn .15s ease;
 }
 .nav-dropdown-item {
   display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
   border: none; background: none; color: var(--ink); font-family: inherit;
   padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
+  transition: background .12s;
 }
 .nav-dropdown-item:hover { background: var(--paper); }
 .nav-dropdown-item.active { background: var(--accent-soft); color: var(--brand); }
@@ -689,18 +697,25 @@ tr.task-soon td { background: #fffbeb; }
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
     background: none; border: none; font-family: inherit; color: var(--ink-soft);
     padding: 5px 2px; border-radius: 10px; cursor: pointer;
+    transition: color .15s, background .15s, transform .12s ease;
   }
+  .bottom-nav button:active { transform: scale(.92); }
   .bottom-nav button.active { color: var(--brand); background: var(--accent-soft); }
-  .bottom-nav-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+  .bottom-nav-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 1; transition: transform .15s ease; }
+  .bottom-nav button.active .bottom-nav-icon { transform: translateY(-1px); }
   .bottom-nav-label { font-size: 9.5px; font-weight: 600; white-space: nowrap; }
 
+  @keyframes moreSheetFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes moreSheetSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   .more-sheet-backdrop {
     display: block; position: fixed; inset: 0; background: rgba(11,27,43,.45); z-index: 70;
+    animation: moreSheetFadeIn .18s ease;
   }
   .more-sheet {
     position: fixed; left: 0; right: 0; bottom: 0; background: var(--card);
     border-radius: 16px 16px 0 0; padding: 10px 12px calc(16px + env(safe-area-inset-bottom));
     box-shadow: 0 -4px 20px rgba(11,27,43,.15); max-height: 70vh; overflow-y: auto;
+    animation: moreSheetSlideUp .22s cubic-bezier(.32,.72,.35,1);
   }
   .more-sheet-handle { width: 36px; height: 4px; background: var(--line); border-radius: 999px; margin: 4px auto 12px; }
   .more-sheet-group + .more-sheet-group { margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--line); }
@@ -712,9 +727,10 @@ tr.task-soon td { background: #fffbeb; }
     display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
     background: none; border: none; font-family: inherit; font-size: 14px; font-weight: 600;
     color: var(--ink); padding: 12px 10px; border-radius: 10px; cursor: pointer;
+    transition: background .12s, transform .1s ease;
   }
   .more-sheet-item.active { color: var(--brand); background: var(--accent-soft); }
-  .more-sheet-item:active { background: var(--paper); }
+  .more-sheet-item:active { background: var(--paper); transform: scale(.98); }
 
   /* KPI cards — 2 per row, tighter padding */
   .kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
