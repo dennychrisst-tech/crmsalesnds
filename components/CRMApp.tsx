@@ -65,23 +65,26 @@ const DESKTOP_DROPDOWN_GROUPS: { label: string; icon: LucideIcon; ids: ActiveVie
   { label: "Analitik", icon: BarChart3, ids: ["revenue-forecast", "talent-fill-rate", "mandays-rate"] },
 ];
 
-function NavDropdown({ label, icon: Icon, items, view, onSelect }: {
+function NavDropdown({ label, icon: Icon, items, view, onSelect, open, onToggle, onCloseRequest }: {
   label: string; icon: LucideIcon; items: { id: ActiveView; label: string; icon: LucideIcon }[];
   view: ActiveView; onSelect: (id: ActiveView) => void;
+  open: boolean; onToggle: () => void; onCloseRequest: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const isActive = items.some(i => i.id === view);
 
+  // Shared "which dropdown is open" state lives in the parent (see openNavDropdown
+  // below) so opening one closes the other — each dropdown used to track its own
+  // open state locally, so clicking a second one didn't close the first, letting
+  // both stay open and overlap.
   useEffect(() => {
     if (!open) return;
-    const close = () => setOpen(false);
-    window.addEventListener("click", close);
-    return () => window.removeEventListener("click", close);
-  }, [open]);
+    window.addEventListener("click", onCloseRequest);
+    return () => window.removeEventListener("click", onCloseRequest);
+  }, [open, onCloseRequest]);
 
   return (
     <div className="nav-dropdown-wrap" onClick={e => e.stopPropagation()}>
-      <button className={`nav-dropdown-trigger${isActive ? " active" : ""}`} onClick={() => setOpen(o => !o)}>
+      <button className={`nav-dropdown-trigger${isActive ? " active" : ""}`} onClick={onToggle}>
         <span className="tab-icon"><Icon size={15} /></span>{label}
         <ChevronDown size={13} style={{ transform: open ? "rotate(180deg)" : undefined, transition: "transform .15s" }} />
       </button>
@@ -89,7 +92,7 @@ function NavDropdown({ label, icon: Icon, items, view, onSelect }: {
         <div className="nav-dropdown-menu">
           {items.map(i => (
             <button key={i.id} className={`nav-dropdown-item${view === i.id ? " active" : ""}`}
-              onClick={() => { onSelect(i.id); setOpen(false); }}>
+              onClick={() => { onSelect(i.id); onCloseRequest(); }}>
               <span className="tab-icon"><i.icon size={14} /></span>{i.label}
             </button>
           ))}
@@ -106,6 +109,7 @@ export default function CRMApp() {
   const [pendingDealId, setPendingDealId] = useState<string | null>(null);
   const [pendingVisitId, setPendingVisitId] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [openNavDropdown, setOpenNavDropdown] = useState<string | null>(null);
 
   function openClient(clientId: string) {
     setPendingClientId(clientId);
@@ -182,7 +186,10 @@ export default function CRMApp() {
         {DESKTOP_DROPDOWN_GROUPS.map(g => (
           <NavDropdown key={g.label} label={g.label} icon={g.icon}
             items={g.ids.map(id => TABS.find(t => t.id === id)!).filter(Boolean)}
-            view={view} onSelect={setView} />
+            view={view} onSelect={setView}
+            open={openNavDropdown === g.label}
+            onToggle={() => setOpenNavDropdown(o => o === g.label ? null : g.label)}
+            onCloseRequest={() => setOpenNavDropdown(null)} />
         ))}
       </nav>
 
