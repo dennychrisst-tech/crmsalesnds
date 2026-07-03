@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Briefcase, CalendarDays, TrendingUp, type LucideIcon } from "lucide-react";
+import { Briefcase, CalendarDays, TrendingUp, Mail, Lock, Eye, EyeOff, type LucideIcon } from "lucide-react";
 import Logo from "@/components/ui/Logo";
 
 const FEATURES: { icon: LucideIcon; title: string; desc: string }[] = [
@@ -177,8 +177,8 @@ export default function LoginPage() {
               <div style={{ position: "relative" }}>
                 <span style={{
                   position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)",
-                  fontSize: 14, color: "#94A3B8", pointerEvents: "none",
-                }}>✉</span>
+                  display: "inline-flex", color: "#94A3B8", pointerEvents: "none",
+                }}><Mail size={15} /></span>
                 <input
                   type="email" value={email} onChange={e => setEmail(e.target.value)}
                   required autoComplete="email" placeholder="nama@nds.co.id"
@@ -186,11 +186,11 @@ export default function LoginPage() {
                     width: "100%", padding: "12px 12px 12px 38px",
                     border: "1.5px solid #D8D3C6", borderRadius: 10,
                     fontSize: 14, background: "#fff", color: "#0B1B2B",
-                    outline: "none", boxSizing: "border-box", transition: "border-color .15s",
+                    outline: "none", boxSizing: "border-box", transition: "border-color .15s, box-shadow .15s",
                     fontFamily: "inherit",
                   }}
-                  onFocus={e => e.target.style.borderColor = "#0A6E5C"}
-                  onBlur={e => e.target.style.borderColor = "#D8D3C6"}
+                  onFocus={e => { e.target.style.borderColor = "#0A6E5C"; e.target.style.boxShadow = "0 0 0 3px rgba(0,175,160,.12)"; }}
+                  onBlur={e => { e.target.style.borderColor = "#D8D3C6"; e.target.style.boxShadow = "none"; }}
                 />
               </div>
             </div>
@@ -204,8 +204,8 @@ export default function LoginPage() {
               <div style={{ position: "relative" }}>
                 <span style={{
                   position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)",
-                  fontSize: 14, color: "#94A3B8", pointerEvents: "none",
-                }}>🔒</span>
+                  display: "inline-flex", color: "#94A3B8", pointerEvents: "none",
+                }}><Lock size={15} /></span>
                 <input
                   type={showPass ? "text" : "password"} value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -214,17 +214,17 @@ export default function LoginPage() {
                     width: "100%", padding: "12px 40px 12px 38px",
                     border: "1.5px solid #D8D3C6", borderRadius: 10,
                     fontSize: 14, background: "#fff", color: "#0B1B2B",
-                    outline: "none", boxSizing: "border-box", transition: "border-color .15s",
+                    outline: "none", boxSizing: "border-box", transition: "border-color .15s, box-shadow .15s",
                     fontFamily: "inherit",
                   }}
-                  onFocus={e => e.target.style.borderColor = "#0A6E5C"}
-                  onBlur={e => e.target.style.borderColor = "#D8D3C6"}
+                  onFocus={e => { e.target.style.borderColor = "#0A6E5C"; e.target.style.boxShadow = "0 0 0 3px rgba(0,175,160,.12)"; }}
+                  onBlur={e => { e.target.style.borderColor = "#D8D3C6"; e.target.style.boxShadow = "none"; }}
                 />
                 <button type="button" onClick={() => setShowPass(s => !s)} tabIndex={-1} style={{
                   position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
-                  background: "none", border: "none", cursor: "pointer", fontSize: 14,
-                  color: "#94A3B8", padding: 0, lineHeight: 1,
-                }}>{showPass ? "🙈" : "👁"}</button>
+                  background: "none", border: "none", cursor: "pointer",
+                  display: "inline-flex", color: "#94A3B8", padding: 0, lineHeight: 1,
+                }}>{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button>
               </div>
             </div>
 
@@ -264,6 +264,10 @@ export default function LoginPage() {
       </div>
 
       <style>{`
+        @keyframes lpFadeIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        .lp-brand { animation: lpFadeIn .45s ease; }
+        .lp-form-card { animation: lpFadeIn .45s ease .08s both; }
+
         @media (max-width: 720px) {
           .lp-brand { display: none !important; }
           .lp-form {
