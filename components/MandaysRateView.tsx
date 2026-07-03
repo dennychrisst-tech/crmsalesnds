@@ -165,8 +165,8 @@ export default function MandaysRateView({ data, isViewer, onSaveRole, onDeleteRo
                               return (
                                 <td key={label} style={{ cursor: e && !isViewer ? "pointer" : "default" }} onClick={() => e && openEditRate(e)}>
                                   {e ? (
-                                    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                                      <span>{fmtIDR(e.rate_value)}</span>
+                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 3 }}>
+                                      <span style={{ whiteSpace: "nowrap" }}>{fmtIDR(e.rate_value)}</span>
                                       <ClassBadge classification={e.classification} />
                                     </div>
                                   ) : "—"}
