@@ -13,6 +13,7 @@ import { v4 as uuid } from "uuid";
 import { Download } from "lucide-react";
 
 const WFO_DRAG_PREFIX = "wfo:";
+const LEAVE_DRAG_PREFIX = "leave:";
 
 interface Props {
   data: AppData;
@@ -40,6 +41,16 @@ function WfoChip({ name }: { name: string }) {
   );
 }
 
+function LeaveChip({ name }: { name: string }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `${LEAVE_DRAG_PREFIX}${name}` });
+  const style = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
+  return (
+    <div ref={setNodeRef} {...listeners} {...attributes} style={style} className="leave-chip">
+      🌴 {name}
+    </div>
+  );
+}
+
 // Mobile alternative to dragging a WfoChip onto the grid: a plain date + name
 // form. Works the same on any screen size, so it doesn't rely on touch-drag.
 function WfoQuickForm({ team, onMark }: { team: string[]; onMark: (name: string, ds: string) => Promise<void> }) {
@@ -63,6 +74,33 @@ function WfoQuickForm({ team, onMark }: { team: string[]; onMark: (name: string,
       </div>
       <button type="button" className="btn" disabled={!name || !date || saving} onClick={submit}>
         {saving ? "Menandai…" : "🏠 Tandai WFO"}
+      </button>
+    </div>
+  );
+}
+
+// Mobile alternative to dragging a LeaveChip onto the grid — same shape as WfoQuickForm.
+function LeaveQuickForm({ team, onMark }: { team: string[]; onMark: (name: string, ds: string) => Promise<void> }) {
+  const [date, setDate] = useState(todayStr());
+  const [name, setName] = useState(team[0] || "");
+  const [saving, setSaving] = useState(false);
+
+  async function submit() {
+    if (!name || !date || saving) return;
+    setSaving(true);
+    try { await onMark(name, date); } finally { setSaving(false); }
+  }
+
+  return (
+    <div className="leave-quick-form">
+      <div className="leave-quick-row">
+        <input type="date" value={date} onChange={e => setDate(e.target.value)} />
+        <select value={name} onChange={e => setName(e.target.value)}>
+          {team.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+      </div>
+      <button type="button" className="btn" disabled={!name || !date || saving} onClick={submit}>
+        {saving ? "Menandai…" : "🌴 Tandai Cuti"}
       </button>
     </div>
   );
@@ -98,22 +136,24 @@ function AgendaDayCard({
         })}
         {dayEvents.map(ev => {
           const isWfo = ev.type === "WFO";
-          const isCancel = !isWfo && ev.status === "Cancel";
-          const isReschedule = !isWfo && ev.status === "Reschedule";
-          const isDone = !isWfo && ev.status === "Done";
+          const isLeave = ev.type === "Cuti";
+          const isSpecial = isWfo || isLeave;
+          const isCancel = !isSpecial && ev.status === "Cancel";
+          const isReschedule = !isSpecial && ev.status === "Reschedule";
+          const isDone = !isSpecial && ev.status === "Done";
           const statusNote = isCancel ? " · Dibatalkan"
             : isReschedule ? ` · Reschedule${ev.followup_date ? " ke " + fmtDate(ev.followup_date) : ""}`
             : isDone ? " · Selesai" : "";
           return (
             <button key={ev.id} type="button" className="agenda-item"
-              style={{ background: isWfo ? "var(--brand-soft)" : "var(--paper)", cursor: isWfo ? "default" : "pointer", opacity: (isCancel || isDone) ? 0.6 : 1 }}
-              onClick={() => { if (!isWfo && !isViewer) onEditEvent(ev); }}>
-              <span className="agenda-item-dot" style={{ background: isWfo ? "var(--brand)" : "var(--gold)" }} />
+              style={{ background: isWfo ? "var(--brand-soft)" : isLeave ? "#FEE2E2" : "var(--paper)", cursor: isSpecial ? "default" : "pointer", opacity: (isCancel || isDone) ? 0.6 : 1 }}
+              onClick={() => { if (!isSpecial && !isViewer) onEditEvent(ev); }}>
+              <span className="agenda-item-dot" style={{ background: isWfo ? "var(--brand)" : isLeave ? "#991B1B" : "var(--gold)" }} />
               <span>
                 <div className="agenda-item-title" style={{ textDecoration: isCancel ? "line-through" : "none" }}>
-                  {isWfo ? `🏠 WFO — ${ev.created_by || "—"}` : ev.title}
+                  {isWfo ? `🏠 WFO — ${ev.created_by || "—"}` : isLeave ? `🌴 Cuti — ${ev.created_by || "—"}` : ev.title}
                 </div>
-                {!isWfo && <div className="agenda-item-sub">{ev.type}{ev.created_by ? ` · ${ev.created_by}` : ""}{statusNote}</div>}
+                {!isSpecial && <div className="agenda-item-sub">{ev.type}{ev.created_by ? ` · ${ev.created_by}` : ""}{statusNote}</div>}
               </span>
             </button>
           );
@@ -125,17 +165,18 @@ function AgendaDayCard({
 }
 
 function DayCell({
-  ds, day, isToday, dayVisits, dayEvents, clientName, isViewer, onOpenNewVisit, onEditVisit, onEditEvent,
+  ds, day, isToday, dayVisits, dayEvents, clientName, isViewer, activeDragKind, onOpenNewVisit, onEditVisit, onEditEvent,
 }: {
   ds: string; day: number; isToday: boolean; dayVisits: Visit[]; dayEvents: CalendarEvent[];
-  clientName: (id: string) => string; isViewer?: boolean;
+  clientName: (id: string) => string; isViewer?: boolean; activeDragKind: "wfo" | "leave" | null;
   onOpenNewVisit: (ds: string) => void; onEditVisit: (v: Visit) => void; onEditEvent: (e: CalendarEvent) => void;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: ds });
+  const dropClass = isOver ? (activeDragKind === "leave" ? " leave-drop-target" : " wfo-drop-target") : "";
   return (
-    <div ref={setNodeRef} className={`cell${isToday ? " today" : ""}${isOver ? " wfo-drop-target" : ""}`}
+    <div ref={setNodeRef} className={`cell${isToday ? " today" : ""}${dropClass}`}
       onDoubleClick={() => { if (!isViewer) onOpenNewVisit(ds); }}
-      title={isViewer ? "" : "Double-klik untuk tambah visit, atau seret WFO ke sini"}>
+      title={isViewer ? "" : "Double-klik untuk tambah visit, atau seret WFO/Cuti ke sini"}>
       <div className="dnum">{day}</div>
       {dayVisits.map(v => {
         const names = picList(v.pic);
@@ -154,22 +195,24 @@ function DayCell({
       })}
       {dayEvents.map(ev => {
         const isWfo = ev.type === "WFO";
-        const isCancel = !isWfo && ev.status === "Cancel";
-        const isReschedule = !isWfo && ev.status === "Reschedule";
-        const isDone = !isWfo && ev.status === "Done";
+        const isLeave = ev.type === "Cuti";
+        const isSpecial = isWfo || isLeave;
+        const isCancel = !isSpecial && ev.status === "Cancel";
+        const isReschedule = !isSpecial && ev.status === "Reschedule";
+        const isDone = !isSpecial && ev.status === "Done";
         const statusNote = isCancel ? " · Dibatalkan"
           : isReschedule ? ` · Reschedule${ev.followup_date ? " ke " + fmtDate(ev.followup_date) : ""}`
           : isDone ? " · Selesai" : "";
         return (
-          <div key={ev.id} className={`vpill ${isWfo ? "vpill-wfo" : "vpill-event"}`}
+          <div key={ev.id} className={`vpill ${isWfo ? "vpill-wfo" : isLeave ? "vpill-leave" : "vpill-event"}`}
             style={{
-              cursor: isWfo ? "default" : "pointer",
+              cursor: isSpecial ? "default" : "pointer",
               opacity: (isCancel || isDone) ? 0.55 : 1,
               textDecoration: isCancel ? "line-through" : "none",
             }}
-            onClick={isWfo ? undefined : e => { e.stopPropagation(); if (!isViewer) onEditEvent(ev); }}
-            title={isWfo ? `WFO: ${ev.created_by || "—"}` : `${ev.title}${statusNote}`}>
-            {isWfo ? `🏠 ${ev.created_by || "WFO"}` : `${isReschedule ? "↻ " : ""}${ev.title}`}
+            onClick={isSpecial ? undefined : e => { e.stopPropagation(); if (!isViewer) onEditEvent(ev); }}
+            title={isWfo ? `WFO: ${ev.created_by || "—"}` : isLeave ? `Cuti: ${ev.created_by || "—"}` : `${ev.title}${statusNote}`}>
+            {isWfo ? `🏠 ${ev.created_by || "WFO"}` : isLeave ? `🌴 ${ev.created_by || "Cuti"}` : `${isReschedule ? "↻ " : ""}${ev.title}`}
           </div>
         );
       })}
@@ -196,6 +239,9 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
   const [showWfoPanel, setShowWfoPanel] = useState(false);
   const [activeWfoName, setActiveWfoName] = useState<string | null>(null);
   const [pendingWfo, setPendingWfo] = useState<Set<string>>(new Set());
+  const [showLeavePanel, setShowLeavePanel] = useState(false);
+  const [activeLeaveName, setActiveLeaveName] = useState<string | null>(null);
+  const [pendingLeave, setPendingLeave] = useState<Set<string>>(new Set());
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
   const y = cursor.getFullYear(), m = cursor.getMonth();
@@ -226,6 +272,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
   function handleDragStart(e: DragStartEvent) {
     const id = String(e.active.id);
     if (id.startsWith(WFO_DRAG_PREFIX)) setActiveWfoName(id.slice(WFO_DRAG_PREFIX.length));
+    else if (id.startsWith(LEAVE_DRAG_PREFIX)) setActiveLeaveName(id.slice(LEAVE_DRAG_PREFIX.length));
   }
 
   async function markWfo(name: string, ds: string) {
@@ -246,13 +293,32 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
     }
   }
 
+  async function markLeave(name: string, ds: string) {
+    const key = `${name}::${ds}`;
+    if (pendingLeave.has(key)) return;
+    const exists = events.some(ev => ev.type === "Cuti" && ev.date === ds && ev.created_by === name);
+    if (exists) { alert(`${name} sudah ditandai Cuti pada tanggal ${ds}.`); return; }
+    setPendingLeave(prev => new Set(prev).add(key));
+    try {
+      await onSaveEvent({
+        id: uuid(), title: "Cuti", date: ds, type: "Cuti",
+        description: "", created_by: name, client_id: null, status: "Planned",
+      });
+    } catch {
+      // useData's mutation helpers already surface the failure via error toast.
+    } finally {
+      setPendingLeave(prev => { const next = new Set(prev); next.delete(key); return next; });
+    }
+  }
+
   async function handleDragEnd(e: DragEndEvent) {
     setActiveWfoName(null);
+    setActiveLeaveName(null);
     const { over, active } = e;
     if (!over) return;
     const id = String(active.id);
-    if (!id.startsWith(WFO_DRAG_PREFIX)) return;
-    await markWfo(id.slice(WFO_DRAG_PREFIX.length), String(over.id));
+    if (id.startsWith(WFO_DRAG_PREFIX)) await markWfo(id.slice(WFO_DRAG_PREFIX.length), String(over.id));
+    else if (id.startsWith(LEAVE_DRAG_PREFIX)) await markLeave(id.slice(LEAVE_DRAG_PREFIX.length), String(over.id));
   }
 
   const filteredVisits = visits.filter(v => picMatches(v.pic, salesFilter));
@@ -290,6 +356,11 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
               {showWfoPanel ? "Tutup Panel WFO" : "🏠 Tandai WFO"}
             </button>
           )}
+          {!isViewer && (
+            <button className="btn btn-ghost" onClick={() => setShowLeavePanel(s => !s)}>
+              {showLeavePanel ? "Tutup Panel Cuti" : "🌴 Tandai Cuti"}
+            </button>
+          )}
           {!isViewer && <button className="btn btn-ghost" onClick={() => openNewEvent()}>+ Event</button>}
           {!isViewer && <button className="btn add-btn-desktop" onClick={() => openNewVisit()}>+ Jadwalkan Visit</button>}
         </div>
@@ -310,12 +381,18 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
         })}
         <span className="cal-legend-item"><span className="cal-dot cal-dot-event" />Event / Kegiatan</span>
         <span className="cal-legend-item"><span className="cal-dot cal-dot-wfo" />WFO (tidak visit)</span>
+        <span className="cal-legend-item"><span className="cal-dot cal-dot-leave" />Cuti</span>
       </div>
 
-      {/* Mobile-only WFO form — plain date + name picker, no drag needed */}
+      {/* Mobile-only WFO/Cuti forms — plain date + name picker, no drag needed */}
       {showWfoPanel && !isViewer && (
         <div className="wfo-quick-form-wrap">
           <WfoQuickForm team={team} onMark={markWfo} />
+        </div>
+      )}
+      {showLeavePanel && !isViewer && (
+        <div className="leave-quick-form-wrap">
+          <LeaveQuickForm team={team} onMark={markLeave} />
         </div>
       )}
 
@@ -329,6 +406,14 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
               </div>
             </div>
           )}
+          {showLeavePanel && !isViewer && (
+            <div className="leave-panel">
+              <div className="leave-panel-hint">🌴 Seret nama ke tanggal kalender untuk menandai hari itu Cuti</div>
+              <div className="leave-panel-list">
+                {team.map(name => <LeaveChip key={name} name={name} />)}
+              </div>
+            </div>
+          )}
 
           <div className="panel">
             <div className="calendar">
@@ -336,7 +421,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
               {Array.from({ length: firstDay }, (_, i) => <div key={`e${i}`} className="cell empty" />)}
               {monthDays.map(({ ds, day, dayVisits, dayEvents }) => (
                 <DayCell key={ds} ds={ds} day={day} isToday={ds === today} dayVisits={dayVisits} dayEvents={dayEvents}
-                  clientName={clientName} isViewer={isViewer}
+                  clientName={clientName} isViewer={isViewer} activeDragKind={activeWfoName ? "wfo" : activeLeaveName ? "leave" : null}
                   onOpenNewVisit={openNewVisit} onEditVisit={openEditVisit} onEditEvent={openEditEvent} />
               ))}
             </div>
@@ -345,6 +430,9 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
           <DragOverlay>
             {activeWfoName && (
               <div className="wfo-chip" style={{ opacity: 0.9, cursor: "grabbing" }}>🏠 {activeWfoName}</div>
+            )}
+            {activeLeaveName && (
+              <div className="leave-chip" style={{ opacity: 0.9, cursor: "grabbing" }}>🌴 {activeLeaveName}</div>
             )}
           </DragOverlay>
         </DndContext>
