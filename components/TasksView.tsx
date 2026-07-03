@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, RotateCcw } from "lucide-react";
 import { AppData } from "@/hooks/useData";
 import { Task, Client, Deal } from "@/types";
 import { fmtDate, todayStr, TASK_STATUS_COLOR } from "@/lib/utils";
@@ -55,6 +55,14 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
     .filter(t => filterAssignee === "All" || t.assigned_to === filterAssignee)
     .filter(t => !search || t.title.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => (a.due_date || "").localeCompare(b.due_date || ""));
+
+  // Riwayat (history) always shows every Done task below the main list, so it
+  // doesn't disappear behind the Status filter above — most recently done first.
+  const history = tasks
+    .filter(t => t.status === "Done")
+    .filter(t => filterAssignee === "All" || t.assigned_to === filterAssignee)
+    .filter(t => !search || t.title.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => (b.due_date || b.created_at || "").localeCompare(a.due_date || a.created_at || ""));
 
   const openCount = tasks.filter(t => t.status === "Open").length;
   const overdueCount = tasks.filter(t => t.status === "Open" && t.due_date && t.due_date < todayStr()).length;
@@ -160,6 +168,70 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
                     {t.status !== "Done" && (
                       <button className="btn btn-sm" onClick={() => onSaveTask({ ...t, status: "Done" })}><Check size={13} /> Selesai</button>
                     )}
+                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)}>Edit</button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <div className="panel" style={{ padding: 0, marginTop: 18 }}>
+          <div style={{ padding: "14px 16px 0", fontWeight: 700, fontSize: 13.5 }}>
+            Riwayat Task Selesai <span style={{ fontWeight: 400, color: "var(--ink-soft)", fontSize: 12 }}>({history.length})</span>
+          </div>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>Deadline</th>
+                <th>Assigned To</th>
+                <th>Client</th>
+                <th>Project</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.map(t => (
+                <tr key={t.id} style={{ opacity: 0.75 }}>
+                  <td style={{ fontWeight: 600 }}>{t.title}{t.notes && <div style={{ fontWeight: 400, fontSize: 12, color: "var(--ink-soft)" }}>{t.notes}</div>}</td>
+                  <td>{t.due_date ? fmtDate(t.due_date) : "—"}</td>
+                  <td>{t.assigned_to || "—"}</td>
+                  <td>{clientName(t.client_id)}</td>
+                  <td>{dealName(t.deal_id)}</td>
+                  <td>{statusBadge(t.status)}</td>
+                  <td>
+                    {!isViewer && (
+                      <span style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                        <button className="btn btn-ghost btn-sm" title="Buka lagi"
+                          onClick={() => onSaveTask({ ...t, status: "Open" })}><RotateCcw size={13} /> Buka lagi</button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)}>Edit</button>
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="mobile-cards" style={{ padding: 10 }}>
+            {history.map(t => (
+              <div key={t.id} className="mcard" style={{ opacity: 0.75 }}>
+                <div className="mcard-head">
+                  <div className="mcard-title">{t.title}</div>
+                  {statusBadge(t.status)}
+                </div>
+                {t.notes && <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{t.notes}</div>}
+                <div className="mcard-row"><span>Deadline</span><b>{t.due_date ? fmtDate(t.due_date) : "—"}</b></div>
+                <div className="mcard-row"><span>Assigned To</span><b>{t.assigned_to || "—"}</b></div>
+                <div className="mcard-row"><span>Client</span><b>{clientName(t.client_id)}</b></div>
+                <div className="mcard-row"><span>Project</span><b>{dealName(t.deal_id)}</b></div>
+                {!isViewer && (
+                  <div className="mcard-actions">
+                    <button className="btn btn-ghost btn-sm" onClick={() => onSaveTask({ ...t, status: "Open" })}><RotateCcw size={13} /> Buka lagi</button>
                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)}>Edit</button>
                   </div>
                 )}
