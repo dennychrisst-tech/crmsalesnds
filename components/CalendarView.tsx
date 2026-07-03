@@ -123,13 +123,20 @@ function AgendaDayCard({
         {dayVisits.map(v => {
           const names = picList(v.pic);
           const color = colorForSales(names[0] || "—");
+          const isReschedule = v.status === "Reschedule";
+          const isRescheduledInto = !!v.rescheduled_from_id;
           return (
             <button key={v.id} type="button" className="agenda-item" style={{ background: "var(--paper)" }}
               onClick={() => { if (!isViewer) onEditVisit(v); }}>
               <span className="agenda-item-dot" style={{ background: color.bg }} />
               <span>
-                <div className="agenda-item-title">{clientName(v.client_id)}</div>
-                <div className="agenda-item-sub">{v.purpose}{names.length ? ` · ${names.join(" & ")}` : ""}{v.status === "Done" ? " · Selesai" : ""}</div>
+                <div className="agenda-item-title">{isReschedule ? "↻ " : isRescheduledInto ? "↩ " : ""}{clientName(v.client_id)}</div>
+                <div className="agenda-item-sub">
+                  {v.purpose}{names.length ? ` · ${names.join(" & ")}` : ""}
+                  {v.status === "Done" ? " · Selesai" : ""}
+                  {isReschedule ? ` · Reschedule${v.followup_date ? " ke " + fmtDate(v.followup_date) : ""}` : ""}
+                  {isRescheduledInto ? " · Hasil reschedule" : ""}
+                </div>
               </span>
             </button>
           );
@@ -184,12 +191,20 @@ function DayCell({
         const background = colors.length > 1
           ? `linear-gradient(90deg, ${colors[0].bg} 50%, ${colors[1].bg} 50%)`
           : colors[0].bg;
+        const isReschedule = v.status === "Reschedule";
+        const isRescheduledInto = !!v.rescheduled_from_id;
+        const rescheduleNote = isReschedule ? ` · Reschedule ke ${v.followup_date ? fmtDate(v.followup_date) : "-"}` : isRescheduledInto ? " · Hasil reschedule" : "";
         return (
           <div key={v.id} className="vpill"
-            style={{ background, color: colors[0].fg, opacity: v.status === "Done" ? 0.55 : 1, textDecoration: v.status === "Done" ? "line-through" : "none" }}
+            style={{
+              background, color: colors[0].fg,
+              opacity: v.status === "Done" ? 0.55 : isReschedule ? 0.8 : 1,
+              textDecoration: v.status === "Done" ? "line-through" : "none",
+              border: isReschedule ? `1.5px dashed ${colors[0].fg}` : isRescheduledInto ? `1.5px solid ${colors[0].fg}` : undefined,
+            }}
             onClick={e => { e.stopPropagation(); if (!isViewer) onEditVisit(v); }}
-            title={`${clientName(v.client_id)}: ${v.purpose} (${names.join(" & ") || "Tanpa sales"})`}>
-            {clientName(v.client_id)}
+            title={`${clientName(v.client_id)}: ${v.purpose} (${names.join(" & ") || "Tanpa sales"})${rescheduleNote}`}>
+            {isReschedule ? "↻ " : isRescheduledInto ? "↩ " : ""}{clientName(v.client_id)}
           </div>
         );
       })}

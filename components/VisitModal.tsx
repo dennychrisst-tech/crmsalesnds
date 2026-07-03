@@ -38,7 +38,7 @@ function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit
     id: uuid(), client_id: clientId, deal_id: null, project: null, date,
     purpose: "", approach: "", status: "Planned",
     pic: defaultPic, pic_client: "", jabatan: "",
-    followup_date: null, summary: "", rescheduled_to_id: null,
+    followup_date: null, summary: "", rescheduled_to_id: null, rescheduled_from_id: null,
   };
 }
 
@@ -76,6 +76,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         project: visit.project ?? null,
         followup_date: visit.followup_date ?? null,
         rescheduled_to_id: visit.rescheduled_to_id ?? null,
+        rescheduled_from_id: visit.rescheduled_from_id ?? null,
       };
       setForm(restored);
       const [a = "", b = ""] = picList(visit.pic);
@@ -159,7 +160,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
           id: newId, client_id: form.client_id, deal_id: form.deal_id ?? null, project: form.project ?? null,
           date: form.followup_date, purpose: form.purpose, approach: form.approach, status: "Planned",
           pic: form.pic, pic_client: form.pic_client, jabatan: form.jabatan,
-          followup_date: null, summary: "",
+          followup_date: null, summary: "", rescheduled_from_id: form.id,
         });
         toSave = { ...form, rescheduled_to_id: newId };
       }
@@ -229,6 +230,11 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
             </div>
             <VisitBadge status={form.status} />
           </div>
+          {form.rescheduled_from_id && (
+            <div style={{ fontSize: 12, color: "var(--brand)", marginTop: -4, marginBottom: 10 }}>
+              ↩ Jadwal ini dibuat dari reschedule visit sebelumnya
+            </div>
+          )}
           <div className="dd-grid">
             <div className="dd-item"><div className="dd-label">Project</div><div className="dd-value">{visitDeal?.name || "—"}</div></div>
             <div className="dd-item">
