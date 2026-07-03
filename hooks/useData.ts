@@ -265,10 +265,36 @@ export function useData() {
     }
   }
 
-  const upsertDeal = makeUpsert<Deal>("deals");
+  // Auto-hands a Deal off to Revenue Forecast the moment it reaches Kontrak —
+  // previously someone had to remember to separately create a RevenueLine for
+  // billing/invoicing at exactly the point the two systems should meet. Only
+  // fires on the transition into Kontrak (not every re-save while already
+  // there), and only once per deal (checked via RevenueLine.deal_id) so
+  // re-entering Kontrak later doesn't spawn a second draft.
+  async function handleKontrakHandOff(deal: Deal, prevStage: string | undefined) {
+    if (deal.stage !== "Kontrak" || prevStage === "Kontrak") return;
+    if (dataRef.current.revenue_lines.some(l => l.deal_id === deal.id)) return;
+    await upsert("revenue_lines", {
+      id: uuid(), year: deal.year || new Date().getFullYear(), category: "Project",
+      project_name: deal.name, pic: deal.owner || "", milestones: [],
+      notes: "Auto-dibuat dari Pipeline saat deal masuk stage Kontrak — lengkapi milestone invoicing.",
+      deal_id: deal.id,
+    });
+    toast(`"${deal.name}" ditambahkan ke Revenue Forecast — lengkapi milestone invoicing`);
+  }
+
+  async function upsertDeal(d: Deal) {
+    const prevStage = dataRef.current.deals.find(x => x.id === d.id)?.stage;
+    await upsert("deals", d as unknown as Record<string, unknown>);
+    await handleKontrakHandOff(d, prevStage);
+  }
   const deleteDeal = makeRemove("deals");
-  const updateDealStage = (id: string, stage: string) =>
-    patch("deals", id, { stage, stage_updated_at: new Date().toISOString() });
+  async function updateDealStage(id: string, stage: string) {
+    const prev = dataRef.current.deals.find(d => d.id === id);
+    const result = await patch("deals", id, { stage, stage_updated_at: new Date().toISOString() });
+    if (prev) await handleKontrakHandOff({ ...prev, stage: stage as Deal["stage"] }, prev.stage);
+    return result;
+  }
 
   const upsertProject = makeUpsert<Project>("projects");
   const deleteProject = makeRemove("projects");

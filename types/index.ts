@@ -236,6 +236,7 @@ export interface RevenueLine {
   pic: string;
   milestones: RevenueMilestone[];
   notes: string;
+  deal_id?: string | null;
   created_by_id?: string;
   created_at?: string;
 }

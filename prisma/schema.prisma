@@ -331,6 +331,10 @@ model RevenueLine {
   pic           String   @default("")
   milestones    Json     @default("[]")
   notes         String   @default("")
+  // Set when this line was auto-generated from a Deal reaching Kontrak stage
+  // (see useData's updateDealStage/upsertDeal) — lets that hand-off check
+  // whether a line already exists for a deal before creating another one.
+  deal_id       String?  @db.Uuid
   created_by_id String?  @db.Uuid
   created_at    DateTime @default(now())
 
