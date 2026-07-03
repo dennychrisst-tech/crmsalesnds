@@ -16,7 +16,7 @@ interface Props {
 }
 
 const PRODUCT_CATEGORIES = ["Solution", "Talent", "License", "Support", "IBM"] as const;
-const IBM_PRODUCTS = ["IBM Filenet", "IBM MQ", "IBM BAW", "IBM BOB"] as const;
+const IBM_PRODUCTS = ["IBM Filenet", "IBM MQ", "IBM BAW", "IBM BOB", "IBM Cloud Pak for Integration"] as const;
 
 function parseProduct(product: string) {
   const ibmMatch = IBM_PRODUCTS.find(p => product === p);
