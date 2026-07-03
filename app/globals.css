@@ -764,7 +764,12 @@ tr.task-soon td { background: #fffbeb; }
   }
   .pipeline-stage-tab.active .pipeline-stage-tab-count { background: rgba(255,255,255,.25); }
   .pipeline-mobile-list { display: flex; flex-direction: column; gap: 10px; }
-  .pipeline-mobile-list .deal { width: 100%; }
+  /* .deal's base touch-action:none is for the desktop drag board — these cards
+     aren't draggable here (see Pipeline.tsx's draggable={false}), so restore
+     normal touch scrolling or every swipe over a card gets swallowed instead
+     of scrolling the list. */
+  .pipeline-mobile-list .deal { width: 100%; touch-action: auto; cursor: default; }
+  .pipeline-mobile-list .deal:active { cursor: default; }
 
   /* Modal — full-width on phones, collapse 2-col grids to 1-col */
   .modal-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
