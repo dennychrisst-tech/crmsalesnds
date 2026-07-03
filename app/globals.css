@@ -659,7 +659,7 @@ tr.task-soon td { background: #fffbeb; }
   header.top {
     flex-wrap: wrap; row-gap: 10px; padding: 14px 84px 14px 14px; border-radius: 14px; margin-bottom: 14px;
   }
-  .header-brand img { height: 32px; }
+  .header-brand img { height: 32px !important; width: auto !important; }
   .header-crm-tag { font-size: 9px; padding: 2px 6px; }
   .header-search-row {
     display: flex; flex-wrap: nowrap; align-items: center; gap: 6px;
