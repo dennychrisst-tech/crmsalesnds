@@ -57,13 +57,6 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer }: { deal: 
   const ownerColor = deal.owner ? colorForSales(deal.owner).bg : null;
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  useEffect(() => {
-    if (!pickerOpen) return;
-    const close = () => setPickerOpen(false);
-    window.addEventListener("click", close);
-    return () => window.removeEventListener("click", close);
-  }, [pickerOpen]);
-
   return (
     <div ref={setNodeRef} {...listeners} {...attributes}
       style={{ ...style, borderLeft: `3px solid ${stageColor}`, borderRight: ownerColor ? `3px solid ${ownerColor}` : undefined }}
@@ -87,11 +80,15 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer }: { deal: 
             Pindah stage →
           </button>
           {pickerOpen && (
-            <div className="stage-move-menu" onClick={e => e.stopPropagation()}>
-              {[...STAGES, "On Hold", "Dropped"].filter(s => s !== deal.stage).map(s => (
-                <button key={s} type="button" className="stage-move-item"
-                  onClick={() => { onMoveStage(s); setPickerOpen(false); }}>{s}</button>
-              ))}
+            <div className="stage-move-sheet-backdrop" onClick={e => { e.stopPropagation(); setPickerOpen(false); }}>
+              <div className="stage-move-sheet" onClick={e => e.stopPropagation()}>
+                <div className="stage-move-sheet-handle" />
+                <div className="stage-move-sheet-title">Pindah stage: {deal.name}</div>
+                {[...STAGES, "On Hold", "Dropped"].filter(s => s !== deal.stage).map(s => (
+                  <button key={s} type="button" className="stage-move-sheet-item"
+                    onClick={() => { onMoveStage(s); setPickerOpen(false); }}>{s}</button>
+                ))}
+              </div>
             </div>
           )}
         </div>
