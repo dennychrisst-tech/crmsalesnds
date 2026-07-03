@@ -359,3 +359,42 @@ model RevenueOpportunity {
   @@index([year])
   @@map("revenue_opportunities")
 }
+
+// Internal rate-card benchmark per resource role (COGS / Low / Medium / Max
+// price). One row per role — shared reference used to judge whether a
+// client's actual rate (MandaysClientRate) is competitive or under/over-priced.
+model MandaysRole {
+  id            String   @id @default(uuid()) @db.Uuid
+  role_name     String   @unique
+  cogs          BigInt   @default(0)
+  low_rate      BigInt   @default(0)
+  med_rate      BigInt   @default(0)
+  max_price     BigInt   @default(0)
+  created_by_id String?  @db.Uuid
+  created_at    DateTime @default(now())
+
+  client_rates MandaysClientRate[]
+
+  @@map("mandays_roles")
+}
+
+// One actual/quoted rate for a role at a specific client + contract period
+// (e.g. "DBS OBID Propose Rate 2025"), plus where it falls relative to the
+// role's Low/Medium/Max bands. client_label is free text (not a Client FK)
+// since this is a standalone rate-benchmark reference, not a CRM relationship.
+model MandaysClientRate {
+  id             String   @id @default(uuid()) @db.Uuid
+  role_id        String   @db.Uuid
+  client_label   String
+  rate_label     String
+  rate_value     BigInt   @default(0)
+  classification String   @default("")
+  notes          String   @default("")
+  created_by_id  String?  @db.Uuid
+  created_at     DateTime @default(now())
+
+  role MandaysRole @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@index([role_id])
+  @@map("mandays_client_rates")
+}

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   LayoutDashboard, Building2, CalendarDays, FolderKanban, Briefcase,
-  ListChecks, TrendingUp, ClipboardList, CalendarRange, Wallet, Users, MoreHorizontal,
+  ListChecks, TrendingUp, ClipboardList, CalendarRange, Wallet, Users, MoreHorizontal, Calculator,
   type LucideIcon,
 } from "lucide-react";
 import { useData } from "@/hooks/useData";
@@ -23,6 +23,7 @@ import VisitReport from "./VisitReport";
 import WeeklyReport from "./WeeklyReport";
 import RevenueForecastView from "./RevenueForecastView";
 import TalentFillRateView from "./TalentFillRateView";
+import MandaysRateView from "./MandaysRateView";
 import ToastHost from "./ui/Toast";
 
 const TABS: { id: ActiveView; label: string; icon: LucideIcon }[] = [
@@ -37,6 +38,7 @@ const TABS: { id: ActiveView; label: string; icon: LucideIcon }[] = [
   { id: "weekly-report",label: "Laporan Mingguan",  icon: CalendarRange },
   { id: "revenue-forecast", label: "Revenue Forecast", icon: Wallet },
   { id: "talent-fill-rate", label: "Talent Fill Rate", icon: Users },
+  { id: "mandays-rate", label: "Mandays Rate", icon: Calculator },
 ];
 
 // Bottom nav (mobile only) surfaces the 4 most-used views + a "Lainnya" sheet for the rest.
@@ -87,6 +89,8 @@ export default function CRMApp() {
     uploadClientLogo, deleteClientLogo,
     upsertActivity, deleteActivity,
     upsertEvent, deleteEvent,
+    upsertMandaysRole, deleteMandaysRole,
+    upsertMandaysClientRate, deleteMandaysClientRate,
   } = useData();
 
   const isViewer = currentProfile?.role === "viewer";
@@ -225,6 +229,11 @@ export default function CRMApp() {
                 )}
                 {view === "talent-fill-rate" && (
                   <TalentFillRateView data={data} onOpenClient={openClient} />
+                )}
+                {view === "mandays-rate" && (
+                  <MandaysRateView data={data} isViewer={isViewer}
+                    onSaveRole={ro(upsertMandaysRole)} onDeleteRole={ro(deleteMandaysRole)}
+                    onSaveClientRate={ro(upsertMandaysClientRate)} onDeleteClientRate={ro(deleteMandaysClientRate)} />
                 )}
               </>
             );

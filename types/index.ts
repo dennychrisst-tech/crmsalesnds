@@ -202,7 +202,7 @@ export interface CalendarEvent {
   created_at?: string;
 }
 
-export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects" | "tasks" | "catalog" | "summary" | "visit-report" | "weekly-report" | "revenue-forecast" | "talent-fill-rate";
+export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects" | "tasks" | "catalog" | "summary" | "visit-report" | "weekly-report" | "revenue-forecast" | "talent-fill-rate" | "mandays-rate";
 
 // Revenue Forecast — annual target vs. contracted revenue vs. opportunity
 // pipeline (mirrors the team's yearly forecast workbook).
@@ -257,6 +257,29 @@ export interface RevenueOpportunity {
   sales: string;
   status: RevenueOppStatus;
   reason: string;
+  notes: string;
+  created_by_id?: string;
+  created_at?: string;
+}
+
+export interface MandaysRole {
+  id: string;
+  role_name: string;
+  cogs: number;
+  low_rate: number;
+  med_rate: number;
+  max_price: number;
+  created_by_id?: string;
+  created_at?: string;
+}
+
+export interface MandaysClientRate {
+  id: string;
+  role_id: string;
+  client_label: string;
+  rate_label: string;
+  rate_value: number;
+  classification: string;
   notes: string;
   created_by_id?: string;
   created_at?: string;
