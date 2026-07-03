@@ -84,6 +84,33 @@ nav.tabs button.active::after {
 }
 .tab-icon { display: inline-flex; align-items: center; line-height: 1; }
 
+/* Nav dropdown — groups less-frequent tabs (Laporan / Analitik) so the desktop
+   tab row keeps fitting on one line instead of wrapping as more menus get added. */
+.nav-dropdown-wrap { position: relative; display: inline-flex; }
+.nav-dropdown-trigger {
+  display: flex; align-items: center; gap: 5px;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
+  padding: 9px 14px 9px 16px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 600;
+  transition: all .15s; font-family: inherit;
+}
+.nav-dropdown-trigger:hover { border-color: var(--brand); color: var(--brand); }
+.nav-dropdown-trigger.active {
+  background: var(--ink); color: #fff; border-color: var(--ink);
+  box-shadow: 0 2px 8px rgba(11,27,43,.18);
+}
+.nav-dropdown-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 50; min-width: 190px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(11,27,43,.16); padding: 6px; display: flex; flex-direction: column; gap: 2px;
+}
+.nav-dropdown-item {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  border: none; background: none; color: var(--ink); font-family: inherit;
+  padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
+}
+.nav-dropdown-item:hover { background: var(--paper); }
+.nav-dropdown-item.active { background: var(--accent-soft); color: var(--brand); }
+
 /* Bottom nav — mobile only, see @media (max-width: 640px) below */
 .bottom-nav { display: none; }
 .more-sheet-backdrop { display: none; }
@@ -155,9 +182,14 @@ nav.tabs button.active::after {
 .board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; min-height: 300px; }
 .board .col { flex: 0 0 260px; transition: flex-basis .2s ease; }
 /* Stages without deals shrink so filled columns get the space; they stay
-   full drop targets and widen again the moment a card lands. */
-.board .col.col-empty { flex-basis: 130px; }
-.col-empty .col-head h3 { font-size: 11px; }
+   full drop targets and widen again the moment a card lands. Narrowed
+   further and the "0 · Rp 0" line dropped (always zero, so it's just
+   noise) — with 14 stages, several are empty at once and each one still
+   ate a full-height "0 · Rp 0" row before. */
+.board .col.col-empty { flex-basis: 92px; }
+.col-empty .col-head { text-align: center; }
+.col-empty .col-head h3 { font-size: 10px; line-height: 1.3; }
+.col-empty .colval { display: none; }
 .col {
   display: flex; flex-direction: column; min-height: 0;
   background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden;

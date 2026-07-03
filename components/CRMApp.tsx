@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   LayoutDashboard, Building2, CalendarDays, FolderKanban, Briefcase,
   ListChecks, TrendingUp, ClipboardList, CalendarRange, Wallet, Users, MoreHorizontal, Calculator,
+  BarChart3, ChevronDown,
   type LucideIcon,
 } from "lucide-react";
 import { useData } from "@/hooks/useData";
@@ -53,6 +54,49 @@ const MORE_GROUPS: { label: string; ids: ActiveView[] }[] = [
   { label: "Laporan", ids: ["summary", "visit-report", "weekly-report"] },
   { label: "Analitik", ids: ["revenue-forecast", "talent-fill-rate", "mandays-rate"] },
 ];
+
+// Desktop tab row: keeps the 6 most-used views inline, and groups the rest
+// under two dropdowns instead of letting the row wrap to a ragged second
+// line once it doesn't fit (it was already right at the edge at 12 tabs).
+const DESKTOP_PRIMARY_IDS: ActiveView[] = ["dashboard", "clients", "calendar", "projects", "pipeline", "tasks"];
+const DESKTOP_DROPDOWN_GROUPS: { label: string; icon: LucideIcon; ids: ActiveView[] }[] = [
+  { label: "Laporan", icon: ClipboardList, ids: ["summary", "visit-report", "weekly-report"] },
+  { label: "Analitik", icon: BarChart3, ids: ["revenue-forecast", "talent-fill-rate", "mandays-rate"] },
+];
+
+function NavDropdown({ label, icon: Icon, items, view, onSelect }: {
+  label: string; icon: LucideIcon; items: { id: ActiveView; label: string; icon: LucideIcon }[];
+  view: ActiveView; onSelect: (id: ActiveView) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const isActive = items.some(i => i.id === view);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [open]);
+
+  return (
+    <div className="nav-dropdown-wrap" onClick={e => e.stopPropagation()}>
+      <button className={`nav-dropdown-trigger${isActive ? " active" : ""}`} onClick={() => setOpen(o => !o)}>
+        <span className="tab-icon"><Icon size={15} /></span>{label}
+        <ChevronDown size={13} style={{ transform: open ? "rotate(180deg)" : undefined, transition: "transform .15s" }} />
+      </button>
+      {open && (
+        <div className="nav-dropdown-menu">
+          {items.map(i => (
+            <button key={i.id} className={`nav-dropdown-item${view === i.id ? " active" : ""}`}
+              onClick={() => { onSelect(i.id); setOpen(false); }}>
+              <span className="tab-icon"><i.icon size={14} /></span>{i.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function CRMApp() {
   const router = useRouter();
@@ -138,10 +182,15 @@ export default function CRMApp() {
       </header>
 
       <nav className="tabs">
-        {TABS.map(t => (
+        {TABS.filter(t => DESKTOP_PRIMARY_IDS.includes(t.id)).map(t => (
           <button key={t.id} className={view === t.id ? "active" : ""} onClick={() => setView(t.id)}>
             <span className="tab-icon"><t.icon size={15} /></span>{t.label}
           </button>
+        ))}
+        {DESKTOP_DROPDOWN_GROUPS.map(g => (
+          <NavDropdown key={g.label} label={g.label} icon={g.icon}
+            items={g.ids.map(id => TABS.find(t => t.id === id)!).filter(Boolean)}
+            view={view} onSelect={setView} />
         ))}
       </nav>
 
