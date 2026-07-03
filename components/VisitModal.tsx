@@ -36,7 +36,7 @@ interface TaskDraft {
 
 function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit {
   return {
-    id: uuid(), client_id: clientId, deal_id: null, project: null, date,
+    id: uuid(), client_id: clientId, deal_id: null, date,
     purpose: "", approach: "", status: "Planned",
     pic: defaultPic, pic_client: "", jabatan: "",
     followup_date: null, summary: "", rescheduled_to_id: null, rescheduled_from_id: null,
@@ -74,7 +74,6 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         // Old visits without a jabatan fall back to the contact's title from the Client menu
         jabatan: visit.jabatan || matchingContact?.title || "",
         deal_id: visit.deal_id ?? null,
-        project: visit.project ?? null,
         followup_date: visit.followup_date ?? null,
         rescheduled_to_id: visit.rescheduled_to_id ?? null,
         rescheduled_from_id: visit.rescheduled_from_id ?? null,
@@ -113,7 +112,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   const isReschedule = form.status === "Reschedule";
 
   function handleClientChange(clientId: string) {
-    setForm(f => ({ ...f, client_id: clientId, pic_client: "", jabatan: "", deal_id: null, project: null }));
+    setForm(f => ({ ...f, client_id: clientId, pic_client: "", jabatan: "", deal_id: null }));
     setManualPic(false);
   }
 
@@ -163,7 +162,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       } else {
         const newId = uuid();
         await onSave({
-          id: newId, client_id: form.client_id, deal_id: form.deal_id ?? null, project: form.project ?? null,
+          id: newId, client_id: form.client_id, deal_id: form.deal_id ?? null,
           date: form.followup_date, purpose: form.purpose, approach: form.approach, status: "Planned",
           pic: form.pic, pic_client: form.pic_client, jabatan: form.jabatan,
           followup_date: null, summary: "", rescheduled_from_id: form.id,

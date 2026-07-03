@@ -64,7 +64,6 @@ model Visit {
   id            String    @id @default(uuid()) @db.Uuid
   client_id     String    @db.Uuid
   deal_id       String?   @db.Uuid
-  project       String?
   date          DateTime  @db.Date
   purpose       String    @default("")
   approach      String    @default("")
