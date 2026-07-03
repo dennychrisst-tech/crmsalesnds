@@ -59,11 +59,14 @@ function RoleBars({ role, entries, isViewer, onEditRate }: {
       ) : (
         <>
           {/* Label row sits above each full-width bar (rather than a fixed side
-              column) so the bar itself stays readable down to phone widths. */}
-          <div style={{ position: "relative", height: 14, marginBottom: 6, fontSize: 10.5, color: "var(--ink-soft)" }}>
-            <span style={{ position: "absolute", left: `${pct(role.low_rate)}%`, transform: "translateX(-50%)" }}>Low</span>
-            <span style={{ position: "absolute", left: `${pct(role.med_rate)}%`, transform: "translateX(-50%)" }}>Medium</span>
-            <span style={{ position: "absolute", left: `${pct(role.max_price)}%`, transform: "translateX(-50%)" }}>Max</span>
+              column) so the bar itself stays readable down to phone widths.
+              "Medium" gets its own row below Low/Max — when a role has a big
+              outlier rate (e.g. Senior IT/IT1 with entries well past Max),
+              the band compresses and same-row labels collide otherwise. */}
+          <div style={{ position: "relative", height: 28, marginBottom: 6, fontSize: 10.5, color: "var(--ink-soft)" }}>
+            <span style={{ position: "absolute", top: 0, left: `${pct(role.low_rate)}%`, transform: "translateX(-50%)" }}>Low</span>
+            <span style={{ position: "absolute", top: 0, left: `${pct(role.max_price)}%`, transform: "translateX(-50%)" }}>Max</span>
+            <span style={{ position: "absolute", top: 14, left: `${pct(role.med_rate)}%`, transform: "translateX(-50%)" }}>Medium</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {sorted.map(e => {
