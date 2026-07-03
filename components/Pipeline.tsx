@@ -46,6 +46,8 @@ interface Props {
   onDeleteActivity: (id: string) => Promise<void>;
   openDealId?: string | null;
   onOpenDealHandled?: () => void;
+  openStage?: string | null;
+  onOpenStageHandled?: () => void;
 }
 
 // draggable=false on mobile's plain vertical list — dnd-kit's pointer listeners
@@ -256,7 +258,7 @@ function Column({ stage, deals, clientName, onDealClick, onMoveStage, isViewer, 
   );
 }
 
-export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity, openDealId, onOpenDealHandled }: Props) {
+export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity, openDealId, onOpenDealHandled, openStage, onOpenStageHandled }: Props) {
   const { clients, deals, products, documents, attachments, activities, profiles, projects } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [modalOpen, setModalOpen] = useState(false);
@@ -333,6 +335,16 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
     const col = boardRef.current?.querySelector(`[data-stage="${CSS.escape(stage)}"]`);
     col?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
   }
+
+  // Deep-link from Dashboard's "Pipeline per Stage" rows — jump straight to
+  // that stage instead of just landing on the board's default scroll position.
+  useEffect(() => {
+    if (!openStage) return;
+    setMobileStage(openStage);
+    scrollToStage(openStage);
+    onOpenStageHandled?.();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openStage]);
 
   // Single path for every stage change (drag, picker menu, mobile list) so the
   // undo toast is offered consistently. Only Dealed/Dropped are a fresh win/loss

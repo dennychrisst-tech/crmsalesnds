@@ -108,6 +108,9 @@ export default function CRMApp() {
   const [pendingClientId, setPendingClientId] = useState<string | null>(null);
   const [pendingDealId, setPendingDealId] = useState<string | null>(null);
   const [pendingVisitId, setPendingVisitId] = useState<string | null>(null);
+  const [pendingProjectId, setPendingProjectId] = useState<string | null>(null);
+  const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
+  const [pendingStage, setPendingStage] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [openNavDropdown, setOpenNavDropdown] = useState<string | null>(null);
 
@@ -124,6 +127,21 @@ export default function CRMApp() {
   function openVisit(visitId: string) {
     setPendingVisitId(visitId);
     setView("calendar");
+  }
+
+  function openProject(projectId: string) {
+    setPendingProjectId(projectId);
+    setView("projects");
+  }
+
+  function openTask(taskId: string) {
+    setPendingTaskId(taskId);
+    setView("tasks");
+  }
+
+  function openStage(stage: string) {
+    setPendingStage(stage);
+    setView("pipeline");
   }
 
   async function handleLogout() {
@@ -254,7 +272,11 @@ export default function CRMApp() {
             const currentUserName = currentProfile?.name ?? "";
             return (
               <>
-                {view === "dashboard" && <Dashboard data={data} onNavigate={setView} />}
+                {view === "dashboard" && (
+                  <Dashboard data={data} onNavigate={setView}
+                    onOpenClient={openClient} onOpenDeal={openDeal} onOpenVisit={openVisit}
+                    onOpenProject={openProject} onOpenTask={openTask} onOpenStage={openStage} />
+                )}
                 {view === "calendar" && (
                   <CalendarView data={data} currentUserName={currentUserName} isViewer={isViewer}
                     onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)}
@@ -276,15 +298,18 @@ export default function CRMApp() {
                     onAddDocument={ro(upsertDocument)} onDeleteDocument={ro(deleteDocument)}
                     onUploadAttachment={ro(uploadAttachment)} onDeleteAttachment={ro(deleteAttachment)}
                     onAddActivity={ro(upsertActivity)} onDeleteActivity={ro(deleteActivity)}
-                    openDealId={pendingDealId} onOpenDealHandled={() => setPendingDealId(null)} />
+                    openDealId={pendingDealId} onOpenDealHandled={() => setPendingDealId(null)}
+                    openStage={pendingStage} onOpenStageHandled={() => setPendingStage(null)} />
                 )}
                 {view === "projects" && (
                   <Projects data={data} isViewer={isViewer} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)}
                     onSaveTalentRole={ro(upsertTalentRole)} onDeleteTalentRole={ro(deleteTalentRole)}
-                    onOpenClient={openClient} />
+                    onOpenClient={openClient}
+                    openProjectId={pendingProjectId} onOpenProjectHandled={() => setPendingProjectId(null)} />
                 )}
                 {view === "tasks" && (
-                  <TasksView data={data} currentUserName={currentUserName} isViewer={isViewer} onSaveTask={ro(upsertTask)} onDeleteTask={ro(deleteTask)} onCreateDeal={ro(upsertDeal)} />
+                  <TasksView data={data} currentUserName={currentUserName} isViewer={isViewer} onSaveTask={ro(upsertTask)} onDeleteTask={ro(deleteTask)} onCreateDeal={ro(upsertDeal)}
+                    openTaskId={pendingTaskId} onOpenTaskHandled={() => setPendingTaskId(null)} />
                 )}
                 {view === "catalog" && (
                   <ProductsView data={data} isViewer={isViewer} onSaveProduct={ro(upsertProduct)} onDeleteProduct={ro(deleteProduct)} />

@@ -9,6 +9,12 @@ import EmptyState from "./ui/EmptyState";
 interface Props {
   data: AppData;
   onNavigate: (view: ActiveView) => void;
+  onOpenClient?: (clientId: string) => void;
+  onOpenDeal?: (dealId: string) => void;
+  onOpenVisit?: (visitId: string) => void;
+  onOpenProject?: (projectId: string) => void;
+  onOpenTask?: (taskId: string) => void;
+  onOpenStage?: (stage: string) => void;
 }
 
 type Period = "daily" | "weekly" | "monthly";
@@ -124,7 +130,7 @@ function FilterBar({
   );
 }
 
-export default function Dashboard({ data, onNavigate }: Props) {
+export default function Dashboard({ data, onNavigate, onOpenClient, onOpenDeal, onOpenVisit, onOpenProject, onOpenTask, onOpenStage }: Props) {
   const { clients, visits, deals, projects, tasks, activities, profiles } = data;
   const today = todayStr();
 
@@ -323,11 +329,12 @@ export default function Dashboard({ data, onNavigate }: Props) {
       </div>
 
       {/* ── Pipeline Funnel ── */}
-      <div className="panel" style={{ marginBottom: 16, cursor: "pointer", ...panelStyle(PANEL_ACCENTS.pipeline) }} onClick={() => onNavigate("pipeline")}>
+      <div className="panel" style={{ marginBottom: 16, ...panelStyle(PANEL_ACCENTS.pipeline) }}>
         <SectionHeader title="Pipeline per Stage" icon="📊" accent={PANEL_ACCENTS.pipeline} action="Buka Pipeline" onClick={() => onNavigate("pipeline")} />
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {stageData.map(s => (
-            <div key={s.stage} className="funnel-row">
+            <div key={s.stage} className="funnel-row" style={{ cursor: "pointer" }}
+              onClick={() => onOpenStage ? onOpenStage(s.stage) : onNavigate("pipeline")}>
               <div className="funnel-stage" style={{
                 color: STAGE_COLOR[s.stage] || "var(--brand)", background: `${STAGE_COLOR[s.stage] || "var(--brand)"}1A`,
               }}>{s.stage}</div>
@@ -350,7 +357,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
         <div className="panel" style={panelStyle(PANEL_ACCENTS.visit)}>
           <SectionHeader title={`Visit Mendatang (${upcoming.length})`} icon="🚗" accent={PANEL_ACCENTS.visit} action="Buka Calendar" onClick={() => onNavigate("calendar")} />
           {upcoming.length ? upcoming.map(v => (
-            <div key={v.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => onNavigate("calendar")}>
+            <div key={v.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => onOpenVisit ? onOpenVisit(v.id) : onNavigate("calendar")}>
               <div className="ti-date">{fmtDate(v.date)} · <b>{clientName(v.client_id)}</b></div>
               <div className="ti-body">{v.purpose} <VisitBadge status={v.status} /></div>
               {v.pic && <div className="muted" style={{ fontSize: 11 }}>PIC: {v.pic}</div>}
@@ -361,7 +368,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
         <div className="panel" style={panelStyle(followups.length > 0 ? PANEL_ACCENTS.reschedule : PANEL_ACCENTS.reschedule_ok)}>
           <SectionHeader title={`Reschedule Pending (${followups.length})`} icon="🔄" accent={followups.length > 0 ? PANEL_ACCENTS.reschedule : PANEL_ACCENTS.reschedule_ok} action="Buka Calendar" onClick={() => onNavigate("calendar")} />
           {followups.length ? followups.map(v => (
-            <div key={v.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => onNavigate("calendar")}>
+            <div key={v.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => onOpenVisit ? onOpenVisit(v.id) : onNavigate("calendar")}>
               <div className="ti-date"><b>{clientName(v.client_id)}</b> · {fmtDate(v.date)}</div>
               <div className="ti-body">{v.summary || v.purpose}</div>
               {v.pic && <div className="muted" style={{ fontSize: 11 }}>PIC: {v.pic}</div>}
@@ -377,7 +384,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
           {closingSoon.length ? closingSoon.map(d => {
             const daysLeft = Math.ceil((new Date(d.close_date).getTime() - new Date(today).getTime()) / 86400000);
             return (
-              <div key={d.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => onNavigate("pipeline")}>
+              <div key={d.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => onOpenDeal ? onOpenDeal(d.id) : onNavigate("pipeline")}>
                 <div className="ti-date" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   {fmtDate(d.close_date)}
                   <span style={{
@@ -409,7 +416,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
             const isOverdue = t.due_date < today;
             return (
               <div key={t.id} className={`task-item${isOverdue ? " task-item-overdue" : ""}`}
-                style={{ cursor: "pointer" }} onClick={() => onNavigate("tasks")}>
+                style={{ cursor: "pointer" }} onClick={() => onOpenTask ? onOpenTask(t.id) : onNavigate("tasks")}>
                 <div className="task-item-title">{t.title}</div>
                 <div className="task-item-meta">
                   {fmtDate(t.due_date)} · {t.assigned_to || "—"}
@@ -432,7 +439,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
                 display: "flex", alignItems: "center", gap: 12, padding: "8px 0",
                 borderBottom: i < topClients.length - 1 ? "1px solid var(--line)" : "none",
                 cursor: "pointer",
-              }} onClick={() => onNavigate("clients")}>
+              }} onClick={() => onOpenClient ? onOpenClient(c.id) : onNavigate("clients")}>
                 <div style={{
                   width: 28, height: 28, borderRadius: "50%", background: rankColors[i] || "var(--brand)",
                   color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
@@ -451,7 +458,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
             <div key={p.id} style={{
               display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 0",
               borderBottom: "1px solid var(--line)", cursor: "pointer",
-            }} onClick={() => onNavigate("projects")}>
+            }} onClick={() => onOpenProject ? onOpenProject(p.id) : onNavigate("projects")}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{p.name}</div>
                 <div className="muted" style={{ fontSize: 11 }}>
