@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   LayoutDashboard, Building2, CalendarDays, FolderKanban, Briefcase,
-  ListChecks, TrendingUp, ClipboardList, CalendarRange, Wallet, MoreHorizontal,
+  ListChecks, TrendingUp, ClipboardList, CalendarRange, Wallet, Users, MoreHorizontal,
   type LucideIcon,
 } from "lucide-react";
 import { useData } from "@/hooks/useData";
@@ -22,6 +22,7 @@ import SummaryView from "./SummaryView";
 import VisitReport from "./VisitReport";
 import WeeklyReport from "./WeeklyReport";
 import RevenueForecastView from "./RevenueForecastView";
+import TalentFillRateView from "./TalentFillRateView";
 import ToastHost from "./ui/Toast";
 
 const TABS: { id: ActiveView; label: string; icon: LucideIcon }[] = [
@@ -35,6 +36,7 @@ const TABS: { id: ActiveView; label: string; icon: LucideIcon }[] = [
   { id: "visit-report",label: "Laporan Visit",      icon: ClipboardList },
   { id: "weekly-report",label: "Laporan Mingguan",  icon: CalendarRange },
   { id: "revenue-forecast", label: "Revenue Forecast", icon: Wallet },
+  { id: "talent-fill-rate", label: "Talent Fill Rate", icon: Users },
 ];
 
 // Bottom nav (mobile only) surfaces the 4 most-used views + a "Lainnya" sheet for the rest.
@@ -221,6 +223,9 @@ export default function CRMApp() {
                     onSaveTarget={ro(upsertRevenueTarget)}
                     onSaveLine={ro(upsertRevenueLine)} onDeleteLine={ro(deleteRevenueLine)}
                     onSaveOpportunity={ro(upsertRevenueOpportunity)} onDeleteOpportunity={ro(deleteRevenueOpportunity)} />
+                )}
+                {view === "talent-fill-rate" && (
+                  <TalentFillRateView data={data} onOpenClient={openClient} />
                 )}
               </>
             );
