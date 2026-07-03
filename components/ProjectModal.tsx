@@ -4,7 +4,7 @@ import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import SearchableSelect from "./ui/SearchableSelect";
 import { Project, Client } from "@/types";
-import { PROJ_STATUS } from "@/lib/utils";
+import { PROJ_STATUS, fmtIDR as fmtIDRFull, fmtDate } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -41,6 +41,7 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
   const [productCat, setProductCat] = useState("");
   const [ibmSub, setIbmSub] = useState("");
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState<"detail" | "edit">("edit");
 
   useEffect(() => {
     const base = project || emptyProject();
@@ -49,6 +50,7 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
     const { category, sub } = parseProduct(base.product || "");
     setProductCat(category);
     setIbmSub(sub);
+    setTab(project ? "detail" : "edit");
   // Re-init only when the modal opens or a different project is opened — the
   // clients array is replaced by background polling and must not wipe edits.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -85,8 +87,45 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
     onClose();
   }
 
+  const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
+  const tabCls = (t: string) => `modal-tab${tab === t ? " modal-tab-active" : ""}`;
+
   return (
-    <Modal open={open} onClose={onClose} title={`${isEdit ? "Edit" : "Tambah"} Project`}>
+    <Modal open={open} onClose={onClose} title={isEdit ? (tab === "detail" ? "Detail Project" : "Edit Project") : "Tambah Project"}>
+      {isEdit && (
+        <div className="modal-tabs">
+          <button className={tabCls("detail")} onClick={() => setTab("detail")}>Detail</button>
+          <button className={tabCls("edit")} onClick={() => setTab("edit")}>Edit</button>
+        </div>
+      )}
+
+      {isEdit && tab === "detail" && (
+        <>
+          <div className="dd-title-row">
+            <div>
+              <div className="dd-name">{form.name}</div>
+              <div className="dd-client">{clientName(form.client_id)}</div>
+            </div>
+            <span className="badge">{form.status}</span>
+          </div>
+          <div className="dd-grid">
+            <div className="dd-item"><div className="dd-label">Produk / Solusi</div><div className="dd-value">{form.product || "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Nilai</div><div className="dd-value dd-value-brand">{fmtIDRFull(form.value)}</div></div>
+            <div className="dd-item"><div className="dd-label">Target Go-Live</div><div className="dd-value">{form.golive ? fmtDate(form.golive) : "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Partner</div><div className="dd-value">{form.partner || "—"}</div></div>
+          </div>
+          <div className="dd-block">
+            <div className="dd-label">Catatan</div>
+            <div className="dd-text">{form.notes || "—"}</div>
+          </div>
+          <ModalActions>
+            <button className="btn btn-ghost" onClick={onClose}>Tutup</button>
+          </ModalActions>
+        </>
+      )}
+
+      {tab === "edit" && (
+        <>
       <Field label="Nama project">
         <input className={inputCls} value={form.name} onChange={e => set("name", e.target.value)} />
       </Field>
@@ -159,6 +198,8 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
         <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
+        </>
+      )}
     </Modal>
   );
 }

@@ -4,7 +4,7 @@ import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import SearchableSelect from "./ui/SearchableSelect";
 import { Task, Client, Contact, Deal } from "@/types";
-import { todayStr, picList } from "@/lib/utils";
+import { todayStr, picList, fmtDate } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -32,15 +32,18 @@ export default function TaskModal({ open, task, clients, contacts, deals, team, 
   const [form, setForm] = useState<Task>(empty(defaultAssignee));
   const [manualPic, setManualPic] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState<"detail" | "edit">("edit");
 
   useEffect(() => {
     if (task) {
       setForm({ ...task });
       const hasMatchingContact = contacts.some(c => c.client_id === task.client_id && c.name === task.pic_client);
       setManualPic(!!task.pic_client && !hasMatchingContact);
+      setTab("detail");
     } else {
       setForm({ ...empty(defaultAssignee), client_id: preClientId || null, deal_id: preDealId || null });
       setManualPic(false);
+      setTab("edit");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task, preClientId, preDealId, open, defaultAssignee]);
@@ -87,9 +90,47 @@ export default function TaskModal({ open, task, clients, contacts, deals, team, 
 
   const clientContacts = contacts.filter(c => c.client_id === form.client_id);
   const clientDeals = form.client_id ? deals.filter(d => d.client_id === form.client_id) : deals;
+  const clientName = (id: string | null) => id ? (clients.find(c => c.id === id)?.name || "—") : "—";
+  const dealName = (id: string | null) => id ? (deals.find(d => d.id === id)?.name || "—") : "—";
+
+  const tabCls = (t: string) => `modal-tab${tab === t ? " modal-tab-active" : ""}`;
 
   return (
-    <Modal open={open} onClose={onClose} title={`${isEdit ? "Edit" : "Tambah"} Task`}>
+    <Modal open={open} onClose={onClose} title={isEdit ? (tab === "detail" ? "Detail Task" : "Edit Task") : "Tambah Task"}>
+      {isEdit && (
+        <div className="modal-tabs">
+          <button className={tabCls("detail")} onClick={() => setTab("detail")}>Detail</button>
+          <button className={tabCls("edit")} onClick={() => setTab("edit")}>Edit</button>
+        </div>
+      )}
+
+      {isEdit && tab === "detail" && (
+        <>
+          <div className="dd-title-row">
+            <div>
+              <div className="dd-name">{form.title}</div>
+              <div className="dd-client">{clientName(form.client_id)}</div>
+            </div>
+            <span className="badge">{form.status}</span>
+          </div>
+          <div className="dd-grid">
+            <div className="dd-item"><div className="dd-label">Deadline</div><div className="dd-value">{form.due_date ? fmtDate(form.due_date) : "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Assigned To</div><div className="dd-value">{form.assigned_to || "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Project</div><div className="dd-value">{dealName(form.deal_id)}</div></div>
+            <div className="dd-item"><div className="dd-label">PIC Client</div><div className="dd-value">{form.pic_client || "—"}</div></div>
+          </div>
+          <div className="dd-block">
+            <div className="dd-label">Catatan</div>
+            <div className="dd-text">{form.notes || "—"}</div>
+          </div>
+          <ModalActions>
+            <button className="btn btn-ghost" onClick={onClose}>Tutup</button>
+          </ModalActions>
+        </>
+      )}
+
+      {tab === "edit" && (
+        <>
       <Field label="Judul task">
         <input className={inputCls} value={form.title} onChange={e => set("title", e.target.value)} placeholder="Follow up proposal, kirim kontrak…" />
       </Field>
@@ -168,6 +209,8 @@ export default function TaskModal({ open, task, clients, contacts, deals, team, 
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
         <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
+        </>
+      )}
     </Modal>
   );
 }

@@ -30,7 +30,7 @@ export default function ClientModal({ open, client, team, onSave, onDelete, onUp
   const isEdit = !!client;
   const [form, setForm] = useState<Client>(emptyClient());
   const [assigned, setAssigned] = useState<string[]>([]);
-  const [tab, setTab] = useState<"info" | "profile">("info");
+  const [tab, setTab] = useState<"detail" | "info" | "profile">("info");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -38,11 +38,12 @@ export default function ClientModal({ open, client, team, onSave, onDelete, onUp
     if (client) {
       setForm(client);
       setAssigned(getAssigned(client));
+      setTab("detail");
     } else {
       setForm(emptyClient());
       setAssigned([]);
+      setTab("info");
     }
-    setTab("info");
   }, [client, open]);
 
   const set = <K extends keyof Client>(k: K, v: Client[K]) => setForm(f => ({ ...f, [k]: v }));
@@ -96,11 +97,39 @@ export default function ClientModal({ open, client, team, onSave, onDelete, onUp
   const tabCls = (t: string) => `modal-tab${tab === t ? " modal-tab-active" : ""}`;
 
   return (
-    <Modal open={open} onClose={onClose} title={`${isEdit ? "Edit" : "Tambah"} Client`}>
+    <Modal open={open} onClose={onClose} title={isEdit ? (tab === "detail" ? "Detail Client" : "Edit Client") : "Tambah Client"}>
       <div className="modal-tabs">
+        {isEdit && <button className={tabCls("detail")} onClick={() => setTab("detail")}>Detail</button>}
         <button className={tabCls("info")} onClick={() => setTab("info")}>Info Utama</button>
         <button className={tabCls("profile")} onClick={() => setTab("profile")}>Company Profile</button>
       </div>
+
+      {isEdit && tab === "detail" && (
+        <>
+          <div className="dd-title-row">
+            <div>
+              <div className="dd-name">{form.name}</div>
+              <div className="dd-client">{form.sector}{form.company_size ? ` · ${form.company_size}` : ""}</div>
+            </div>
+            <span className="badge">{form.status}</span>
+          </div>
+          <div className="dd-grid">
+            <div className="dd-item"><div className="dd-label">Assign Sales</div><div className="dd-value">{assigned.length ? assigned.join(", ") : "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Website</div><div className="dd-value">{form.website || "—"}</div></div>
+          </div>
+          <div className="dd-block">
+            <div className="dd-label">Alamat</div>
+            <div className="dd-text">{form.address || "—"}</div>
+          </div>
+          <div className="dd-block">
+            <div className="dd-label">Catatan</div>
+            <div className="dd-text">{form.notes || "—"}</div>
+          </div>
+          <ModalActions>
+            <button className="btn btn-ghost" onClick={onClose}>Tutup</button>
+          </ModalActions>
+        </>
+      )}
 
       {tab === "info" && (
         <>
@@ -201,11 +230,13 @@ export default function ClientModal({ open, client, team, onSave, onDelete, onUp
         </>
       )}
 
-      <ModalActions>
-        {isEdit && <button className="btn btn-danger" onClick={handleDelete} disabled={saving}>Hapus</button>}
-        <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-        <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
-      </ModalActions>
+      {tab !== "detail" && (
+        <ModalActions>
+          {isEdit && <button className="btn btn-danger" onClick={handleDelete} disabled={saving}>Hapus</button>}
+          <button className="btn btn-ghost" onClick={onClose}>Batal</button>
+          <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
+        </ModalActions>
+      )}
     </Modal>
   );
 }
