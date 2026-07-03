@@ -28,7 +28,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline-offs
 body {
   margin: 0;
   font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-  background: var(--paper);
+  background:
+    radial-gradient(1100px 520px at 15% -8%, rgba(0,175,160,.08), transparent 60%),
+    radial-gradient(900px 460px at 100% 0%, rgba(10,110,92,.06), transparent 55%),
+    var(--paper);
   color: var(--ink);
   font-size: 14px;
 }
