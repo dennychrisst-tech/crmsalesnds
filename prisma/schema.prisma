@@ -74,6 +74,10 @@ model Visit {
   jabatan       String    @default("")
   followup_date DateTime? @db.Date
   summary       String    @default("")
+  // Points at the new Visit auto-created when this one is marked Reschedule
+  // (see VisitModal) — lets re-saving move that same follow-up visit instead
+  // of spawning a duplicate each time the reschedule date is edited.
+  rescheduled_to_id String? @db.Uuid
   created_by_id String?   @db.Uuid
   created_at    DateTime  @default(now())
 

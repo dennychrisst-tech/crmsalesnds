@@ -58,6 +58,7 @@ export interface Visit {
   jabatan: string;
   followup_date?: string | null;
   summary: string;
+  rescheduled_to_id?: string | null;
   created_by_id?: string;
   created_at?: string;
 }

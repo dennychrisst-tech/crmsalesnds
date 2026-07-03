@@ -38,7 +38,7 @@ function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit
     id: uuid(), client_id: clientId, deal_id: null, project: null, date,
     purpose: "", approach: "", status: "Planned",
     pic: defaultPic, pic_client: "", jabatan: "",
-    followup_date: null, summary: "",
+    followup_date: null, summary: "", rescheduled_to_id: null,
   };
 }
 
@@ -75,6 +75,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         deal_id: visit.deal_id ?? null,
         project: visit.project ?? null,
         followup_date: visit.followup_date ?? null,
+        rescheduled_to_id: visit.rescheduled_to_id ?? null,
       };
       setForm(restored);
       const [a = "", b = ""] = picList(visit.pic);
@@ -107,6 +108,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   const clientContacts = contacts.filter(c => c.client_id === form.client_id);
   const clientDeals = deals.filter(d => d.client_id === form.client_id);
   const isDone = form.status === "Done";
+  const isReschedule = form.status === "Reschedule";
 
   function handleClientChange(clientId: string) {
     setForm(f => ({ ...f, client_id: clientId, pic_client: "", jabatan: "", deal_id: null, project: null }));
@@ -142,7 +144,33 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   async function handleSave() {
     if (!form.client_id) { alert("Client wajib dipilih."); return; }
     if (!form.date) { alert("Tanggal approach wajib diisi."); return; }
-    await onSave(form);
+    if (isReschedule && !form.followup_date) { alert("Tanggal reschedule wajib diisi untuk membuat jadwal baru."); return; }
+
+    let toSave: Visit = form;
+    if (isReschedule && form.followup_date) {
+      if (form.rescheduled_to_id) {
+        // Already spawned a follow-up visit from an earlier save — just move
+        // its date if the reschedule date was changed again, instead of
+        // creating another duplicate visit.
+        await onSave({ id: form.rescheduled_to_id, date: form.followup_date } as unknown as Visit);
+      } else {
+        const newId = uuid();
+        await onSave({
+          id: newId, client_id: form.client_id, deal_id: form.deal_id ?? null, project: form.project ?? null,
+          date: form.followup_date, purpose: form.purpose, approach: form.approach, status: "Planned",
+          pic: form.pic, pic_client: form.pic_client, jabatan: form.jabatan,
+          followup_date: null, summary: "",
+        });
+        toSave = { ...form, rescheduled_to_id: newId };
+      }
+    } else if (form.rescheduled_to_id) {
+      // Status moved away from Reschedule — drop the link so a future
+      // reschedule starts fresh. The follow-up visit already created stays
+      // as-is; it isn't deleted since it may already hold its own detail.
+      toSave = { ...form, rescheduled_to_id: null };
+    }
+
+    await onSave(toSave);
     // Jabatan edited here flows back to the contact in the Client menu, so both
     // stay one source of truth.
     const jabatan = (form.jabatan || "").trim();
@@ -212,7 +240,13 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
             <div className="dd-item"><div className="dd-label">PIC Client</div><div className="dd-value">{form.pic_client || "—"}</div></div>
             <div className="dd-item"><div className="dd-label">Jabatan</div><div className="dd-value">{form.jabatan || "—"}</div></div>
             <div className="dd-item"><div className="dd-label">PIC NDS Sales</div><div className="dd-value">{picList(form.pic).join(" & ") || "—"}</div></div>
-            <div className="dd-item"><div className="dd-label">Tanggal Follow-up</div><div className="dd-value">{form.followup_date ? fmtDate(form.followup_date) : "—"}</div></div>
+            <div className="dd-item">
+              <div className="dd-label">{isReschedule ? "Tanggal Reschedule" : "Tanggal Follow-up"}</div>
+              <div className="dd-value">
+                {form.followup_date ? fmtDate(form.followup_date) : "—"}
+                {isReschedule && form.rescheduled_to_id && <span style={{ color: "var(--brand)" }}> · jadwal baru sudah dibuat</span>}
+              </div>
+            </div>
           </div>
           <div className="dd-block">
             <div className="dd-label">Tujuan Visit</div>
@@ -264,8 +298,8 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         </Field>
       </div>
 
-      {isDone && (
-        <Field label="Tanggal follow-up">
+      {(isDone || isReschedule) && (
+        <Field label={isReschedule ? "Tanggal Reschedule (jadwal visit baru)" : "Tanggal follow-up"}>
           <input type="date" className={inputCls} value={form.followup_date || ""} onChange={e => set("followup_date", e.target.value || null)} />
         </Field>
       )}
