@@ -80,7 +80,6 @@ export default function CRMApp() {
     upsertTalentRole, deleteTalentRole,
     upsertRevenueTarget,
     upsertRevenueLine, deleteRevenueLine,
-    upsertRevenueOpportunity, deleteRevenueOpportunity,
     upsertTask, deleteTask,
     upsertProduct, deleteProduct,
     upsertDocument, deleteDocument,
@@ -222,7 +221,7 @@ export default function CRMApp() {
                   <RevenueForecastView data={data} isViewer={isViewer}
                     onSaveTarget={ro(upsertRevenueTarget)}
                     onSaveLine={ro(upsertRevenueLine)} onDeleteLine={ro(deleteRevenueLine)}
-                    onSaveOpportunity={ro(upsertRevenueOpportunity)} onDeleteOpportunity={ro(deleteRevenueOpportunity)} />
+                    onSaveDeal={ro(upsertDeal)} onDeleteDeal={ro(deleteDeal)} />
                 )}
                 {view === "talent-fill-rate" && (
                   <TalentFillRateView data={data} onOpenClient={openClient} />

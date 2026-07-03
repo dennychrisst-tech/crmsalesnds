@@ -166,7 +166,7 @@ export default function Dashboard({ data, onNavigate }: Props) {
   const bySales = (owner: string) => salesFilter === "all" || owner === salesFilter;
 
   // ── Filtered data ──────────────────────────────────────────────────────
-  const filteredDeals = deals.filter(d => bySales(d.owner));
+  const filteredDeals = deals.filter(d => bySales(d.owner) && !d.archived);
   const filteredVisits = visits.filter(v => picMatches(v.pic, salesFilter));
   const filteredTasks = tasks.filter(t => bySales(t.assigned_to));
 

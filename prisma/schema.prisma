@@ -104,6 +104,24 @@ model Deal {
   created_by_id    String?   @db.Uuid
   created_at       DateTime  @default(now())
 
+  // Revenue Forecast opportunity fields — merged in from the old standalone
+  // revenue_opportunities table so a deal only ever needs one record (see
+  // RevenueForecastView, which now reads its "Opportunity" list from Deal
+  // instead of a separate table to avoid the two views drifting out of sync).
+  year                        Int?
+  category                    String @default("") // H/M/L risk rating
+  potentially_billed_amount   BigInt @default(0)
+  potentially_billed_percent  Int    @default(0)
+  team                        String @default("")
+  pmo                         String @default("")
+  plan                        String @default("")
+  presales                    String @default("")
+  sales                       String @default("")
+  // True for historical/stale revenue-forecast opportunities (e.g. old Dropped
+  // items) that should stay visible in Revenue Forecast but never count toward
+  // Dashboard's Win Rate / Pipeline Aktif KPIs.
+  archived                    Boolean @default(false)
+
   client      Client       @relation(fields: [client_id], references: [id], onDelete: Cascade)
   documents   Document[]
   attachments Attachment[]

@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
 import { AppData } from "@/hooks/useData";
-import { RevenueLine, RevenueOpportunity, RevenueTarget } from "@/types";
+import { RevenueLine, RevenueTarget, Deal } from "@/types";
 import {
-  fmtIDR, fmtDate, REVENUE_LINE_CATEGORIES, REVENUE_OPP_STATUS,
-  REVENUE_OPP_CATEGORY_COLOR, REVENUE_OPP_STATUS_COLOR, REVENUE_MILESTONE_STATUS_COLOR,
+  fmtIDR, fmtDate, REVENUE_LINE_CATEGORIES,
+  REVENUE_OPP_CATEGORY_COLOR, REVENUE_MILESTONE_STATUS_COLOR, isWonStage,
 } from "@/lib/utils";
 import RevenueLineModal from "./RevenueLineModal";
-import RevenueOpportunityModal from "./RevenueOpportunityModal";
+import DealOpportunityModal from "./DealOpportunityModal";
 import RevenueTargetModal from "./RevenueTargetModal";
 import EmptyState from "./ui/EmptyState";
 
@@ -17,9 +17,25 @@ interface Props {
   onSaveTarget: (t: RevenueTarget) => Promise<void>;
   onSaveLine: (l: RevenueLine) => Promise<void>;
   onDeleteLine: (id: string) => Promise<void>;
-  onSaveOpportunity: (o: RevenueOpportunity) => Promise<void>;
-  onDeleteOpportunity: (id: string) => Promise<void>;
+  onSaveDeal: (d: Deal) => Promise<void>;
+  onDeleteDeal: (id: string) => Promise<void>;
 }
+
+// Opportunity list buckets deals by stage — Won stages (Dealed/PO/Kontrak)
+// graduate out of "opportunity" tracking entirely (they belong to the Kontrak
+// section once formalized as a RevenueLine), so only 3 tabs remain.
+type OppBucket = "Active" | "Hold" | "Drop";
+function oppBucket(stage: string): OppBucket | null {
+  if (stage === "Dropped") return "Drop";
+  if (stage === "On Hold") return "Hold";
+  if (isWonStage(stage)) return null;
+  return "Active";
+}
+const OPP_STATUS_COLOR: Record<OppBucket, { bg: string; fg: string }> = {
+  Active: { bg: "#DCFCE7", fg: "#15803D" },
+  Hold: { bg: "#FEF3C7", fg: "#B45309" },
+  Drop: { bg: "#FEE2E2", fg: "#991B1B" },
+};
 
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
 const CATEGORY_LABELS: Record<string, string> = { Project: "Project (Contracted)", Maintenance: "Support Maintenance", Other: "Others" };
@@ -37,16 +53,17 @@ function KpiCard({ label, value, sub, accent }: { label: string; value: string; 
   );
 }
 
-export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSaveLine, onDeleteLine, onSaveOpportunity, onDeleteOpportunity }: Props) {
-  const { revenue_targets, revenue_lines, revenue_opportunities, profiles } = data;
+export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSaveLine, onDeleteLine, onSaveDeal, onDeleteDeal }: Props) {
+  const { revenue_targets, revenue_lines, deals, clients, profiles } = data;
   const team = profiles.filter(p => !["super_admin", "admin", "viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
+  const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
   const currentYear = new Date().getFullYear();
   const years = Array.from(new Set([
     currentYear,
     ...revenue_targets.map(t => t.year),
     ...revenue_lines.map(l => l.year),
-    ...revenue_opportunities.map(o => o.year),
+    ...deals.filter(d => d.year).map(d => d.year as number),
   ])).sort((a, b) => b - a);
 
   const [year, setYear] = useState(currentYear);
@@ -54,16 +71,19 @@ export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSa
   const [lineModalOpen, setLineModalOpen] = useState(false);
   const [editLine, setEditLine] = useState<RevenueLine | null>(null);
   const [oppModalOpen, setOppModalOpen] = useState(false);
-  const [editOpp, setEditOpp] = useState<RevenueOpportunity | null>(null);
-  const [oppFilter, setOppFilter] = useState<"Active" | "Hold" | "Drop">("Active");
+  const [editOpp, setEditOpp] = useState<Deal | null>(null);
+  const [oppFilter, setOppFilter] = useState<OppBucket>("Active");
 
   const target = revenue_targets.find(t => t.year === year) || null;
   const yearLines = revenue_lines.filter(l => l.year === year);
-  const yearOpps = revenue_opportunities.filter(o => o.year === year);
+  const yearOpps = deals
+    .filter(d => d.year === year)
+    .map(d => ({ deal: d, bucket: oppBucket(d.stage) }))
+    .filter((x): x is { deal: Deal; bucket: OppBucket } => x.bucket !== null);
 
   const allMilestones = yearLines.flatMap(l => l.milestones.map(m => ({ ...m, lineId: l.id })));
   const contractedTotal = allMilestones.reduce((s, m) => s + (m.amount || 0), 0);
-  const oppActiveTotal = yearOpps.filter(o => o.status === "Active").reduce((s, o) => s + o.amount, 0);
+  const oppActiveTotal = yearOpps.filter(o => o.bucket === "Active").reduce((s, o) => s + o.deal.value, 0);
   const totalEstimated = contractedTotal + oppActiveTotal;
   const targetRevenue = target?.target_revenue || 0;
   const remaining = Math.max(targetRevenue - totalEstimated, 0);
@@ -82,9 +102,9 @@ export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSa
   function openNewLine() { setEditLine(null); setLineModalOpen(true); }
   function openEditLine(l: RevenueLine) { setEditLine(l); setLineModalOpen(true); }
   function openNewOpp() { setEditOpp(null); setOppModalOpen(true); }
-  function openEditOpp(o: RevenueOpportunity) { setEditOpp(o); setOppModalOpen(true); }
+  function openEditOpp(d: Deal) { setEditOpp(d); setOppModalOpen(true); }
 
-  const filteredOpps = yearOpps.filter(o => o.status === oppFilter);
+  const filteredOpps = yearOpps.filter(o => o.bucket === oppFilter).map(o => o.deal);
 
   return (
     <section>
@@ -101,7 +121,7 @@ export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSa
         <KpiCard label="Contracted" value={fmtIDR(contractedTotal)}
           sub={targetRevenue > 0 ? `${pctContracted.toFixed(1)}% dari target` : undefined} accent="var(--brand)" />
         <KpiCard label="Oppty Active" value={fmtIDR(oppActiveTotal)}
-          sub={`${yearOpps.filter(o => o.status === "Active").length} opportunity`} accent="#D97706" />
+          sub={`${yearOpps.filter(o => o.bucket === "Active").length} opportunity`} accent="#D97706" />
         <KpiCard label="Total Estimated" value={fmtIDR(totalEstimated)}
           sub={targetRevenue > 0 ? `${(pctContracted + pctOppty).toFixed(1)}% dari target` : undefined} accent="#2563EB" />
         <KpiCard label="Remaining to Target" value={fmtIDR(remaining)} accent={remaining > 0 ? "var(--danger)" : "var(--brand)"} />
@@ -207,12 +227,14 @@ export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSa
         )}
       </div>
 
-      {/* Opportunity list */}
+      {/* Opportunity list — sourced directly from Deal (Pipeline) so this is
+          always the same record as what sales sees in Pipeline; no separate
+          opportunity table to keep in sync. */}
       <div className="panel">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
           <h2 style={{ margin: 0 }}>Opportunity</h2>
           <div style={{ display: "flex", gap: 6 }}>
-            {REVENUE_OPP_STATUS.map(s => (
+            {(["Active", "Hold", "Drop"] as OppBucket[]).map(s => (
               <button key={s} type="button"
                 style={{
                   border: "1.5px solid var(--line)", background: oppFilter === s ? "var(--ink)" : "var(--card)",
@@ -220,7 +242,7 @@ export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSa
                   fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
                 }}
                 onClick={() => setOppFilter(s)}>
-                {s} ({yearOpps.filter(o => o.status === s).length})
+                {s} ({yearOpps.filter(o => o.bucket === s).length})
               </button>
             ))}
           </div>
@@ -229,30 +251,32 @@ export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSa
 
         {filteredOpps.length === 0 ? <EmptyState icon="💼" label={`Belum ada opportunity berstatus ${oppFilter}.`} /> : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {filteredOpps.map(o => {
-              const catStyle = REVENUE_OPP_CATEGORY_COLOR[o.category] || { bg: "var(--paper)", fg: "var(--ink-soft)" };
-              const statusStyle = REVENUE_OPP_STATUS_COLOR[o.status] || { bg: "var(--paper)", fg: "var(--ink-soft)" };
+            {filteredOpps.map(d => {
+              const catStyle = REVENUE_OPP_CATEGORY_COLOR[d.category || "L"] || { bg: "var(--paper)", fg: "var(--ink-soft)" };
+              const statusStyle = OPP_STATUS_COLOR[oppFilter];
               return (
-                <div key={o.id} className="ccard" style={{ padding: "10px 14px", cursor: "pointer" }} onClick={() => openEditOpp(o)}>
+                <div key={d.id} className="ccard" style={{ padding: "10px 14px", cursor: "pointer" }} onClick={() => openEditOpp(d)}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontSize: 10.5, fontWeight: 800, padding: "1px 7px", borderRadius: 999, background: catStyle.bg, color: catStyle.fg }}>{o.category}</span>
-                        <span style={{ fontWeight: 700, fontSize: 13.5 }}>{o.project_name}</span>
+                        <span style={{ fontSize: 10.5, fontWeight: 800, padding: "1px 7px", borderRadius: 999, background: catStyle.bg, color: catStyle.fg }}>{d.category || "L"}</span>
+                        <span style={{ fontWeight: 700, fontSize: 13.5 }}>{d.name}</span>
                       </div>
                       <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 4 }}>
-                        {o.pic ? `PIC: ${o.pic}` : ""}
-                        {o.target_closing_date ? ` · Target Closing: ${fmtDate(o.target_closing_date)}` : ""}
-                        {o.product ? ` · ${o.product}` : ""}
+                        {clientName(d.client_id)}
+                        {d.owner ? ` · PIC: ${d.owner}` : ""}
+                        {d.close_date ? ` · Target Closing: ${fmtDate(d.close_date)}` : ""}
+                        {d.product ? ` · ${d.product}` : ""}
+                        {d.stage !== "Approching" ? ` · Stage: ${d.stage}` : ""}
                       </div>
-                      {o.status !== "Active" && o.reason && (
-                        <div style={{ fontSize: 11.5, color: "var(--danger)", marginTop: 4 }}>{o.reason}</div>
+                      {oppFilter !== "Active" && d.win_loss_reason && (
+                        <div style={{ fontSize: 11.5, color: "var(--danger)", marginTop: 4 }}>{d.win_loss_reason}</div>
                       )}
                     </div>
                     <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: 13, color: "var(--brand)" }}>{fmtIDR(o.amount)}</div>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: "var(--brand)" }}>{fmtIDR(d.value)}</div>
                       <span style={{ fontSize: 10.5, fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: statusStyle.bg, color: statusStyle.fg, marginTop: 3, display: "inline-block" }}>
-                        {o.status}
+                        {oppFilter}
                       </span>
                     </div>
                   </div>
@@ -265,7 +289,7 @@ export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSa
 
       <RevenueTargetModal open={targetModalOpen} target={target} year={year} onSave={onSaveTarget} onClose={() => setTargetModalOpen(false)} />
       <RevenueLineModal open={lineModalOpen} line={editLine} year={year} team={team} onSave={onSaveLine} onDelete={onDeleteLine} onClose={() => setLineModalOpen(false)} />
-      <RevenueOpportunityModal open={oppModalOpen} opportunity={editOpp} year={year} team={team} onSave={onSaveOpportunity} onDelete={onDeleteOpportunity} onClose={() => setOppModalOpen(false)} />
+      <DealOpportunityModal open={oppModalOpen} deal={editOpp} year={year} team={team} clients={clients} onSave={onSaveDeal} onDelete={onDeleteDeal} onClose={() => setOppModalOpen(false)} />
     </section>
   );
 }

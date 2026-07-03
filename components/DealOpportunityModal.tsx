@@ -2,46 +2,56 @@
 import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
-import { RevenueOpportunity } from "@/types";
-import { REVENUE_OPP_CATEGORIES, REVENUE_OPP_STATUS } from "@/lib/utils";
+import { Deal, Client } from "@/types";
+import { STAGES, REVENUE_OPP_CATEGORIES } from "@/lib/utils";
+import SearchableSelect from "./ui/SearchableSelect";
 
 interface Props {
   open: boolean;
-  opportunity: RevenueOpportunity | null;
+  deal: Deal | null;
   year: number;
   team: string[];
-  onSave: (o: RevenueOpportunity) => Promise<void>;
+  clients: Client[];
+  onSave: (d: Deal) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onClose: () => void;
 }
 
-function emptyOpp(year: number): RevenueOpportunity {
+// Opportunities live pre-Kontrak — once a deal is formalized as a signed
+// contract it belongs in the "Kontrak" section (sourced from RevenueLine),
+// not here, so Kontrak is deliberately excluded from this stage picker.
+const OPP_STAGES = [...STAGES, "On Hold", "Dropped"];
+
+function emptyOpp(year: number, clientId: string): Deal {
   return {
-    id: uuid(), year, project_name: "", pic: "", category: "L", amount: 0, target_closing_date: null,
-    team: "", pmo: "", plan: "", product: "", potentially_billed_amount: 0, potentially_billed_percent: 0,
-    presales: "", sales: "", status: "Active", reason: "", notes: "",
+    id: uuid(), name: "", client_id: clientId, value: 0, stage: "Approching",
+    deal_type: "", product: "", close_date: "", notes: "", owner: "",
+    win_loss_reason: "", competitor: "",
+    year, category: "L", potentially_billed_amount: 0, potentially_billed_percent: 0,
+    team: "", pmo: "", plan: "", presales: "", sales: "", archived: false,
   };
 }
 
-export default function RevenueOpportunityModal({ open, opportunity, year, team, onSave, onDelete, onClose }: Props) {
-  const isEdit = !!opportunity;
-  const [form, setForm] = useState<RevenueOpportunity>(emptyOpp(year));
-  const [amountDisplay, setAmountDisplay] = useState("");
+export default function DealOpportunityModal({ open, deal, year, team, clients, onSave, onDelete, onClose }: Props) {
+  const isEdit = !!deal;
+  const [form, setForm] = useState<Deal>(emptyOpp(year, ""));
+  const [valueDisplay, setValueDisplay] = useState("");
   const [billedDisplay, setBilledDisplay] = useState("");
 
   useEffect(() => {
-    const base = opportunity || emptyOpp(year);
+    const base = deal || emptyOpp(year, "");
     setForm(base);
-    setAmountDisplay(base.amount ? base.amount.toLocaleString("id-ID") : "");
+    setValueDisplay(base.value ? base.value.toLocaleString("id-ID") : "");
     setBilledDisplay(base.potentially_billed_amount ? base.potentially_billed_amount.toLocaleString("id-ID") : "");
-  // Re-init only when the modal opens or a different opportunity is opened.
+  // Re-init only when the modal opens or a different deal is opened.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [opportunity?.id, open]);
+  }, [deal?.id, open]);
 
-  const set = (k: keyof RevenueOpportunity, v: string | number | null) => setForm(f => ({ ...f, [k]: v }));
+  const set = <K extends keyof Deal>(k: K, v: Deal[K]) => setForm(f => ({ ...f, [k]: v }));
 
   async function handleSave() {
-    if (!form.project_name.trim()) { alert("Nama project wajib diisi."); return; }
+    if (!form.name.trim()) { alert("Nama project wajib diisi."); return; }
+    if (!form.client_id) { alert("Client wajib dipilih."); return; }
     await onSave(form);
     onClose();
   }
@@ -52,10 +62,20 @@ export default function RevenueOpportunityModal({ open, opportunity, year, team,
     onClose();
   }
 
+  const needsReason = form.stage === "Dropped" || form.stage === "On Hold";
+
   return (
     <Modal open={open} onClose={onClose} title={isEdit ? "Edit Opportunity" : "Tambah Opportunity"}>
       <Field label="Nama Project">
-        <input className={inputCls} value={form.project_name} onChange={e => set("project_name", e.target.value)} placeholder="Mis. SMBCI - IBM MQ Annual Support" />
+        <input className={inputCls} value={form.name} onChange={e => set("name", e.target.value)} placeholder="Mis. SMBCI - IBM MQ Annual Support" />
+      </Field>
+      <Field label="Client">
+        <SearchableSelect
+          options={clients.map(c => ({ value: c.id, label: c.name }))}
+          value={form.client_id}
+          onChange={v => set("client_id", v)}
+          placeholder="Cari client…"
+        />
       </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Kategori (H/M/L)">
@@ -63,9 +83,9 @@ export default function RevenueOpportunityModal({ open, opportunity, year, team,
             {REVENUE_OPP_CATEGORIES.map(c => <option key={c}>{c}</option>)}
           </select>
         </Field>
-        <Field label="Status">
-          <select className={selectCls} value={form.status} onChange={e => set("status", e.target.value)}>
-            {REVENUE_OPP_STATUS.map(s => <option key={s}>{s}</option>)}
+        <Field label="Stage">
+          <select className={selectCls} value={form.stage} onChange={e => set("stage", e.target.value as Deal["stage"])}>
+            {OPP_STAGES.map(s => <option key={s}>{s}</option>)}
           </select>
         </Field>
       </div>
@@ -74,24 +94,24 @@ export default function RevenueOpportunityModal({ open, opportunity, year, team,
           <div style={{ position: "relative" }}>
             <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "var(--ink-soft)", pointerEvents: "none" }}>IDR</span>
             <input
-              className={inputCls} style={{ paddingLeft: 38 }} inputMode="numeric" value={amountDisplay}
+              className={inputCls} style={{ paddingLeft: 38 }} inputMode="numeric" value={valueDisplay}
               onChange={e => {
                 const raw = e.target.value.replace(/\D/g, "");
                 const num = parseInt(raw, 10) || 0;
-                setAmountDisplay(raw ? num.toLocaleString("id-ID") : "");
-                setForm(f => ({ ...f, amount: num }));
+                setValueDisplay(raw ? num.toLocaleString("id-ID") : "");
+                setForm(f => ({ ...f, value: num }));
               }}
               placeholder="0"
             />
           </div>
         </Field>
         <Field label="Target Closing">
-          <input type="date" className={inputCls} value={form.target_closing_date || ""} onChange={e => set("target_closing_date", e.target.value || null)} />
+          <input type="date" className={inputCls} value={form.close_date || ""} onChange={e => set("close_date", e.target.value)} />
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="PIC">
-          <select className={selectCls} value={form.pic} onChange={e => set("pic", e.target.value)}>
+        <Field label="Owner (Sales)">
+          <select className={selectCls} value={form.owner} onChange={e => set("owner", e.target.value)}>
             <option value="">— Pilih —</option>
             {team.map(t => <option key={t}>{t}</option>)}
           </select>
@@ -147,9 +167,9 @@ export default function RevenueOpportunityModal({ open, opportunity, year, team,
         </Field>
       </div>
 
-      {form.status !== "Active" && (
-        <Field label={`Alasan ${form.status}`}>
-          <textarea className={textareaCls} value={form.reason} onChange={e => set("reason", e.target.value)}
+      {needsReason && (
+        <Field label={`Alasan ${form.stage}`}>
+          <textarea className={textareaCls} value={form.win_loss_reason} onChange={e => set("win_loss_reason", e.target.value)}
             placeholder="Mis. Tidak ada budget, kalah harga, dll." />
         </Field>
       )}
@@ -157,6 +177,16 @@ export default function RevenueOpportunityModal({ open, opportunity, year, team,
       <Field label="Catatan">
         <textarea className={textareaCls} value={form.notes} onChange={e => set("notes", e.target.value)} />
       </Field>
+
+      {isEdit && (
+        <Field label="Arsip">
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer" }}>
+            <input type="checkbox" checked={!!form.archived} onChange={e => set("archived", e.target.checked)} />
+            Kecualikan dari Win Rate / Pipeline Aktif di Dashboard (data historis)
+          </label>
+        </Field>
+      )}
+
       <ModalActions>
         {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>

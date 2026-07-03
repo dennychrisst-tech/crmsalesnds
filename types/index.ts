@@ -78,6 +78,19 @@ export interface Deal {
   stage_updated_at?: string;
   created_by_id?: string;
   created_at?: string;
+  // Revenue Forecast opportunity fields (merged from the old revenue_opportunities table).
+  // Optional here since the DB has defaults for all of them — quick-create flows
+  // (VisitModal, TaskModal, Pipeline's drag-project-to-stage) don't need to set these.
+  year?: number | null;
+  category?: string; // H/M/L
+  potentially_billed_amount?: number;
+  potentially_billed_percent?: number;
+  team?: string;
+  pmo?: string;
+  plan?: string;
+  presales?: string;
+  sales?: string;
+  archived?: boolean;
 }
 
 export interface Activity {

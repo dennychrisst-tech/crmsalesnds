@@ -69,6 +69,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ta
 
   const body = await req.json();
   if (body.value !== undefined) body.value = BigInt(body.value);
+  if (body.potentially_billed_amount !== undefined) body.potentially_billed_amount = BigInt(body.potentially_billed_amount);
 
   try {
     const result = await getModel(table as TableName).update({ where: { id }, data: body });
