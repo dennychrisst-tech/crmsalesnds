@@ -1,28 +1,21 @@
-import { Poppins } from "next/font/google";
-
-// Segoe UI only exists on Windows — everywhere else the browser silently
-// fell back to a different font, so the N/S mark and the small wordmark
-// could render with mismatched letterforms depending on the viewer's OS.
-// Poppins is self-hosted by Next.js at build time, so every viewer gets
-// the exact same glyphs no matter what's installed on their machine.
-const poppins = Poppins({ subsets: ["latin"], weight: ["700", "800"] });
-
 // Shared NDS mark — used in the post-login header (CRMApp) and on the login
-// page (big + mobile-hero variants). Previously each spot hand-copied the
-// same SVG with viewBox="0 0 210 72"; at font-size 10.5 + letterSpacing 1.5,
-// "NUSANTARA" and "SOLUSINDO" (9 chars each) run past x=210 and get clipped.
-// Widened the viewBox and trimmed the spacing so both words render in full.
+// page (big + mobile-hero variants). Previously this was a hand-coded SVG
+// approximation of the brand mark (wrong letter spacing, wrong D position,
+// wrong font) — now it's the actual logo asset (public/logo-white.png,
+// recolored from the official public/logo.png for dark backgrounds).
 export default function Logo({ height = 44 }: { height?: number }) {
   return (
-    <svg viewBox="0 0 230 72" height={height} aria-label="NDS – Nusantara Duta Solusindo" xmlns="http://www.w3.org/2000/svg" style={{ display: "inline-block" }}>
-      <text x="0" y="48" fontFamily={poppins.style.fontFamily} fontSize="52" fontWeight="800" fill="#fff">N</text>
-      <path d="M48 6 C70 6 84 20 84 36 C84 52 70 66 48 66" stroke="#00AFA0" strokeWidth="7" fill="none" strokeLinecap="round" />
-      <text x="108" y="48" fontFamily={poppins.style.fontFamily} fontSize="52" fontWeight="800" fill="#fff">S</text>
-      <text x="148" y="28" fontFamily={poppins.style.fontFamily} fontSize="10.5" fontWeight="700" letterSpacing="1.2" fill="rgba(255,255,255,.58)">NUSANTARA</text>
-      <text x="148" y="42" fontFamily={poppins.style.fontFamily} fontSize="10.5" fontWeight="700" letterSpacing="1.2" fill="rgba(255,255,255,.58)">
-        <tspan fill="#00AFA0">D</tspan>UTA
-      </text>
-      <text x="148" y="56" fontFamily={poppins.style.fontFamily} fontSize="10.5" fontWeight="700" letterSpacing="1.2" fill="rgba(255,255,255,.58)">SOLUSINDO</text>
-    </svg>
+    // Sized via the `height` attribute (not inline style) so the mobile
+    // ".header-brand img" CSS override can still shrink it — an inline
+    // style would beat that stylesheet rule regardless of specificity.
+    // Plain <img> (not next/image) since this is a small, already-tiny
+    // static asset with no responsive/CLS concerns worth the extra config.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/logo-white.png"
+      alt="NDS – Nusantara Duta Solusindo"
+      height={height}
+      style={{ display: "inline-block" }}
+    />
   );
 }
