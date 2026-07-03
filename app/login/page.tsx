@@ -2,19 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Briefcase, CalendarDays, TrendingUp, type LucideIcon } from "lucide-react";
-
-const NDS_LOGO = (
-  <svg viewBox="0 0 210 72" height="44" aria-label="NDS" xmlns="http://www.w3.org/2000/svg">
-    <text x="0" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#fff">N</text>
-    <path d="M68 6 C90 6 104 20 104 36 C104 52 90 66 68 66" stroke="#00AFA0" strokeWidth="7" fill="none" strokeLinecap="round"/>
-    <text x="108" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#fff">S</text>
-    <text x="148" y="28" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.6)">NUSANTARA</text>
-    <text x="148" y="42" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.6)">
-      <tspan fill="#00AFA0">D</tspan>UTA
-    </text>
-    <text x="148" y="56" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.6)">SOLUSINDO</text>
-  </svg>
-);
+import Logo from "@/components/ui/Logo";
 
 const FEATURES: { icon: LucideIcon; title: string; desc: string }[] = [
   { icon: Briefcase, title: "Pipeline Project", desc: "Kelola dan pantau progress setiap project dalam satu papan kanban." },
@@ -79,14 +67,7 @@ export default function LoginPage() {
         <div style={{ position: "relative", textAlign: "center", maxWidth: 400 }}>
           {/* Big logo */}
           <div style={{ marginBottom: 20 }}>
-            <svg viewBox="0 0 210 72" height="72" aria-label="NDS" xmlns="http://www.w3.org/2000/svg" style={{ display: "inline-block" }}>
-              <text x="0" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#fff">N</text>
-              <path d="M68 6 C90 6 104 20 104 36 C104 52 90 66 68 66" stroke="#00AFA0" strokeWidth="7" fill="none" strokeLinecap="round"/>
-              <text x="108" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#fff">S</text>
-              <text x="148" y="28" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.55)">NUSANTARA</text>
-              <text x="148" y="42" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.55)"><tspan fill="#00AFA0">D</tspan>UTA</text>
-              <text x="148" y="56" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.55)">SOLUSINDO</text>
-            </svg>
+            <Logo height={72} />
           </div>
 
           {/* Divider */}
@@ -161,14 +142,7 @@ export default function LoginPage() {
           }} />
 
           <div style={{ position: "relative", textAlign: "center" }}>
-            <svg viewBox="0 0 210 72" height="48" aria-label="NDS" xmlns="http://www.w3.org/2000/svg">
-              <text x="0" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#fff">N</text>
-              <path d="M68 6 C90 6 104 20 104 36 C104 52 90 66 68 66" stroke="#00AFA0" strokeWidth="7" fill="none" strokeLinecap="round"/>
-              <text x="108" y="48" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="52" fontWeight="800" fill="#fff">S</text>
-              <text x="148" y="28" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.6)">NUSANTARA</text>
-              <text x="148" y="42" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.6)"><tspan fill="#00AFA0">D</tspan>UTA</text>
-              <text x="148" y="56" fontFamily="'Segoe UI',system-ui,sans-serif" fontSize="10.5" fontWeight="700" letterSpacing="1.5" fill="rgba(255,255,255,.6)">SOLUSINDO</text>
-            </svg>
+            <Logo height={48} />
             <div style={{ width: 32, height: 2, background: "#00AFA0", borderRadius: 999, margin: "14px auto 12px" }} />
             <div style={{
               display: "inline-block", fontSize: 9.5, fontWeight: 800, letterSpacing: ".2em",
