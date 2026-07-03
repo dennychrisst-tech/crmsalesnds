@@ -151,8 +151,11 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       await onSaveContact({ ...contact, title: jabatan });
     }
     if (isDone && onCreateTask && task.title.trim()) {
+      // Reuse the visit's own id (like the Visit->Activity sync) so re-saving
+      // an already-Done visit upserts the same follow-up task instead of
+      // minting a new duplicate every time.
       await onCreateTask({
-        id: uuid(),
+        id: form.id,
         title: task.title.trim(),
         due_date: task.due_date,
         client_id: form.client_id,
