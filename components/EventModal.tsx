@@ -37,6 +37,7 @@ export default function EventModal({ open, event, preDate, team, clients, defaul
   const isEdit = !!event;
   const [form, setForm] = useState<CalendarEvent>(emptyEvent(preDate));
   const [selected, setSelected] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
 
   // Re-init only when the modal opens or a different event is opened — not on
   // every background poll (see VisitModal/ProjectModal for the same fix).
@@ -65,8 +66,13 @@ export default function EventModal({ open, event, preDate, team, clients, defaul
 
   async function handleSave() {
     if (!form.title.trim()) { alert("Judul event wajib diisi."); return; }
-    await onSave({ ...form, created_by: joinMembers(selected) });
-    onClose();
+    setSaving(true);
+    try {
+      await onSave({ ...form, created_by: joinMembers(selected) });
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDelete() {
@@ -143,9 +149,9 @@ export default function EventModal({ open, event, preDate, team, clients, defaul
         <textarea className={textareaCls} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Detail lokasi, link meeting, agenda, dll." />
       </Field>
       <ModalActions>
-        {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
+        {isEdit && <button className="btn btn-danger" onClick={handleDelete} disabled={saving}>Hapus</button>}
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-        <button className="btn" onClick={handleSave}>Simpan</button>
+        <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
     </Modal>
   );

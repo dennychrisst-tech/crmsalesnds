@@ -35,6 +35,7 @@ export default function ContactModal({ open, contact, clientId, onSave, onDelete
   const [tab, setTab] = useState<"detail" | "edit">("edit");
   // Add mode: multiple rows
   const [rows, setRows] = useState<Contact[]>([emptyRow(clientId)]);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (isEdit) {
@@ -63,13 +64,22 @@ export default function ContactModal({ open, contact, clientId, onSave, onDelete
   async function handleSave() {
     if (isEdit) {
       if (!form.name.trim()) { alert("Nama kontak wajib diisi."); return; }
-      await onSave(form);
     } else {
       const valid = rows.filter(r => r.name.trim());
       if (!valid.length) { alert("Isi minimal satu nama kontak."); return; }
-      for (const r of valid) await onSave(r);
     }
-    onClose();
+    setSaving(true);
+    try {
+      if (isEdit) {
+        await onSave(form);
+      } else {
+        const valid = rows.filter(r => r.name.trim());
+        for (const r of valid) await onSave(r);
+      }
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDelete() {
@@ -139,9 +149,9 @@ export default function ContactModal({ open, contact, clientId, onSave, onDelete
             <textarea className={textareaCls} value={form.notes} onChange={e => setField("notes", e.target.value)} />
           </Field>
           <ModalActions>
-            {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
+            {isEdit && <button className="btn btn-danger" onClick={handleDelete} disabled={saving}>Hapus</button>}
             <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-            <button className="btn" onClick={handleSave}>Simpan</button>
+            <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
           </ModalActions>
         </>
       ) : !isEdit ? (
@@ -185,7 +195,9 @@ export default function ContactModal({ open, contact, clientId, onSave, onDelete
           </button>
           <ModalActions>
             <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-            <button className="btn" onClick={handleSave}>Simpan {rows.filter(r => r.name.trim()).length > 1 ? `(${rows.filter(r => r.name.trim()).length} kontak)` : ""}</button>
+            <button className="btn" onClick={handleSave} disabled={saving}>
+              {saving ? "Menyimpan…" : `Simpan ${rows.filter(r => r.name.trim()).length > 1 ? `(${rows.filter(r => r.name.trim()).length} kontak)` : ""}`}
+            </button>
           </ModalActions>
         </>
       ) : null}

@@ -51,6 +51,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   const [pic1, setPic1] = useState(defaultPic);
   const [pic2, setPic2] = useState("");
   const [manualPic, setManualPic] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "";
   const deal = (id: string | null | undefined) => id ? deals.find(d => d.id === id) || null : null;
@@ -147,60 +148,65 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
     if (!form.date) { alert("Tanggal approach wajib diisi."); return; }
     if (isReschedule && !form.followup_date) { alert("Tanggal reschedule wajib diisi untuk membuat jadwal baru."); return; }
 
-    let toSave: Visit = form;
-    if (isReschedule && form.followup_date) {
-      // The linked follow-up visit may have been deleted independently since
-      // it was created — check it still exists before doing a date-only
-      // partial update, otherwise Prisma's upsert falls through to its create
-      // path and 500s on the missing required fields.
-      const linkedChildExists = !!form.rescheduled_to_id && visits.some(v => v.id === form.rescheduled_to_id);
-      if (linkedChildExists) {
-        // Already spawned a follow-up visit from an earlier save — just move
-        // its date if the reschedule date was changed again, instead of
-        // creating another duplicate visit.
-        await onSave({ id: form.rescheduled_to_id, date: form.followup_date } as unknown as Visit);
-      } else {
-        const newId = uuid();
-        await onSave({
-          id: newId, client_id: form.client_id, deal_id: form.deal_id ?? null,
-          date: form.followup_date, purpose: form.purpose, approach: form.approach, status: "Planned",
-          pic: form.pic, pic_client: form.pic_client, jabatan: form.jabatan,
-          followup_date: null, summary: "", rescheduled_from_id: form.id,
-        });
-        toSave = { ...form, rescheduled_to_id: newId };
+    setSaving(true);
+    try {
+      let toSave: Visit = form;
+      if (isReschedule && form.followup_date) {
+        // The linked follow-up visit may have been deleted independently since
+        // it was created — check it still exists before doing a date-only
+        // partial update, otherwise Prisma's upsert falls through to its create
+        // path and 500s on the missing required fields.
+        const linkedChildExists = !!form.rescheduled_to_id && visits.some(v => v.id === form.rescheduled_to_id);
+        if (linkedChildExists) {
+          // Already spawned a follow-up visit from an earlier save — just move
+          // its date if the reschedule date was changed again, instead of
+          // creating another duplicate visit.
+          await onSave({ id: form.rescheduled_to_id, date: form.followup_date } as unknown as Visit);
+        } else {
+          const newId = uuid();
+          await onSave({
+            id: newId, client_id: form.client_id, deal_id: form.deal_id ?? null,
+            date: form.followup_date, purpose: form.purpose, approach: form.approach, status: "Planned",
+            pic: form.pic, pic_client: form.pic_client, jabatan: form.jabatan,
+            followup_date: null, summary: "", rescheduled_from_id: form.id,
+          });
+          toSave = { ...form, rescheduled_to_id: newId };
+        }
+      } else if (form.rescheduled_to_id) {
+        // Status moved away from Reschedule — drop the link so a future
+        // reschedule starts fresh. The follow-up visit already created stays
+        // as-is; it isn't deleted since it may already hold its own detail.
+        toSave = { ...form, rescheduled_to_id: null };
       }
-    } else if (form.rescheduled_to_id) {
-      // Status moved away from Reschedule — drop the link so a future
-      // reschedule starts fresh. The follow-up visit already created stays
-      // as-is; it isn't deleted since it may already hold its own detail.
-      toSave = { ...form, rescheduled_to_id: null };
-    }
 
-    await onSave(toSave);
-    // Jabatan edited here flows back to the contact in the Client menu, so both
-    // stay one source of truth.
-    const jabatan = (form.jabatan || "").trim();
-    const contact = clientContacts.find(c => c.name === form.pic_client);
-    if (onSaveContact && contact && jabatan && jabatan !== contact.title) {
-      await onSaveContact({ ...contact, title: jabatan });
+      await onSave(toSave);
+      // Jabatan edited here flows back to the contact in the Client menu, so both
+      // stay one source of truth.
+      const jabatan = (form.jabatan || "").trim();
+      const contact = clientContacts.find(c => c.name === form.pic_client);
+      if (onSaveContact && contact && jabatan && jabatan !== contact.title) {
+        await onSaveContact({ ...contact, title: jabatan });
+      }
+      if (isDone && onCreateTask && task.title.trim()) {
+        // Reuse the visit's own id (like the Visit->Activity sync) so re-saving
+        // an already-Done visit upserts the same follow-up task instead of
+        // minting a new duplicate every time.
+        await onCreateTask({
+          id: form.id,
+          title: task.title.trim(),
+          due_date: task.due_date,
+          client_id: form.client_id,
+          deal_id: form.deal_id ?? null,
+          pic_client: form.pic_client || "",
+          assigned_to: task.assigned_to || picList(form.pic)[0] || "",
+          status: "Open",
+          notes: task.notes,
+        });
+      }
+      onClose();
+    } finally {
+      setSaving(false);
     }
-    if (isDone && onCreateTask && task.title.trim()) {
-      // Reuse the visit's own id (like the Visit->Activity sync) so re-saving
-      // an already-Done visit upserts the same follow-up task instead of
-      // minting a new duplicate every time.
-      await onCreateTask({
-        id: form.id,
-        title: task.title.trim(),
-        due_date: task.due_date,
-        client_id: form.client_id,
-        deal_id: form.deal_id ?? null,
-        pic_client: form.pic_client || "",
-        assigned_to: task.assigned_to || picList(form.pic)[0] || "",
-        status: "Open",
-        notes: task.notes,
-      });
-    }
-    onClose();
   }
 
   async function handleDelete() {
@@ -415,9 +421,9 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
       )}
 
       <ModalActions>
-        {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
+        {isEdit && <button className="btn btn-danger" onClick={handleDelete} disabled={saving}>Hapus</button>}
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-        <button className="btn" onClick={handleSave}>Simpan</button>
+        <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
         </>
       )}

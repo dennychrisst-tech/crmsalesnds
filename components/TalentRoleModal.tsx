@@ -39,6 +39,7 @@ export default function TalentRoleModal({ open, role, projectId, team, onSave, o
   const isEdit = !!role;
   const [form, setForm] = useState<TalentRole>(emptyRole(projectId));
   const [ratecardDisplay, setRatecardDisplay] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const base = role || emptyRole(projectId);
@@ -52,8 +53,13 @@ export default function TalentRoleModal({ open, role, projectId, team, onSave, o
 
   async function handleSave() {
     if (!form.role_name.trim()) { alert("Role wajib diisi."); return; }
-    await onSave(form);
-    onClose();
+    setSaving(true);
+    try {
+      await onSave(form);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDelete() {
@@ -132,9 +138,9 @@ export default function TalentRoleModal({ open, role, projectId, team, onSave, o
           placeholder="Penjelasan hasil, nama kandidat yang PO Issued, dll." />
       </Field>
       <ModalActions>
-        {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
+        {isEdit && <button className="btn btn-danger" onClick={handleDelete} disabled={saving}>Hapus</button>}
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-        <button className="btn" onClick={handleSave}>Simpan</button>
+        <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
     </Modal>
   );

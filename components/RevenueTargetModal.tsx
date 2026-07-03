@@ -40,6 +40,7 @@ function MoneyField({ label, value, onChange }: { label: string; value: number; 
 
 export default function RevenueTargetModal({ open, target, year, onSave, onClose }: Props) {
   const [form, setForm] = useState<RevenueTarget>(emptyTarget(year));
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setForm(target || emptyTarget(year));
@@ -47,8 +48,13 @@ export default function RevenueTargetModal({ open, target, year, onSave, onClose
   }, [target?.id, year, open]);
 
   async function handleSave() {
-    await onSave(form);
-    onClose();
+    setSaving(true);
+    try {
+      await onSave(form);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -73,7 +79,7 @@ export default function RevenueTargetModal({ open, target, year, onSave, onClose
       </div>
       <ModalActions>
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-        <button className="btn" onClick={handleSave}>Simpan</button>
+        <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
     </Modal>
   );

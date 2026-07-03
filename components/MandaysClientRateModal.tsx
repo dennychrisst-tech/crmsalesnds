@@ -24,6 +24,7 @@ export default function MandaysClientRateModal({ open, rate, roles, defaultRoleI
   const isEdit = !!rate;
   const [form, setForm] = useState<MandaysClientRate>(emptyRate(defaultRoleId || roles[0]?.id || ""));
   const [display, setDisplay] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const base = rate || emptyRate(defaultRoleId || roles[0]?.id || "");
@@ -36,8 +37,13 @@ export default function MandaysClientRateModal({ open, rate, roles, defaultRoleI
     if (!form.client_label.trim()) { alert("Nama client wajib diisi."); return; }
     if (!form.rate_label.trim()) { alert("Label rate/periode wajib diisi."); return; }
     if (!form.role_id) { alert("Role wajib dipilih."); return; }
-    await onSave(form);
-    onClose();
+    setSaving(true);
+    try {
+      await onSave(form);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDelete() {
@@ -87,9 +93,9 @@ export default function MandaysClientRateModal({ open, rate, roles, defaultRoleI
         <textarea className={textareaCls} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
       </Field>
       <ModalActions>
-        {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
+        {isEdit && <button className="btn btn-danger" onClick={handleDelete} disabled={saving}>Hapus</button>}
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-        <button className="btn" onClick={handleSave}>Simpan</button>
+        <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
     </Modal>
   );

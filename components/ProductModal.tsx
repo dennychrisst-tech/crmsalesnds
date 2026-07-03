@@ -18,6 +18,7 @@ const empty = (): Product => ({ id: uuid(), name: "", category: "ECM / BPM", des
 export default function ProductModal({ open, product, onSave, onDelete, onClose }: Props) {
   const isEdit = !!product;
   const [form, setForm] = useState<Product>(empty());
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => { setForm(product || empty()); }, [product, open]);
 
@@ -25,8 +26,13 @@ export default function ProductModal({ open, product, onSave, onDelete, onClose 
 
   async function handleSave() {
     if (!form.name.trim()) { alert("Nama produk wajib diisi."); return; }
-    await onSave(form);
-    onClose();
+    setSaving(true);
+    try {
+      await onSave(form);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDelete() {
@@ -49,9 +55,9 @@ export default function ProductModal({ open, product, onSave, onDelete, onClose 
         <textarea className={textareaCls} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Singkat tentang produk ini…" />
       </Field>
       <ModalActions>
-        {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
+        {isEdit && <button className="btn btn-danger" onClick={handleDelete} disabled={saving}>Hapus</button>}
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-        <button className="btn" onClick={handleSave}>Simpan</button>
+        <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
     </Modal>
   );

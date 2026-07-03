@@ -26,6 +26,7 @@ function emptyMilestone(): RevenueMilestone {
 export default function RevenueLineModal({ open, line, year, team, onSave, onDelete, onClose }: Props) {
   const isEdit = !!line;
   const [form, setForm] = useState<RevenueLine>(emptyLine(year));
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setForm(line || emptyLine(year));
@@ -51,8 +52,13 @@ export default function RevenueLineModal({ open, line, year, team, onSave, onDel
 
   async function handleSave() {
     if (!form.project_name.trim()) { alert("Nama project wajib diisi."); return; }
-    await onSave(form);
-    onClose();
+    setSaving(true);
+    try {
+      await onSave(form);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDelete() {
@@ -132,9 +138,9 @@ export default function RevenueLineModal({ open, line, year, team, onSave, onDel
         <textarea className={textareaCls} value={form.notes} onChange={e => set("notes", e.target.value)} />
       </Field>
       <ModalActions>
-        {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
+        {isEdit && <button className="btn btn-danger" onClick={handleDelete} disabled={saving}>Hapus</button>}
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-        <button className="btn" onClick={handleSave}>Simpan</button>
+        <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
     </Modal>
   );

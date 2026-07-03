@@ -41,6 +41,7 @@ function MoneyField({ label, value, onChange }: { label: string; value: number; 
 export default function MandaysRoleModal({ open, role, onSave, onDelete, onClose }: Props) {
   const isEdit = !!role;
   const [form, setForm] = useState<MandaysRole>(emptyRole());
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setForm(role || emptyRole());
@@ -49,8 +50,13 @@ export default function MandaysRoleModal({ open, role, onSave, onDelete, onClose
 
   async function handleSave() {
     if (!form.role_name.trim()) { alert("Nama role wajib diisi."); return; }
-    await onSave(form);
-    onClose();
+    setSaving(true);
+    try {
+      await onSave(form);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDelete() {
@@ -73,9 +79,9 @@ export default function MandaysRoleModal({ open, role, onSave, onDelete, onClose
         <MoneyField label="Max Price" value={form.max_price} onChange={n => setForm(f => ({ ...f, max_price: n }))} />
       </div>
       <ModalActions>
-        {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
+        {isEdit && <button className="btn btn-danger" onClick={handleDelete} disabled={saving}>Hapus</button>}
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-        <button className="btn" onClick={handleSave}>Simpan</button>
+        <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
     </Modal>
   );

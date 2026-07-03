@@ -40,6 +40,7 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
   const [valueDisplay, setValueDisplay] = useState("");
   const [productCat, setProductCat] = useState("");
   const [ibmSub, setIbmSub] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const base = project || emptyProject();
@@ -69,8 +70,13 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
   async function handleSave() {
     if (!form.name.trim()) { alert("Nama project wajib diisi."); return; }
     if (!form.client_id) { alert("Client wajib dipilih."); return; }
-    await onSave(form);
-    onClose();
+    setSaving(true);
+    try {
+      await onSave(form);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDelete() {
@@ -149,9 +155,9 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
         <textarea className={textareaCls} value={form.notes} onChange={e => set("notes", e.target.value)} />
       </Field>
       <ModalActions>
-        {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
+        {isEdit && <button className="btn btn-danger" onClick={handleDelete} disabled={saving}>Hapus</button>}
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-        <button className="btn" onClick={handleSave}>Simpan</button>
+        <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
     </Modal>
   );

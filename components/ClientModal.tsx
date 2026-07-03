@@ -32,6 +32,7 @@ export default function ClientModal({ open, client, team, onSave, onDelete, onUp
   const [assigned, setAssigned] = useState<string[]>([]);
   const [tab, setTab] = useState<"info" | "profile">("info");
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (client) {
@@ -76,9 +77,14 @@ export default function ClientModal({ open, client, team, onSave, onDelete, onUp
 
   async function handleSave() {
     if (!form.name.trim()) { alert("Nama client wajib diisi."); return; }
-    const pic = assigned.map(name => ({ name, phone: "" }));
-    await onSave({ ...form, pic });
-    onClose();
+    setSaving(true);
+    try {
+      const pic = assigned.map(name => ({ name, phone: "" }));
+      await onSave({ ...form, pic });
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDelete() {
@@ -196,9 +202,9 @@ export default function ClientModal({ open, client, team, onSave, onDelete, onUp
       )}
 
       <ModalActions>
-        {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
+        {isEdit && <button className="btn btn-danger" onClick={handleDelete} disabled={saving}>Hapus</button>}
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-        <button className="btn" onClick={handleSave}>Simpan</button>
+        <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
     </Modal>
   );

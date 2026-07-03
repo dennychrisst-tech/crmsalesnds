@@ -51,6 +51,7 @@ export default function DealModal({
   const [tab, setTab] = useState<"detail" | "info" | "activity" | "docs" | "files">("info");
   const [actForm, setActForm] = useState(emptyActivity(deal?.id || ""));
   const [saving, setSaving] = useState(false);
+  const [savingMain, setSavingMain] = useState(false);
 
   // Re-init only when the modal opens or a different deal is opened — NOT when
   // background polling replaces the data arrays, which would wipe in-progress
@@ -70,8 +71,13 @@ export default function DealModal({
   async function handleSave() {
     if (!form.name.trim()) { alert("Nama project wajib diisi."); return; }
     if (!form.client_id) { alert("Client wajib dipilih."); return; }
-    await onSave(form);
-    onClose();
+    setSavingMain(true);
+    try {
+      await onSave(form);
+      onClose();
+    } finally {
+      setSavingMain(false);
+    }
   }
 
   async function handleDelete() {
@@ -221,9 +227,9 @@ export default function DealModal({
             <textarea className={textareaCls} value={form.notes} onChange={e => set("notes", e.target.value)} />
           </Field>
           <ModalActions>
-            {isEdit && <button className="btn btn-danger" onClick={handleDelete}>Hapus</button>}
+            {isEdit && <button className="btn btn-danger" onClick={handleDelete} disabled={savingMain}>Hapus</button>}
             <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-            <button className="btn" onClick={handleSave}>Simpan</button>
+            <button className="btn" onClick={handleSave} disabled={savingMain}>{savingMain ? "Menyimpan…" : "Simpan"}</button>
           </ModalActions>
         </>
       )}
