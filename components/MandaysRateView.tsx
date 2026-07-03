@@ -28,85 +28,62 @@ function zoneFor(value: number, role: MandaysRole) {
   return { key: "> Max", bg: "#FEE2E2", fg: "#B91C1C" };
 }
 
-function RoleGauge({ role, entries, isViewer, onEditRate }: {
+// Ranked horizontal bar chart: one bar per client rate, sorted ascending.
+// Low/Medium/Max are drawn as vertical guide lines shared by every bar in the
+// chart, so you can read directly which zone each bar's tip lands in without
+// hovering over anything — every client name and number stays on-screen.
+function RoleBars({ role, entries, isViewer, onEditRate }: {
   role: MandaysRole; entries: MandaysClientRate[]; isViewer?: boolean; onEditRate: (r: MandaysClientRate) => void;
 }) {
   const scaleMax = Math.max(role.max_price, ...entries.map(e => e.rate_value), 1) * 1.08;
   const pct = (v: number) => Math.min(100, (v / scaleMax) * 100);
-
-  // Stack markers that land within ~2% of each other so they don't overlap.
   const sorted = [...entries].sort((a, b) => a.rate_value - b.rate_value);
-  const placed: { e: MandaysClientRate; left: number; row: number }[] = [];
-  for (const e of sorted) {
-    const left = pct(e.rate_value);
-    let row = 0;
-    while (placed.some(p => p.row === row && Math.abs(p.left - left) < 2.2)) row++;
-    placed.push({ e, left, row });
-  }
-  const maxRow = placed.reduce((m, p) => Math.max(m, p.row), 0);
-  const trackHeight = 46 + maxRow * 20;
+
+  const GuideLines = () => (
+    <>
+      <div style={{ position: "absolute", left: `${pct(role.low_rate)}%`, top: 0, bottom: 0, width: 1, background: "rgba(0,0,0,.22)" }} />
+      <div style={{ position: "absolute", left: `${pct(role.med_rate)}%`, top: 0, bottom: 0, width: 1, background: "rgba(0,0,0,.22)" }} />
+      <div style={{ position: "absolute", left: `${pct(role.max_price)}%`, top: 0, bottom: 0, width: 1, background: "rgba(0,0,0,.22)" }} />
+    </>
+  );
 
   return (
     <div className="panel">
       <h2 style={{ marginBottom: 4 }}>{role.role_name}</h2>
-      <div style={{ fontSize: 12, color: "var(--ink-soft)", marginBottom: 14 }}>
+      <div style={{ fontSize: 12, color: "var(--ink-soft)", marginBottom: 12 }}>
         COGS {fmtIDR(role.cogs)} · Low {fmtIDR(role.low_rate)} · Med {fmtIDR(role.med_rate)} · Max {fmtIDR(role.max_price)}
-      </div>
-      <div style={{ position: "relative", height: trackHeight, marginBottom: 22 }}>
-        <div style={{ position: "absolute", left: 0, right: 0, top: maxRow * 20, height: 14, borderRadius: 7, overflow: "hidden", display: "flex" }}>
-          <div style={{ width: `${pct(role.low_rate)}%`, background: "#DBEAFE" }} />
-          <div style={{ width: `${pct(role.med_rate) - pct(role.low_rate)}%`, background: "#DCFCE7" }} />
-          <div style={{ width: `${pct(role.max_price) - pct(role.med_rate)}%`, background: "#FEF3C7" }} />
-          <div style={{ flex: 1, background: "#FEE2E2" }} />
-        </div>
-        {/* COGS reference tick */}
-        <div title={`COGS: ${fmtIDR(role.cogs)}`} style={{
-          position: "absolute", left: `${pct(role.cogs)}%`, top: maxRow * 20 - 3, width: 2, height: 20,
-          background: "var(--ink-soft)", opacity: 0.6,
-        }} />
-        {placed.map(({ e, left, row }) => {
-          const zone = zoneFor(e.rate_value, role);
-          return (
-            <div
-              key={e.id}
-              title={`${e.client_label} — ${e.rate_label}: ${fmtIDR(e.rate_value)} (${zone.key})`}
-              onClick={() => !isViewer && onEditRate(e)}
-              style={{
-                position: "absolute", left: `${left}%`, top: (maxRow - row) * 20, transform: "translateX(-50%)",
-                width: 14, height: 14, borderRadius: "50%", background: zone.bg, border: `2px solid ${zone.fg}`,
-                cursor: isViewer ? "default" : "pointer", boxShadow: "0 1px 2px rgba(0,0,0,.15)",
-              }}
-            />
-          );
-        })}
-        <div style={{ position: "absolute", left: 0, right: 0, top: maxRow * 20 + 20, display: "flex", fontSize: 10.5, color: "var(--ink-soft)" }}>
-          <span style={{ position: "absolute", left: 0 }}>Rp 0</span>
-          <span style={{ position: "absolute", left: `${pct(role.low_rate)}%`, transform: "translateX(-50%)" }}>Low</span>
-          <span style={{ position: "absolute", left: `${pct(role.med_rate)}%`, transform: "translateX(-50%)" }}>Medium</span>
-          <span style={{ position: "absolute", left: `${pct(role.max_price)}%`, transform: "translateX(-50%)" }}>Max</span>
-        </div>
       </div>
 
       {entries.length === 0 ? (
         <div style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>Belum ada rate client untuk role ini.</div>
       ) : (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {sorted.map(e => {
-            const zone = zoneFor(e.rate_value, role);
-            return (
-              <span
-                key={e.id}
-                onClick={() => !isViewer && onEditRate(e)}
-                style={{
-                  fontSize: 11.5, padding: "3px 9px", borderRadius: 999, background: zone.bg, color: zone.fg,
-                  cursor: isViewer ? "default" : "pointer", whiteSpace: "nowrap",
-                }}
-              >
-                <b>{e.client_label}</b> · {e.rate_label}: {fmtIDR(e.rate_value)}
-              </span>
-            );
-          })}
-        </div>
+        <>
+          <div style={{ display: "flex", marginLeft: 150, marginBottom: 4, fontSize: 10.5, color: "var(--ink-soft)", position: "relative", height: 14 }}>
+            <span style={{ position: "absolute", left: `${pct(role.low_rate)}%`, transform: "translateX(-50%)" }}>Low</span>
+            <span style={{ position: "absolute", left: `${pct(role.med_rate)}%`, transform: "translateX(-50%)" }}>Medium</span>
+            <span style={{ position: "absolute", left: `${pct(role.max_price)}%`, transform: "translateX(-50%)" }}>Max</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {sorted.map(e => {
+              const zone = zoneFor(e.rate_value, role);
+              return (
+                <div key={e.id} onClick={() => !isViewer && onEditRate(e)} style={{ display: "flex", alignItems: "center", gap: 10, cursor: isViewer ? "default" : "pointer" }}>
+                  <div style={{ width: 150, flexShrink: 0, lineHeight: 1.25 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700 }}>{e.client_label}</div>
+                    <div style={{ fontSize: 10.5, color: "var(--ink-soft)" }}>{e.rate_label}</div>
+                  </div>
+                  <div style={{ flex: 1, position: "relative", height: 20, background: "var(--line)", borderRadius: 5, overflow: "hidden" }}>
+                    <GuideLines />
+                    <div style={{ width: `${pct(e.rate_value)}%`, height: "100%", background: zone.fg, borderRadius: 5 }} />
+                  </div>
+                  <div style={{ width: 105, flexShrink: 0, textAlign: "right", fontSize: 12.5, fontWeight: 700, color: zone.fg }}>
+                    {fmtIDR(e.rate_value)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
@@ -204,7 +181,7 @@ export default function MandaysRateView({ data, isViewer, onSaveRole, onDeleteRo
           </div>
 
           {roles.map(role => (
-            <RoleGauge
+            <RoleBars
               key={role.id}
               role={role}
               entries={filteredRates.filter(e => e.role_id === role.id)}
