@@ -44,6 +44,15 @@ const TABS: { id: ActiveView; label: string; icon: LucideIcon }[] = [
 // Bottom nav (mobile only) surfaces the 4 most-used views + a "Lainnya" sheet for the rest.
 const PRIMARY_VIEWS: ActiveView[] = ["dashboard", "clients", "calendar", "pipeline"];
 const MORE_TABS = TABS.filter(t => !PRIMARY_VIEWS.includes(t.id));
+// Groups the "Lainnya" sheet under short headers instead of one flat list —
+// it's grown to 8 items as the app added more menus, and was becoming hard
+// to scan on mobile. Anything not listed here falls into "Lainnya" so new
+// tabs never silently disappear from the sheet.
+const MORE_GROUPS: { label: string; ids: ActiveView[] }[] = [
+  { label: "Kerja", ids: ["projects", "tasks"] },
+  { label: "Laporan", ids: ["summary", "visit-report", "weekly-report"] },
+  { label: "Analitik", ids: ["revenue-forecast", "talent-fill-rate", "mandays-rate"] },
+];
 
 export default function CRMApp() {
   const router = useRouter();
@@ -154,12 +163,26 @@ export default function CRMApp() {
         <div className="more-sheet-backdrop" onClick={() => setMoreOpen(false)}>
           <div className="more-sheet" onClick={e => e.stopPropagation()}>
             <div className="more-sheet-handle" />
-            {MORE_TABS.map(t => (
-              <button key={t.id} className={`more-sheet-item${view === t.id ? " active" : ""}`}
-                onClick={() => { setView(t.id); setMoreOpen(false); }}>
-                <span className="bottom-nav-icon"><t.icon size={18} /></span>{t.label}
-              </button>
-            ))}
+            {(() => {
+              const grouped = new Set(MORE_GROUPS.flatMap(g => g.ids));
+              const ungrouped = MORE_TABS.filter(t => !grouped.has(t.id));
+              const sections = [...MORE_GROUPS, ...(ungrouped.length ? [{ label: "Lainnya", ids: ungrouped.map(t => t.id) }] : [])];
+              return sections.map(group => {
+                const items = group.ids.map(id => MORE_TABS.find(t => t.id === id)).filter((t): t is typeof MORE_TABS[number] => !!t);
+                if (items.length === 0) return null;
+                return (
+                  <div key={group.label} className="more-sheet-group">
+                    <div className="more-sheet-group-label">{group.label}</div>
+                    {items.map(t => (
+                      <button key={t.id} className={`more-sheet-item${view === t.id ? " active" : ""}`}
+                        onClick={() => { setView(t.id); setMoreOpen(false); }}>
+                        <span className="bottom-nav-icon"><t.icon size={18} /></span>{t.label}
+                      </button>
+                    ))}
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
       )}

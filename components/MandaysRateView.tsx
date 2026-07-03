@@ -58,26 +58,30 @@ function RoleBars({ role, entries, isViewer, onEditRate }: {
         <div style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>Belum ada rate client untuk role ini.</div>
       ) : (
         <>
-          <div style={{ display: "flex", marginLeft: 150, marginBottom: 4, fontSize: 10.5, color: "var(--ink-soft)", position: "relative", height: 14 }}>
+          {/* Label row sits above each full-width bar (rather than a fixed side
+              column) so the bar itself stays readable down to phone widths. */}
+          <div style={{ position: "relative", height: 14, marginBottom: 6, fontSize: 10.5, color: "var(--ink-soft)" }}>
             <span style={{ position: "absolute", left: `${pct(role.low_rate)}%`, transform: "translateX(-50%)" }}>Low</span>
             <span style={{ position: "absolute", left: `${pct(role.med_rate)}%`, transform: "translateX(-50%)" }}>Medium</span>
             <span style={{ position: "absolute", left: `${pct(role.max_price)}%`, transform: "translateX(-50%)" }}>Max</span>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {sorted.map(e => {
               const zone = zoneFor(e.rate_value, role);
               return (
-                <div key={e.id} onClick={() => !isViewer && onEditRate(e)} style={{ display: "flex", alignItems: "center", gap: 10, cursor: isViewer ? "default" : "pointer" }}>
-                  <div style={{ width: 150, flexShrink: 0, lineHeight: 1.25 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 700 }}>{e.client_label}</div>
-                    <div style={{ fontSize: 10.5, color: "var(--ink-soft)" }}>{e.rate_label}</div>
+                <div key={e.id} onClick={() => !isViewer && onEditRate(e)} style={{ cursor: isViewer ? "default" : "pointer" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
+                    <div style={{ minWidth: 0, lineHeight: 1.3 }}>
+                      <span style={{ fontSize: 12.5, fontWeight: 700 }}>{e.client_label}</span>
+                      <span style={{ fontSize: 11, color: "var(--ink-soft)", marginLeft: 6 }}>{e.rate_label}</span>
+                    </div>
+                    <div style={{ flexShrink: 0, fontSize: 12.5, fontWeight: 700, color: zone.fg, whiteSpace: "nowrap" }}>
+                      {fmtIDR(e.rate_value)}
+                    </div>
                   </div>
-                  <div style={{ flex: 1, position: "relative", height: 20, background: "var(--line)", borderRadius: 5, overflow: "hidden" }}>
+                  <div style={{ position: "relative", height: 16, background: "var(--line)", borderRadius: 5, overflow: "hidden" }}>
                     <GuideLines />
                     <div style={{ width: `${pct(e.rate_value)}%`, height: "100%", background: zone.fg, borderRadius: 5 }} />
-                  </div>
-                  <div style={{ width: 105, flexShrink: 0, textAlign: "right", fontSize: 12.5, fontWeight: 700, color: zone.fg }}>
-                    {fmtIDR(e.rate_value)}
                   </div>
                 </div>
               );
