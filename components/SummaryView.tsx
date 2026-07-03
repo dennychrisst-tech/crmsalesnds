@@ -38,6 +38,15 @@ function inRange(dateStr: string | null | undefined, start: string, end: string)
   return d >= start && d <= end;
 }
 
+// Everything already in the CRM as of this point was bulk-imported from
+// historical spreadsheets (revenue forecast, client approach log, talent
+// trackers, etc.) — created_at on those reflects import time, not when the
+// project/opportunity actually started, so counting them as "Project baru"
+// in whatever week they happened to be imported is misleading. Only deals
+// created after this cutoff (i.e. added through normal day-to-day CRM use)
+// count toward "Project baru" going forward.
+const HISTORICAL_DATA_CUTOFF = "2026-07-03T07:52:11.000Z";
+
 interface FeedItem {
   date: string;
   icon: string;
@@ -66,7 +75,7 @@ export default function SummaryView({ data, onOpenVisit }: Props) {
   const periodTasks    = tasks.filter(t => inRange(t.due_date, start, end) && matchSales(t.assigned_to));
   const periodActivities = activities.filter(a => inRange(a.date || a.created_at, start, end) && matchSales(a.created_by));
   const periodEvents   = events.filter(e => inRange(e.date, start, end) && matchSales(e.created_by));
-  const periodDeals    = deals.filter(d => inRange(d.created_at, start, end) && matchSales(d.owner));
+  const periodDeals    = deals.filter(d => (d.created_at || "") > HISTORICAL_DATA_CUTOFF && inRange(d.created_at, start, end) && matchSales(d.owner));
   const wonDeals       = deals.filter(d => isWonStage(d.stage) && inRange(d.stage_updated_at || d.created_at, start, end) && matchSales(d.owner));
   const lostDeals      = deals.filter(d => d.stage === "Dropped" && inRange(d.stage_updated_at || d.created_at, start, end) && matchSales(d.owner));
   const doneTasks      = periodTasks.filter(t => t.status === "Done");
