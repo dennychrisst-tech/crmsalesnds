@@ -511,7 +511,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
         </table>
       </div>
 
-      <VisitModal open={visitModal} visit={editVisit} preClientId={preClientId} preDate={preDate} clients={clients} contacts={contacts} deals={deals} team={team} defaultPic={currentUserName}
+      <VisitModal open={visitModal} visit={editVisit} preClientId={preClientId} preDate={preDate} clients={clients} contacts={contacts} deals={deals} visits={visits} team={team} defaultPic={currentUserName}
         onSave={handleSaveVisit} onDelete={onDeleteVisit} onCreateTask={onCreateTask} onCreateDeal={onCreateDeal} onSaveContact={onSaveContact} onClose={() => setVisitModal(false)} />
       <EventModal open={eventModal} event={editEvent} preDate={preDate} team={team} clients={clients} defaultMember={currentUserName}
         onSave={onSaveEvent} onDelete={onDeleteEvent} onClose={() => setEventModal(false)} />

@@ -15,6 +15,7 @@ interface Props {
   clients: Client[];
   contacts: Contact[];
   deals: Deal[];
+  visits: Visit[];
   team: string[];
   defaultPic?: string;
   onSave: (v: Visit) => Promise<void>;
@@ -42,7 +43,7 @@ function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit
   };
 }
 
-export default function VisitModal({ open, visit, preClientId, preDate, clients, contacts, deals, team, defaultPic = "", onSave, onDelete, onCreateTask, onCreateDeal, onSaveContact, onClose }: Props) {
+export default function VisitModal({ open, visit, preClientId, preDate, clients, contacts, deals, visits, team, defaultPic = "", onSave, onDelete, onCreateTask, onCreateDeal, onSaveContact, onClose }: Props) {
   const isEdit = !!visit;
   const [form, setForm] = useState<Visit>(emptyVisit("", defaultPic));
   const [tab, setTab] = useState<"detail" | "edit">("edit");
@@ -149,7 +150,12 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
 
     let toSave: Visit = form;
     if (isReschedule && form.followup_date) {
-      if (form.rescheduled_to_id) {
+      // The linked follow-up visit may have been deleted independently since
+      // it was created — check it still exists before doing a date-only
+      // partial update, otherwise Prisma's upsert falls through to its create
+      // path and 500s on the missing required fields.
+      const linkedChildExists = !!form.rescheduled_to_id && visits.some(v => v.id === form.rescheduled_to_id);
+      if (linkedChildExists) {
         // Already spawned a follow-up visit from an earlier save — just move
         // its date if the reschedule date was changed again, instead of
         // creating another duplicate visit.
