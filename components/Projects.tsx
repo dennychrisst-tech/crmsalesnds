@@ -6,6 +6,9 @@ import { fmtIDR, fmtDate } from "@/lib/utils";
 import ProjectModal from "./ProjectModal";
 import TalentManageModal from "./TalentManageModal";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
+import SortableTh, { SortDir } from "./ui/SortableTh";
+
+type ProjectSortKey = "name" | "client" | "status" | "value" | "golive";
 
 // Compact "at a glance" summary for a Talent row — aggregates each role's own
 // count fields (matching the team's Excel tracker columns) across the project.
@@ -55,6 +58,8 @@ export default function Projects({
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [talentModalOpen, setTalentModalOpen] = useState(false);
   const [talentProject, setTalentProject] = useState<Project | null>(null);
+  const [sortKey, setSortKey] = useState<ProjectSortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
   const filtered = projects.filter(p => {
@@ -64,6 +69,22 @@ export default function Projects({
     const matchProduct = productFilter === "all" || p.product === productFilter;
     return matchSearch && matchSales && matchProduct;
   });
+
+  function toggleSort(key: ProjectSortKey) {
+    if (key === sortKey) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("asc"); }
+  }
+  const sorted = sortKey ? [...filtered].sort((a, b) => {
+    let cmp = 0;
+    switch (sortKey) {
+      case "name": cmp = a.name.localeCompare(b.name); break;
+      case "client": cmp = clientName(a.client_id).localeCompare(clientName(b.client_id)); break;
+      case "status": cmp = (a.status || "").localeCompare(b.status || ""); break;
+      case "value": cmp = a.value - b.value; break;
+      case "golive": cmp = (a.golive || "").localeCompare(b.golive || ""); break;
+    }
+    return sortDir === "asc" ? cmp : -cmp;
+  }) : filtered;
 
   function openTalentManage(p: Project) { setTalentProject(p); setTalentModalOpen(true); }
 
@@ -111,12 +132,17 @@ export default function Projects({
         <table className="data-table">
           <thead>
             <tr>
-              <th>Project</th><th>Client</th><th>Partner</th><th>Produk / Solusi</th>
-              <th>Status</th><th>Nilai</th><th>Target Go-Live</th><th></th>
+              <SortableTh active={sortKey === "name"} dir={sortDir} onClick={() => toggleSort("name")}>Project</SortableTh>
+              <SortableTh active={sortKey === "client"} dir={sortDir} onClick={() => toggleSort("client")}>Client</SortableTh>
+              <th>Partner</th><th>Produk / Solusi</th>
+              <SortableTh active={sortKey === "status"} dir={sortDir} onClick={() => toggleSort("status")}>Status</SortableTh>
+              <SortableTh active={sortKey === "value"} dir={sortDir} onClick={() => toggleSort("value")}>Nilai</SortableTh>
+              <SortableTh active={sortKey === "golive"} dir={sortDir} onClick={() => toggleSort("golive")}>Target Go-Live</SortableTh>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            {filtered.length ? filtered.map(p => {
+            {sorted.length ? sorted.map(p => {
               const projectRoles = talent_roles.filter(r => r.project_id === p.id);
               return (
                 <tr key={p.id}>
@@ -159,9 +185,9 @@ export default function Projects({
           </tbody>
         </table>
 
-        {filtered.length > 0 && (
+        {sorted.length > 0 && (
           <div className="mobile-cards">
-            {filtered.map(p => {
+            {sorted.map(p => {
               const projectRoles = talent_roles.filter(r => r.project_id === p.id);
               return (
                 <div key={p.id} className="mcard">

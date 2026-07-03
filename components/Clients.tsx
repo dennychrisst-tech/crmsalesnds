@@ -10,6 +10,7 @@ import ContactModal from "./ContactModal";
 import VisitModal from "./VisitModal";
 import { exportClients } from "@/lib/export";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
+import SortableTh from "./ui/SortableTh";
 import { Download } from "lucide-react";
 
 interface Props {
@@ -248,7 +249,12 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
           <table>
             <thead>
               <tr>
-                <th>Nama</th><th>Sektor</th><th>Status</th><th>PIC</th><th>Kontak Terakhir</th><th>Project Aktif</th><th></th>
+                <SortableTh active={sortBy === "name"} dir="asc" onClick={() => setSortBy("name")}>Nama</SortableTh>
+                <th>Sektor</th><th>Status</th><th>PIC</th>
+                <SortableTh active={sortBy === "contact_newest" || sortBy === "contact_oldest"} dir={sortBy === "contact_oldest" ? "asc" : "desc"}
+                  onClick={() => setSortBy(sortBy === "contact_newest" ? "contact_oldest" : "contact_newest")}>Kontak Terakhir</SortableTh>
+                <SortableTh active={sortBy === "deal_value"} dir="desc" onClick={() => setSortBy("deal_value")}>Project Aktif</SortableTh>
+                <th></th>
               </tr>
             </thead>
             <tbody>

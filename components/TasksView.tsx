@@ -7,6 +7,9 @@ import { fmtDate, todayStr, TASK_STATUS_COLOR } from "@/lib/utils";
 import TaskModal from "./TaskModal";
 import EmptyState from "./ui/EmptyState";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
+import SortableTh, { SortDir } from "./ui/SortableTh";
+
+type TaskSortKey = "title" | "due_date" | "assigned_to" | "client" | "project" | "status";
 
 interface Props {
   data: AppData;
@@ -44,17 +47,42 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
   const [filterStatus, setFilterStatus] = useState<"All" | "Open" | "Done">("Open");
   const [filterAssignee, setFilterAssignee] = useState("All");
   const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<TaskSortKey>("due_date");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [histSortKey, setHistSortKey] = useState<TaskSortKey>("due_date");
+  const [histSortDir, setHistSortDir] = useState<SortDir>("desc");
 
   const clientName = (id: string | null) => id ? (clients.find(c => c.id === id)?.name || "—") : "—";
   const dealName = (id: string | null) => id ? (deals.find(d => d.id === id)?.name || "—") : "—";
 
   const assignees = ["All", ...team];
 
+  function compareTasks(a: Task, b: Task, key: TaskSortKey, dir: SortDir): number {
+    let cmp = 0;
+    switch (key) {
+      case "title": cmp = a.title.localeCompare(b.title); break;
+      case "due_date": cmp = (a.due_date || "").localeCompare(b.due_date || ""); break;
+      case "assigned_to": cmp = (a.assigned_to || "").localeCompare(b.assigned_to || ""); break;
+      case "client": cmp = clientName(a.client_id).localeCompare(clientName(b.client_id)); break;
+      case "project": cmp = dealName(a.deal_id).localeCompare(dealName(b.deal_id)); break;
+      case "status": cmp = a.status.localeCompare(b.status); break;
+    }
+    return dir === "asc" ? cmp : -cmp;
+  }
+  function toggleSort(key: TaskSortKey) {
+    if (key === sortKey) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("asc"); }
+  }
+  function toggleHistSort(key: TaskSortKey) {
+    if (key === histSortKey) setHistSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setHistSortKey(key); setHistSortDir("asc"); }
+  }
+
   const filtered = tasks
     .filter(t => filterStatus === "All" || t.status === filterStatus)
     .filter(t => filterAssignee === "All" || t.assigned_to === filterAssignee)
     .filter(t => !search || t.title.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => (a.due_date || "").localeCompare(b.due_date || ""));
+    .sort((a, b) => compareTasks(a, b, sortKey, sortDir));
 
   // Riwayat (history) always shows every Done task below the main list, so it
   // doesn't disappear behind the Status filter above — most recently done first.
@@ -62,7 +90,7 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
     .filter(t => t.status === "Done")
     .filter(t => filterAssignee === "All" || t.assigned_to === filterAssignee)
     .filter(t => !search || t.title.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => (b.due_date || b.created_at || "").localeCompare(a.due_date || a.created_at || ""));
+    .sort((a, b) => compareTasks(a, b, histSortKey, histSortDir));
 
   const openCount = tasks.filter(t => t.status === "Open").length;
   const overdueCount = tasks.filter(t => t.status === "Open" && t.due_date && t.due_date < todayStr()).length;
@@ -117,12 +145,12 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
           <table className="data-table">
             <thead>
               <tr>
-                <th>Task</th>
-                <th>Deadline</th>
-                <th>Assigned To</th>
-                <th>Client</th>
-                <th>Project</th>
-                <th>Status</th>
+                <SortableTh active={sortKey === "title"} dir={sortDir} onClick={() => toggleSort("title")}>Task</SortableTh>
+                <SortableTh active={sortKey === "due_date"} dir={sortDir} onClick={() => toggleSort("due_date")}>Deadline</SortableTh>
+                <SortableTh active={sortKey === "assigned_to"} dir={sortDir} onClick={() => toggleSort("assigned_to")}>Assigned To</SortableTh>
+                <SortableTh active={sortKey === "client"} dir={sortDir} onClick={() => toggleSort("client")}>Client</SortableTh>
+                <SortableTh active={sortKey === "project"} dir={sortDir} onClick={() => toggleSort("project")}>Project</SortableTh>
+                <SortableTh active={sortKey === "status"} dir={sortDir} onClick={() => toggleSort("status")}>Status</SortableTh>
                 <th></th>
               </tr>
             </thead>
@@ -185,12 +213,12 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
           <table className="data-table">
             <thead>
               <tr>
-                <th>Task</th>
-                <th>Deadline</th>
-                <th>Assigned To</th>
-                <th>Client</th>
-                <th>Project</th>
-                <th>Status</th>
+                <SortableTh active={histSortKey === "title"} dir={histSortDir} onClick={() => toggleHistSort("title")}>Task</SortableTh>
+                <SortableTh active={histSortKey === "due_date"} dir={histSortDir} onClick={() => toggleHistSort("due_date")}>Deadline</SortableTh>
+                <SortableTh active={histSortKey === "assigned_to"} dir={histSortDir} onClick={() => toggleHistSort("assigned_to")}>Assigned To</SortableTh>
+                <SortableTh active={histSortKey === "client"} dir={histSortDir} onClick={() => toggleHistSort("client")}>Client</SortableTh>
+                <SortableTh active={histSortKey === "project"} dir={histSortDir} onClick={() => toggleHistSort("project")}>Project</SortableTh>
+                <SortableTh active={histSortKey === "status"} dir={histSortDir} onClick={() => toggleHistSort("status")}>Status</SortableTh>
                 <th></th>
               </tr>
             </thead>
