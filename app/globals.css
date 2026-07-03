@@ -271,9 +271,12 @@ nav.tabs button.active::after {
 .cal-toolbar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .calendar { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; }
 .dow { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing:.08em; color: var(--ink-soft); padding-bottom: 4px; }
+.dow-weekend { color: var(--gold); }
 .cell { background: var(--card); border: 1px solid var(--line); border-radius: 8px; min-height: 92px; padding: 6px; font-size: 12px; }
 .cell.empty { background: transparent; border-color: transparent; }
+.cell.weekend { background: #FBF3E3; }
 .dnum { font-weight: 700; color: var(--ink-soft); }
+.cell.weekend .dnum { color: var(--gold); }
 .cell.today { border-color: var(--brand); border-width: 2px; }
 .cell.today .dnum { color: var(--brand); }
 .vpill { background: var(--brand-soft); color: var(--brand); border-radius: 6px; padding: 3px 5px; margin-top: 4px; cursor: pointer; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -933,6 +936,7 @@ tr.task-soon td { background: #fffbeb; }
     font-size: 12.5px; font-weight: 700; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--line);
   }
   .agenda-date.is-today { color: var(--brand); }
+  .agenda-date.agenda-date-weekend:not(.is-today) { color: var(--gold); }
   .agenda-items { display: flex; flex-direction: column; gap: 6px; }
   .agenda-item {
     display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 9px;
