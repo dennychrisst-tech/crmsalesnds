@@ -1,20 +1,41 @@
 "use client";
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
-import { ActiveView } from "@/types";
+import { ActiveView, Client, Deal, Visit, Project, Task, Contact, CRMDocument, Activity } from "@/types";
 import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches, fmtDateStr, isWonStage, isClosedStage } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import EmptyState from "./ui/EmptyState";
+import ClientModal from "./ClientModal";
+import DealModal from "./DealModal";
+import VisitModal from "./VisitModal";
+import ProjectModal from "./ProjectModal";
+import TaskModal from "./TaskModal";
 
 interface Props {
   data: AppData;
   onNavigate: (view: ActiveView) => void;
-  onOpenClient?: (clientId: string) => void;
-  onOpenDeal?: (dealId: string) => void;
-  onOpenVisit?: (visitId: string) => void;
-  onOpenProject?: (projectId: string) => void;
-  onOpenTask?: (taskId: string) => void;
   onOpenStage?: (stage: string) => void;
+  onSaveClient: (c: Client) => Promise<void>;
+  onDeleteClient: (id: string) => Promise<void>;
+  onUploadLogo: (file: File, clientId: string) => Promise<string>;
+  onDeleteLogo: (url: string) => Promise<void>;
+  onSaveDeal: (d: Deal) => Promise<void>;
+  onDeleteDeal: (id: string) => Promise<void>;
+  onAddDocument: (d: CRMDocument) => Promise<void>;
+  onDeleteDocument: (id: string) => Promise<void>;
+  onUploadAttachment: (file: File, dealId: string) => Promise<void>;
+  onDeleteAttachment: (id: string) => Promise<void>;
+  onAddActivity: (a: Activity) => Promise<void>;
+  onDeleteActivity: (id: string) => Promise<void>;
+  onSaveVisit: (v: Visit) => Promise<void>;
+  onDeleteVisit: (id: string) => Promise<void>;
+  onCreateTask: (t: Task) => Promise<void>;
+  onCreateDeal: (d: Deal) => Promise<void>;
+  onSaveContact: (c: Contact) => Promise<void>;
+  onSaveProject: (p: Project) => Promise<void>;
+  onDeleteProject: (id: string) => Promise<void>;
+  onSaveTask: (t: Task) => Promise<void>;
+  onDeleteTask: (id: string) => Promise<void>;
 }
 
 type Period = "daily" | "weekly" | "monthly";
@@ -130,12 +151,26 @@ function FilterBar({
   );
 }
 
-export default function Dashboard({ data, onNavigate, onOpenClient, onOpenDeal, onOpenVisit, onOpenProject, onOpenTask, onOpenStage }: Props) {
-  const { clients, visits, deals, projects, tasks, activities, profiles } = data;
+export default function Dashboard({
+  data, onNavigate, onOpenStage,
+  onSaveClient, onDeleteClient, onUploadLogo, onDeleteLogo,
+  onSaveDeal, onDeleteDeal, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity,
+  onSaveVisit, onDeleteVisit, onCreateTask, onCreateDeal, onSaveContact,
+  onSaveProject, onDeleteProject, onSaveTask, onDeleteTask,
+}: Props) {
+  const { clients, contacts, visits, deals, projects, tasks, products, documents, attachments, activities, profiles } = data;
   const today = todayStr();
 
   const [period, setPeriod] = useState<Period>("monthly");
   const [salesFilter, setSalesFilter] = useState("all");
+
+  // Clicking a dashboard row shows that record's detail modal right here
+  // instead of navigating away — keeps the user oriented on the dashboard.
+  const [peekClientId, setPeekClientId] = useState<string | null>(null);
+  const [peekDealId, setPeekDealId] = useState<string | null>(null);
+  const [peekVisitId, setPeekVisitId] = useState<string | null>(null);
+  const [peekProjectId, setPeekProjectId] = useState<string | null>(null);
+  const [peekTaskId, setPeekTaskId] = useState<string | null>(null);
 
   const salesList = profiles
     .filter(p => !["super_admin", "admin", "viewer"].includes(p.role))
@@ -300,6 +335,15 @@ export default function Dashboard({ data, onNavigate, onOpenClient, onOpenDeal, 
     },
   ];
 
+  const peekClient = peekClientId ? clients.find(c => c.id === peekClientId) || null : null;
+  const peekDeal = peekDealId ? deals.find(d => d.id === peekDealId) || null : null;
+  const peekVisit = peekVisitId ? visits.find(v => v.id === peekVisitId) || null : null;
+  const peekProject = peekProjectId ? projects.find(p => p.id === peekProjectId) || null : null;
+  const peekTask = peekTaskId ? tasks.find(t => t.id === peekTaskId) || null : null;
+  const peekDealDocuments = peekDealId ? documents.filter(d => d.deal_id === peekDealId) : [];
+  const peekDealAttachments = peekDealId ? attachments.filter(a => a.deal_id === peekDealId) : [];
+  const peekDealActivities = peekDealId ? activities.filter(a => a.deal_id === peekDealId) : [];
+
   return (
     <section>
       {/* ── Filter Bar ── */}
@@ -357,7 +401,7 @@ export default function Dashboard({ data, onNavigate, onOpenClient, onOpenDeal, 
         <div className="panel" style={panelStyle(PANEL_ACCENTS.visit)}>
           <SectionHeader title={`Visit Mendatang (${upcoming.length})`} icon="🚗" accent={PANEL_ACCENTS.visit} action="Buka Calendar" onClick={() => onNavigate("calendar")} />
           {upcoming.length ? upcoming.map(v => (
-            <div key={v.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => onOpenVisit ? onOpenVisit(v.id) : onNavigate("calendar")}>
+            <div key={v.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => setPeekVisitId(v.id)}>
               <div className="ti-date">{fmtDate(v.date)} · <b>{clientName(v.client_id)}</b></div>
               <div className="ti-body">{v.purpose} <VisitBadge status={v.status} /></div>
               {v.pic && <div className="muted" style={{ fontSize: 11 }}>PIC: {v.pic}</div>}
@@ -368,7 +412,7 @@ export default function Dashboard({ data, onNavigate, onOpenClient, onOpenDeal, 
         <div className="panel" style={panelStyle(followups.length > 0 ? PANEL_ACCENTS.reschedule : PANEL_ACCENTS.reschedule_ok)}>
           <SectionHeader title={`Reschedule Pending (${followups.length})`} icon="🔄" accent={followups.length > 0 ? PANEL_ACCENTS.reschedule : PANEL_ACCENTS.reschedule_ok} action="Buka Calendar" onClick={() => onNavigate("calendar")} />
           {followups.length ? followups.map(v => (
-            <div key={v.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => onOpenVisit ? onOpenVisit(v.id) : onNavigate("calendar")}>
+            <div key={v.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => setPeekVisitId(v.id)}>
               <div className="ti-date"><b>{clientName(v.client_id)}</b> · {fmtDate(v.date)}</div>
               <div className="ti-body">{v.summary || v.purpose}</div>
               {v.pic && <div className="muted" style={{ fontSize: 11 }}>PIC: {v.pic}</div>}
@@ -384,7 +428,7 @@ export default function Dashboard({ data, onNavigate, onOpenClient, onOpenDeal, 
           {closingSoon.length ? closingSoon.map(d => {
             const daysLeft = Math.ceil((new Date(d.close_date).getTime() - new Date(today).getTime()) / 86400000);
             return (
-              <div key={d.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => onOpenDeal ? onOpenDeal(d.id) : onNavigate("pipeline")}>
+              <div key={d.id} className="timeline-item" style={{ cursor: "pointer" }} onClick={() => setPeekDealId(d.id)}>
                 <div className="ti-date" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   {fmtDate(d.close_date)}
                   <span style={{
@@ -416,7 +460,7 @@ export default function Dashboard({ data, onNavigate, onOpenClient, onOpenDeal, 
             const isOverdue = t.due_date < today;
             return (
               <div key={t.id} className={`task-item${isOverdue ? " task-item-overdue" : ""}`}
-                style={{ cursor: "pointer" }} onClick={() => onOpenTask ? onOpenTask(t.id) : onNavigate("tasks")}>
+                style={{ cursor: "pointer" }} onClick={() => setPeekTaskId(t.id)}>
                 <div className="task-item-title">{t.title}</div>
                 <div className="task-item-meta">
                   {fmtDate(t.due_date)} · {t.assigned_to || "—"}
@@ -439,7 +483,7 @@ export default function Dashboard({ data, onNavigate, onOpenClient, onOpenDeal, 
                 display: "flex", alignItems: "center", gap: 12, padding: "8px 0",
                 borderBottom: i < topClients.length - 1 ? "1px solid var(--line)" : "none",
                 cursor: "pointer",
-              }} onClick={() => onOpenClient ? onOpenClient(c.id) : onNavigate("clients")}>
+              }} onClick={() => setPeekClientId(c.id)}>
                 <div style={{
                   width: 28, height: 28, borderRadius: "50%", background: rankColors[i] || "var(--brand)",
                   color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
@@ -458,7 +502,7 @@ export default function Dashboard({ data, onNavigate, onOpenClient, onOpenDeal, 
             <div key={p.id} style={{
               display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 0",
               borderBottom: "1px solid var(--line)", cursor: "pointer",
-            }} onClick={() => onOpenProject ? onOpenProject(p.id) : onNavigate("projects")}>
+            }} onClick={() => setPeekProjectId(p.id)}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{p.name}</div>
                 <div className="muted" style={{ fontSize: 11 }}>
@@ -517,6 +561,26 @@ export default function Dashboard({ data, onNavigate, onOpenClient, onOpenDeal, 
           </div>
         </div>
       )}
+
+      {/* Peek modals — clicking a row opens that record's detail right here
+          instead of navigating to its menu, so the user stays on the dashboard. */}
+      <ClientModal open={!!peekClientId} client={peekClient} team={salesList}
+        onSave={onSaveClient} onDelete={onDeleteClient} onUploadLogo={onUploadLogo} onDeleteLogo={onDeleteLogo}
+        onClose={() => setPeekClientId(null)} />
+      <DealModal open={!!peekDealId} deal={peekDeal} clients={clients} products={products} team={salesList}
+        documents={peekDealDocuments} attachments={peekDealAttachments} activities={peekDealActivities}
+        onSave={onSaveDeal} onDelete={onDeleteDeal}
+        onAddDocument={onAddDocument} onDeleteDocument={onDeleteDocument}
+        onUploadAttachment={onUploadAttachment} onDeleteAttachment={onDeleteAttachment}
+        onAddActivity={onAddActivity} onDeleteActivity={onDeleteActivity}
+        onClose={() => setPeekDealId(null)} />
+      <VisitModal open={!!peekVisitId} visit={peekVisit} clients={clients} contacts={contacts} deals={deals} visits={visits} team={salesList}
+        onSave={onSaveVisit} onDelete={onDeleteVisit} onCreateTask={onCreateTask} onCreateDeal={onCreateDeal} onSaveContact={onSaveContact}
+        onClose={() => setPeekVisitId(null)} />
+      <ProjectModal open={!!peekProjectId} project={peekProject} clients={clients}
+        onSave={onSaveProject} onDelete={onDeleteProject} onClose={() => setPeekProjectId(null)} />
+      <TaskModal open={!!peekTaskId} task={peekTask} clients={clients} contacts={contacts} deals={deals} team={salesList}
+        onSave={onSaveTask} onDelete={onDeleteTask} onCreateDeal={onCreateDeal} onClose={() => setPeekTaskId(null)} />
     </section>
   );
 }
