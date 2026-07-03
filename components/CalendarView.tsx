@@ -36,7 +36,7 @@ function WfoChip({ name }: { name: string }) {
   const style = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style} className="wfo-chip">
-      🏠 {name}
+      🏢 {name}
     </div>
   );
 }
@@ -46,7 +46,7 @@ function LeaveChip({ name }: { name: string }) {
   const style = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style} className="leave-chip">
-      🌴 {name}
+      ✈️ {name}
     </div>
   );
 }
@@ -73,7 +73,7 @@ function WfoQuickForm({ team, onMark }: { team: string[]; onMark: (name: string,
         </select>
       </div>
       <button type="button" className="btn" disabled={!name || !date || saving} onClick={submit}>
-        {saving ? "Menandai…" : "🏠 Tandai WFO"}
+        {saving ? "Menandai…" : "🏢 Tandai WFO"}
       </button>
     </div>
   );
@@ -100,7 +100,7 @@ function LeaveQuickForm({ team, onMark }: { team: string[]; onMark: (name: strin
         </select>
       </div>
       <button type="button" className="btn" disabled={!name || !date || saving} onClick={submit}>
-        {saving ? "Menandai…" : "🌴 Tandai Cuti"}
+        {saving ? "Menandai…" : "✈️ Tandai Cuti"}
       </button>
     </div>
   );
@@ -151,7 +151,7 @@ function AgendaDayCard({
               <span className="agenda-item-dot" style={{ background: isWfo ? "var(--brand)" : isLeave ? "#991B1B" : "var(--gold)" }} />
               <span>
                 <div className="agenda-item-title" style={{ textDecoration: isCancel ? "line-through" : "none" }}>
-                  {isWfo ? `🏠 WFO — ${ev.created_by || "—"}` : isLeave ? `🌴 Cuti — ${ev.created_by || "—"}` : ev.title}
+                  {isWfo ? `🏢 WFO — ${ev.created_by || "—"}` : isLeave ? `✈️ Cuti — ${ev.created_by || "—"}` : ev.title}
                 </div>
                 {!isSpecial && <div className="agenda-item-sub">{ev.type}{ev.created_by ? ` · ${ev.created_by}` : ""}{statusNote}</div>}
               </span>
@@ -212,7 +212,7 @@ function DayCell({
             }}
             onClick={isSpecial ? undefined : e => { e.stopPropagation(); if (!isViewer) onEditEvent(ev); }}
             title={isWfo ? `WFO: ${ev.created_by || "—"}` : isLeave ? `Cuti: ${ev.created_by || "—"}` : `${ev.title}${statusNote}`}>
-            {isWfo ? `🏠 ${ev.created_by || "WFO"}` : isLeave ? `🌴 ${ev.created_by || "Cuti"}` : `${isReschedule ? "↻ " : ""}${ev.title}`}
+            {isWfo ? `🏢 ${ev.created_by || "WFO"}` : isLeave ? `✈️ ${ev.created_by || "Cuti"}` : `${isReschedule ? "↻ " : ""}${ev.title}`}
           </div>
         );
       })}
@@ -353,12 +353,12 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
           <button className="btn btn-ghost btn-sm" onClick={() => exportVisits(visits, id => clients.find(c => c.id === id)?.name || "—")}><Download size={13} /> Export CSV</button>
           {!isViewer && (
             <button className="btn btn-ghost" onClick={() => setShowWfoPanel(s => !s)}>
-              {showWfoPanel ? "Tutup Panel WFO" : "🏠 Tandai WFO"}
+              {showWfoPanel ? "Tutup Panel WFO" : "🏢 Tandai WFO"}
             </button>
           )}
           {!isViewer && (
             <button className="btn btn-ghost" onClick={() => setShowLeavePanel(s => !s)}>
-              {showLeavePanel ? "Tutup Panel Cuti" : "🌴 Tandai Cuti"}
+              {showLeavePanel ? "Tutup Panel Cuti" : "✈️ Tandai Cuti"}
             </button>
           )}
           {!isViewer && <button className="btn btn-ghost" onClick={() => openNewEvent()}>+ Event</button>}
@@ -400,7 +400,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           {showWfoPanel && !isViewer && (
             <div className="wfo-panel">
-              <div className="wfo-panel-hint">🏠 Seret nama ke tanggal kalender untuk menandai hari itu WFO (tidak visit client)</div>
+              <div className="wfo-panel-hint">🏢 Seret nama ke tanggal kalender untuk menandai hari itu WFO (tidak visit client)</div>
               <div className="wfo-panel-list">
                 {team.map(name => <WfoChip key={name} name={name} />)}
               </div>
@@ -408,7 +408,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
           )}
           {showLeavePanel && !isViewer && (
             <div className="leave-panel">
-              <div className="leave-panel-hint">🌴 Seret nama ke tanggal kalender untuk menandai hari itu Cuti</div>
+              <div className="leave-panel-hint">✈️ Seret nama ke tanggal kalender untuk menandai hari itu Cuti</div>
               <div className="leave-panel-list">
                 {team.map(name => <LeaveChip key={name} name={name} />)}
               </div>
@@ -429,10 +429,10 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
 
           <DragOverlay>
             {activeWfoName && (
-              <div className="wfo-chip" style={{ opacity: 0.9, cursor: "grabbing" }}>🏠 {activeWfoName}</div>
+              <div className="wfo-chip" style={{ opacity: 0.9, cursor: "grabbing" }}>🏢 {activeWfoName}</div>
             )}
             {activeLeaveName && (
-              <div className="leave-chip" style={{ opacity: 0.9, cursor: "grabbing" }}>🌴 {activeLeaveName}</div>
+              <div className="leave-chip" style={{ opacity: 0.9, cursor: "grabbing" }}>✈️ {activeLeaveName}</div>
             )}
           </DragOverlay>
         </DndContext>
