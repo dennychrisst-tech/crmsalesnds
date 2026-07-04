@@ -303,6 +303,26 @@ model AppSetting {
   @@map("app_settings")
 }
 
+// Security/admin audit trail — separate from the business-facing Activity log.
+// Tracks sensitive admin actions (user create/role-change/delete, settings
+// change, data export, failed logins) so "who changed/deleted what" can be
+// investigated. Failed-login rows also back the login rate-limiting check.
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  actor_id    String?  @db.Uuid
+  actor_name  String   @default("")
+  actor_email String   @default("")
+  action      String
+  target      String   @default("")
+  details     Json     @default("{}")
+  ip          String   @default("")
+  created_at  DateTime @default(now())
+
+  @@index([created_at])
+  @@index([action])
+  @@map("audit_logs")
+}
+
 // Revenue Forecast — company-wide annual target vs. contracted-revenue vs.
 // opportunity-pipeline tracker (mirrors the team's yearly forecast workbook).
 model RevenueTarget {

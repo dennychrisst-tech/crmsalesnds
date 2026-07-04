@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getSession, getClientIp } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAudit } from "@/lib/audit";
 
 function toCSV(rows: Record<string, unknown>[]): string {
   if (!rows.length) return "";
@@ -62,6 +63,8 @@ export async function GET(req: NextRequest) {
   const rows = await fetchRows(table);
   const csv = toCSV(rows as Record<string, unknown>[]);
   const filename = `${table}_${new Date().toISOString().slice(0, 10)}.csv`;
+
+  await logAudit({ actor: session, action: "data.export", target: table, details: { rows: rows.length }, ip: getClientIp(req) });
 
   return new NextResponse(csv, {
     headers: {

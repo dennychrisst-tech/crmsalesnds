@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getSession, getClientIp } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAudit } from "@/lib/audit";
 
 export async function GET() {
   const session = await getSession();
@@ -30,6 +31,8 @@ export async function PUT(req: NextRequest) {
       })
     )
   );
+
+  await logAudit({ actor: session, action: "settings.update", target: "app_settings", details: body, ip: getClientIp(req) });
 
   return NextResponse.json({ ok: true });
 }

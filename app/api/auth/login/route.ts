@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { signToken, COOKIE_NAME } from "@/lib/auth";
+import { signToken, COOKIE_NAME, getClientIp } from "@/lib/auth";
+import { logAudit, isLoginRateLimited } from "@/lib/audit";
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,13 +11,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email dan password wajib diisi" }, { status: 400 });
     }
 
+    const ip = getClientIp(req);
+    if (await isLoginRateLimited(email, ip)) {
+      return NextResponse.json(
+        { error: "Terlalu banyak percobaan login gagal. Coba lagi dalam beberapa menit." },
+        { status: 429 }
+      );
+    }
+
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
+      await logAudit({ actor: null, action: "login.failed", target: email, ip });
       return NextResponse.json({ error: "Email atau password salah" }, { status: 401 });
     }
 
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
+      await logAudit({ actor: null, action: "login.failed", target: email, ip });
       return NextResponse.json({ error: "Email atau password salah" }, { status: 401 });
     }
 
