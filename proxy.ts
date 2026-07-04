@@ -26,5 +26,9 @@ export default async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|api/|.*\\.(?:png|svg|ico)$).*)"],
+  // manifest.webmanifest and sw.js must stay publicly reachable regardless of
+  // auth state — Chrome fetches both to decide installability, and a redirect
+  // to /login instead of real JSON/JS content makes the browser mark the site
+  // as not installable (surfaced as: install banner/prompt never appears).
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|api/|manifest\\.webmanifest|sw\\.js|.*\\.(?:png|svg|ico)$).*)"],
 };
