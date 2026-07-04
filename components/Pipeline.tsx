@@ -107,18 +107,40 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer, draggable 
   );
 }
 
-function ProjectChip({ project, clientName }: { project: Project; clientName: string }) {
+function ProjectChip({ project, clientName, onAddToStage }: { project: Project; clientName: string; onAddToStage: (project: Project, stage: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `${PROJECT_DRAG_PREFIX}${project.id}` });
   const style = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
+  const [pickerOpen, setPickerOpen] = useState(false);
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style} className="project-chip">
       <div className="dn">{project.name}</div>
       <div className="dc">{clientName}{project.product ? ` · ${project.product}` : ""}</div>
+      {/* Drag works on desktop; mobile has no droppable column here (single-list
+          layout), so this tap alternative is the only way to add a project there
+          — same pattern as DealCard's "Pindah stage" button (CSS-hidden on desktop). */}
+      <div className="stage-move-wrap">
+        <button type="button" className="btn btn-ghost btn-sm stage-move-btn"
+          onClick={e => { e.stopPropagation(); setPickerOpen(o => !o); }}>
+          + Tambah ke stage →
+        </button>
+        {pickerOpen && (
+          <div className="stage-move-sheet-backdrop" onClick={e => { e.stopPropagation(); setPickerOpen(false); }}>
+            <div className="stage-move-sheet" onClick={e => e.stopPropagation()}>
+              <div className="stage-move-sheet-handle" />
+              <div className="stage-move-sheet-title">Tambah ke stage: {project.name}</div>
+              {STAGES.map(s => (
+                <button key={s} type="button" className="stage-move-sheet-item"
+                  onClick={() => { onAddToStage(project, s); setPickerOpen(false); }}>{s}</button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function ProjectPanel({ projects, clientName, search, onSearchChange }: { projects: Project[]; clientName: (id: string) => string; search: string; onSearchChange: (v: string) => void }) {
+function ProjectPanel({ projects, clientName, search, onSearchChange, onAddToStage }: { projects: Project[]; clientName: (id: string) => string; search: string; onSearchChange: (v: string) => void; onAddToStage: (project: Project, stage: string) => void }) {
   const filtered = projects.filter(p => p.name.toLowerCase().includes(search.trim().toLowerCase()));
   return (
     <div className="project-panel">
@@ -130,7 +152,7 @@ function ProjectPanel({ projects, clientName, search, onSearchChange }: { projec
       />
       <div className="project-panel-list">
         {filtered.length === 0 && <div className="empty-state" style={{ padding: "8px 0" }}>Tidak ada proyek tersedia.</div>}
-        {filtered.map(p => <ProjectChip key={p.id} project={p} clientName={clientName(p.client_id)} />)}
+        {filtered.map(p => <ProjectChip key={p.id} project={p} clientName={clientName(p.client_id)} onAddToStage={onAddToStage} />)}
       </div>
     </div>
   );
@@ -460,6 +482,31 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
     }
   }
 
+  // Converts an available Project into a Deal at the given stage — shared by
+  // both the desktop drag-and-drop drop target and the mobile tap-to-add
+  // button (dnd-kit drag has no droppable target on mobile's single-column
+  // list, so ProjectChip needs a non-drag path there — see ProjectChip below).
+  async function addProjectToStage(project: Project, stage: string) {
+    if (!(STAGES as readonly string[]).includes(stage)) return;
+    if (pendingProjectIds.has(project.id)) return;
+    const key = projectKey(project.name, project.client_id);
+    if (usedProjectKeys.has(key)) {
+      toast("Project ini sudah ada di pipeline.", { type: "error" });
+      return;
+    }
+    setPendingProjectIds(prev => new Set(prev).add(project.id));
+    try {
+      await onSaveDeal({
+        id: uuid(), name: project.name, client_id: project.client_id, value: project.value,
+        stage: stage as Deal["stage"], deal_type: "", product: project.product, close_date: "",
+        notes: "", owner: currentUserName, win_loss_reason: "", competitor: "",
+        stage_updated_at: new Date().toISOString(),
+      });
+    } finally {
+      setPendingProjectIds(prev => { const next = new Set(prev); next.delete(project.id); return next; });
+    }
+  }
+
   async function handleDragEnd(e: DragEndEvent) {
     setActiveDeal(null);
     setActiveProject(null);
@@ -470,27 +517,9 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
 
     try {
       if (id.startsWith(PROJECT_DRAG_PREFIX)) {
-        if (!(STAGES as readonly string[]).includes(stage)) return;
         const projectId = id.slice(PROJECT_DRAG_PREFIX.length);
-        if (pendingProjectIds.has(projectId)) return;
         const project = projects.find(p => p.id === projectId);
-        if (!project) return;
-        const key = projectKey(project.name, project.client_id);
-        if (usedProjectKeys.has(key)) {
-          toast("Project ini sudah ada di pipeline.", { type: "error" });
-          return;
-        }
-        setPendingProjectIds(prev => new Set(prev).add(projectId));
-        try {
-          await onSaveDeal({
-            id: uuid(), name: project.name, client_id: project.client_id, value: project.value,
-            stage: stage as Deal["stage"], deal_type: "", product: project.product, close_date: "",
-            notes: "", owner: currentUserName, win_loss_reason: "", competitor: "",
-            stage_updated_at: new Date().toISOString(),
-          });
-        } finally {
-          setPendingProjectIds(prev => { const next = new Set(prev); next.delete(projectId); return next; });
-        }
+        if (project) await addProjectToStage(project, stage);
         return;
       }
 
@@ -585,7 +614,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
 
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         {showPanel && !isViewer && (
-          <ProjectPanel projects={availableProjects} clientName={clientName} search={projectSearch} onSearchChange={setProjectSearch} />
+          <ProjectPanel projects={availableProjects} clientName={clientName} search={projectSearch} onSearchChange={setProjectSearch} onAddToStage={addProjectToStage} />
         )}
         {isMobile ? (
           <div className="pipeline-mobile-list">
