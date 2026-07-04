@@ -72,7 +72,7 @@ export function Field({ label, children }: { label: string; children: React.Reac
   );
 }
 
-export const inputCls = "w-full px-3 py-2 border border-[var(--line)] rounded-xl bg-white text-sm font-sans focus:outline-none focus:border-[var(--brand)]";
+export const inputCls = "w-full px-3 py-2 border border-[var(--line)] rounded-xl bg-[var(--input-bg)] text-[var(--ink)] text-sm font-sans focus:outline-none focus:border-[var(--brand)]";
 export const selectCls = inputCls;
 export const textareaCls = inputCls + " min-h-[70px] resize-y";
 

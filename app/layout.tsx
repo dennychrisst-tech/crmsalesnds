@@ -22,9 +22,28 @@ export const viewport: Viewport = {
   themeColor: "#00AFA0",
 };
 
+// Sets data-theme before first paint (from localStorage, falling back to the
+// OS preference) so switching pages/reloading never flashes the wrong theme
+// while React hydrates — this has to run as a plain blocking script, not a
+// useEffect, since useEffect only fires after the initial paint.
+const THEME_BOOTSTRAP = `
+(function () {
+  try {
+    var stored = localStorage.getItem("crm_theme");
+    var theme = stored === "light" || stored === "dark"
+      ? stored
+      : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="id" className={inter.variable}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
+      </head>
       <body>{children}</body>
     </html>
   );

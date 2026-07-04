@@ -26,6 +26,43 @@
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
+  /* A handful of elements (toast, active nav pill/tab, the pipeline
+     bulk-action bar) are deliberately "always dark, high-contrast" surfaces
+     regardless of theme — in light mode that's just --ink itself, but in dark
+     mode --ink flips to a light text color, so those surfaces need their own
+     token instead of silently going invisible (light-on-light). */
+  --surface-strong: var(--ink);
+  /* Form field background — kept as a separate token from --card because
+     modal form inputs (see components/ui/Modal.tsx's inputCls) used to be a
+     hardcoded bg-white regardless of theme, which broke completely in dark
+     mode (light text from --ink landing on a solid white box). */
+  --input-bg: #ffffff;
+}
+
+/* Dark mode — toggled via the header sun/moon button (see useTheme /
+   CRMApp.tsx), applied as data-theme on <html> before first paint by the
+   inline bootstrap script in app/layout.tsx. Covers core chrome (surfaces,
+   text, borders, shadows) — the many hardcoded status/badge colors (deal
+   stage, visit/task status, calendar highlights, etc.) are a follow-up pass. */
+[data-theme="dark"] {
+  --ink: #E7ECF2;
+  --ink-soft: #93A6B8;
+  --paper: #0A121C;
+  --card: #131E2C;
+  --line: #263548;
+  --brand: #1FBE9C;
+  --brand-soft: rgba(31,190,156,.16);
+  --accent: #2AD1BF;
+  --accent-soft: rgba(42,209,191,.18);
+  --gold: #E3AC55;
+  --danger: #E2665F;
+  --won: #1FBE9C;
+  --lost: #C2A5A5;
+  --surface-strong: var(--brand);
+  --input-bg: #0E1720;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.5);
+  --shadow: 0 1px 0 rgba(255,255,255,.03), 0 10px 28px rgba(0,0,0,.5);
+  --shadow-lg: 0 4px 10px rgba(0,0,0,.45), 0 20px 48px rgba(0,0,0,.6);
 }
 
 * { box-sizing: border-box; }
@@ -81,6 +118,13 @@ header.top {
   transition: all .15s; white-space: nowrap; text-decoration: none;
 }
 .btn-admin:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-theme-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,.28); background: rgba(255,255,255,.06); color: #fff;
+  border-radius: 999px; cursor: pointer; transition: all .15s;
+}
+.btn-theme-toggle:hover { background: var(--accent); border-color: var(--accent); }
 
 /* Nav */
 nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 24px; }
@@ -93,12 +137,12 @@ nav.tabs button {
 nav.tabs button:hover { border-color: var(--brand); color: var(--brand); transform: translateY(-1px); }
 nav.tabs button:active { transform: translateY(0) scale(.96); }
 nav.tabs button.active {
-  background: var(--ink); color: #fff; border-color: var(--ink);
+  background: var(--surface-strong); color: #fff; border-color: var(--surface-strong);
   box-shadow: 0 2px 8px rgba(11,27,43,.18);
 }
 nav.tabs button.active::after {
   content: ''; position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%);
-  width: 6px; height: 6px; background: var(--ink); border-radius: 50%;
+  width: 6px; height: 6px; background: var(--surface-strong); border-radius: 50%;
 }
 .tab-icon { display: inline-flex; align-items: center; line-height: 1; }
 
@@ -114,7 +158,7 @@ nav.tabs button.active::after {
 .nav-dropdown-trigger:hover { border-color: var(--brand); color: var(--brand); transform: translateY(-1px); }
 .nav-dropdown-trigger:active { transform: translateY(0) scale(.96); }
 .nav-dropdown-trigger.active {
-  background: var(--ink); color: #fff; border-color: var(--ink);
+  background: var(--surface-strong); color: #fff; border-color: var(--surface-strong);
   box-shadow: 0 2px 8px rgba(11,27,43,.18);
 }
 @keyframes navDropdownIn {
@@ -243,7 +287,7 @@ nav.tabs button.active::after {
 /* Pipeline bulk-select action bar */
 .pipeline-bulk-bar {
   position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 90;
-  background: var(--ink); color: #fff; border-radius: 14px; box-shadow: 0 8px 24px rgba(11,27,43,.3);
+  background: var(--surface-strong); color: #fff; border-radius: 14px; box-shadow: 0 8px 24px rgba(11,27,43,.3);
   padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   max-width: min(92vw, 640px); animation: toast-in .18s ease;
 }
@@ -454,7 +498,7 @@ tr:hover td { background: var(--paper); }
 .view-toggle { display: flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
 .view-toggle button { background: var(--card); border: none; padding: 8px 12px; font-size: 12px; font-weight: 600; color: var(--ink-soft); cursor: pointer; font-family: inherit; }
 .view-toggle button + button { border-left: 1px solid var(--line); }
-.view-toggle button.active { background: var(--ink); color: #fff; }
+.view-toggle button.active { background: var(--surface-strong); color: #fff; }
 
 /* Client summary bar */
 .client-summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -467,7 +511,7 @@ tr:hover td { background: var(--paper); }
 .modal-tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
 .modal-tab { background: transparent; border: 1px solid var(--line); color: var(--ink-soft); padding: 5px 14px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: inherit; }
 .modal-tab:hover { border-color: var(--brand); color: var(--brand); }
-.modal-tab-active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.modal-tab-active { background: var(--surface-strong); color: #fff; border-color: var(--surface-strong); }
 .tab-badge { display: inline-block; background: var(--brand); color: #fff; font-size: 10px; font-weight: 700; border-radius: 999px; padding: 0 5px; margin-left: 4px; }
 
 /* Deal detail (read-only) view */
@@ -539,7 +583,7 @@ tr.task-soon td { background: #fffbeb; }
 .sum-period-toggle { display: flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
 .sum-toggle, .sum-toggle-active { border: none; padding: 7px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .sum-toggle { background: var(--card); color: var(--ink-soft); }
-.sum-toggle-active { background: var(--ink); color: #fff; }
+.sum-toggle-active { background: var(--surface-strong); color: #fff; }
 .sum-nav { display: flex; align-items: center; gap: 8px; }
 .sum-period-label { font-size: 15px; font-weight: 700; min-width: 180px; text-align: center; }
 .sum-sales-filter { margin-left: auto; }
@@ -676,10 +720,14 @@ tr.task-soon td { background: #fffbeb; }
 
 /* Skeleton loading (initial data fetch) */
 .skeleton { position: relative; overflow: hidden; background: #E9E5DA; border-radius: 14px; }
+[data-theme="dark"] .skeleton { background: #1A2634; }
 .skeleton::after {
   content: ""; position: absolute; inset: 0; transform: translateX(-100%);
   background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
   animation: shimmer 1.4s infinite;
+}
+[data-theme="dark"] .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.10), transparent);
 }
 @keyframes shimmer { 100% { transform: translateX(100%); } }
 .sk-bar { height: 54px; margin-bottom: 16px; }
@@ -698,7 +746,7 @@ tr.task-soon td { background: #fffbeb; }
   display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none;
 }
 .toast {
-  display: flex; align-items: center; gap: 14px; background: var(--ink); color: #fff;
+  display: flex; align-items: center; gap: 14px; background: var(--surface-strong); color: #fff;
   font-size: 13px; font-weight: 600; padding: 10px 16px; border-radius: 10px;
   box-shadow: 0 6px 20px rgba(11,27,43,.3); pointer-events: auto;
   max-width: min(92vw, 480px); animation: toast-in .18s ease;
@@ -742,6 +790,7 @@ tr.task-soon td { background: #fffbeb; }
   .header-search-row .gs-input { min-width: 0; }
   .header-search-row .rb-wrap { flex: 0 0 auto; }
   .btn-admin { order: 5; padding: 5px 10px; font-size: 11px; }
+  .btn-theme-toggle { order: 4; width: 30px; height: 30px; }
   .btn-logout { top: 14px; right: 14px; padding: 5px 10px; font-size: 11px; }
 
   /* Nav — replaced by fixed bottom nav on mobile */
@@ -1008,6 +1057,13 @@ tr.task-soon td { background: #fffbeb; }
 
 /* ───────────────────── Print (laporan siap cetak / save-as-PDF) ───────────────────── */
 @media print {
+  /* Force light-mode tokens even if dark mode is active on screen — printing
+     dark-mode's light ink color onto this media query's forced-white page
+     would render body text invisible. */
+  :root, [data-theme="dark"] {
+    --ink: #0B1B2B; --ink-soft: #3A4D60; --paper: #EEF2F1; --card: #FAFCFB;
+    --line: #D8D3C6; --input-bg: #ffffff; --surface-strong: #0B1B2B;
+  }
   body { background: #fff; }
   .app { padding: 0; }
 

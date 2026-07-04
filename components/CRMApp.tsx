@@ -4,10 +4,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard, Building2, CalendarDays, FolderKanban, Briefcase,
   ListChecks, TrendingUp, ClipboardList, CalendarRange, Wallet, Users, MoreHorizontal, Calculator,
-  BarChart3, ChevronDown,
+  BarChart3, ChevronDown, Sun, Moon,
   type LucideIcon,
 } from "lucide-react";
 import { useData } from "@/hooks/useData";
+import { useTheme } from "@/hooks/useTheme";
 
 import { ActiveView } from "@/types";
 import Dashboard from "./Dashboard";
@@ -187,6 +188,7 @@ export default function CRMApp() {
     upsertMandaysClientRate, deleteMandaysClientRate,
   } = useData();
 
+  const { theme, toggle: toggleTheme } = useTheme();
   const isViewer = currentProfile?.role === "viewer";
   const isAdmin = !!currentProfile && ["super_admin", "admin"].includes(currentProfile.role);
   const warnViewer = () => { toast("Anda hanya memiliki akses lihat (view only).", { type: "error" }); return Promise.resolve(); };
@@ -210,6 +212,9 @@ export default function CRMApp() {
         {currentProfile && ["super_admin", "admin"].includes(currentProfile.role) && (
           <a href="/admin/users" className="btn-admin">Admin</a>
         )}
+        <button onClick={toggleTheme} className="btn-theme-toggle" title={theme === "dark" ? "Mode Terang" : "Mode Gelap"} aria-label="Ganti tema">
+          {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+        </button>
         <button onClick={handleLogout} className="btn-logout">Log Out</button>
       </header>
 
