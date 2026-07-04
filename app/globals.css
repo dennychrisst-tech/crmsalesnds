@@ -505,7 +505,7 @@ tr:hover td { background: var(--paper); }
   border-radius: 8px; border: 1px solid var(--line); flex-shrink: 0;
 }
 .client-name-cell { font-size: 14px; font-weight: 700; color: var(--ink); }
-.chip { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #EAE6DA; color: #5C5440; }
+.chip { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #EAE6DA; color: #5C5440; white-space: nowrap; flex-shrink: 0; }
 .visit-track { border-top: 1px dashed var(--line); padding-top: 12px; }
 .vt-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
 .week-group { margin-bottom: 10px; }
