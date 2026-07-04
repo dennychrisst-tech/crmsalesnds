@@ -107,8 +107,11 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Bottom: Copyright */}
-        <div style={{ position: "absolute", bottom: 28, fontSize: 11, color: "rgba(255,255,255,.25)" }}>
+        {/* Bottom: Copyright — absolute on desktop (.lp-brand fills the viewport
+            height, so there's room below the content); switched to normal flow
+            on mobile, where .lp-brand is only as tall as its own content and an
+            absolute bottom-anchor would overlap the last feature card instead. */}
+        <div className="lp-copyright" style={{ position: "absolute", bottom: 28, fontSize: 11, color: "rgba(255,255,255,.25)" }}>
           © {new Date().getFullYear()} PT Nusantara Duta Solusindo
         </div>
       </div>
@@ -238,6 +241,7 @@ export default function LoginPage() {
             flex: none !important; width: 100%; padding: 36px 24px 32px !important;
           }
           .lp-brand h2 { font-size: 22px !important; }
+          .lp-copyright { position: static !important; margin-top: 20px !important; text-align: center; }
           .lp-form { padding: 32px 24px 44px !important; }
           .lp-form-card { max-width: 100% !important; }
         }
