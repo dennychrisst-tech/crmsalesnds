@@ -208,13 +208,13 @@ export default function CRMApp() {
           {!loading && (
             <RemindersBell data={data} currentUserName={currentProfile?.name ?? ""} isAdmin={isAdmin} onNavigate={setView} onOpenTask={openTask} />
           )}
+          <button onClick={toggleTheme} className="btn-theme-toggle" title={theme === "dark" ? "Mode Terang" : "Mode Gelap"} aria-label="Ganti tema">
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
         </div>
         {currentProfile && ["super_admin", "admin"].includes(currentProfile.role) && (
           <a href="/admin/users" className="btn-admin">Admin</a>
         )}
-        <button onClick={toggleTheme} className="btn-theme-toggle" title={theme === "dark" ? "Mode Terang" : "Mode Gelap"} aria-label="Ganti tema">
-          {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
-        </button>
         <button onClick={handleLogout} className="btn-logout">Log Out</button>
       </header>
 
