@@ -55,6 +55,10 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [histSortKey, setHistSortKey] = useState<TaskSortKey>("due_date");
   const [histSortDir, setHistSortDir] = useState<SortDir>("desc");
+  const hasActiveFilters = search !== "" || filterStatus !== "Open" || filterAssignee !== "All";
+  function clearFilters() {
+    setSearch(""); setFilterStatus("Open"); setFilterAssignee("All");
+  }
 
   const clientName = (id: string | null) => id ? (clients.find(c => c.id === id)?.name || "—") : "—";
   const dealName = (id: string | null) => id ? (deals.find(d => d.id === id)?.name || "—") : "—";
@@ -123,6 +127,9 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
           <select className="search" style={{ flex: "none", width: "auto" }} value={filterAssignee} onChange={e => setFilterAssignee(e.target.value)}>
             {assignees.map(a => <option key={a} value={a}>{a === "All" ? "Semua Sales" : a}</option>)}
           </select>
+          {hasActiveFilters && (
+            <button className="btn-clear-filters" onClick={clearFilters} title="Bersihkan semua filter">× Bersihkan filter</button>
+          )}
         </span>
         <FilterSheet>
           <FilterField label="Status">
@@ -137,6 +144,9 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
               {assignees.map(a => <option key={a} value={a}>{a === "All" ? "Semua Sales" : a}</option>)}
             </select>
           </FilterField>
+          {hasActiveFilters && (
+            <button className="btn-clear-filters" onClick={clearFilters}>× Bersihkan filter</button>
+          )}
         </FilterSheet>
         <button className="btn btn-ghost btn-sm" onClick={() => exportTasks(tasks, clientName, dealName)}><Download size={13} /> Export Excel</button>
         {!isViewer && <button className="btn add-btn-desktop" onClick={openNew}>+ Task Baru</button>}

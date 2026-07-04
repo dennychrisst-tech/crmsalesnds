@@ -12,11 +12,11 @@ interface Props {
   onOpenTask: (id: string) => void;
 }
 
-const RESULT_VIEW: Record<Result["type"], ActiveView> = { Client: "clients", Project: "pipeline", Task: "tasks" };
-const RESULT_LABEL: Record<Result["type"], string> = { Client: "client", Project: "project", Task: "task" };
+const RESULT_VIEW: Record<Result["type"], ActiveView> = { Client: "clients", Project: "pipeline", Task: "tasks", Contact: "clients" };
+const RESULT_LABEL: Record<Result["type"], string> = { Client: "client", Project: "project", Task: "task", Contact: "kontak" };
 
 interface Result {
-  type: "Client" | "Project" | "Task";
+  type: "Client" | "Project" | "Task" | "Contact";
   label: string;
   sub: string;
   go: () => void;
@@ -54,7 +54,7 @@ export default function GlobalSearch({ data, onNavigate, onOpenClient, onOpenDea
   const results: Result[] = [];
   // How many matches exist beyond what's shown per category — surfaced as a
   // "+N lainnya" line so a truncated list doesn't read as "no more results".
-  const moreCounts: Record<Result["type"], number> = { Client: 0, Project: 0, Task: 0 };
+  const moreCounts: Record<Result["type"], number> = { Client: 0, Project: 0, Task: 0, Contact: 0 };
 
   if (term.length >= 2) {
     const clientMatches = data.clients.filter(c => c.name.toLowerCase().includes(term) || c.sector.toLowerCase().includes(term));
@@ -80,6 +80,16 @@ export default function GlobalSearch({ data, onNavigate, onOpenClient, onOpenDea
       go: () => onOpenTask(t.id),
     }));
     moreCounts.Task = Math.max(0, taskMatches.length - 3);
+
+    const contactMatches = data.contacts.filter(ct => ct.name.toLowerCase().includes(term));
+    contactMatches.slice(0, 3).forEach(ct => {
+      const cn = data.clients.find(c => c.id === ct.client_id)?.name || "—";
+      results.push({
+        type: "Contact", label: ct.name, sub: `${ct.title || "PIC"} · ${cn}`,
+        go: () => onOpenClient(ct.client_id),
+      });
+    });
+    moreCounts.Contact = Math.max(0, contactMatches.length - 3);
   }
 
   function seeMore(type: Result["type"]) {
@@ -112,7 +122,8 @@ export default function GlobalSearch({ data, onNavigate, onOpenClient, onOpenDea
     }
   }
 
-  const typeCls: Record<string, string> = { Client: "gs-type-client", Project: "gs-type-deal", Task: "gs-type-task" };
+  const typeCls: Record<string, string> = { Client: "gs-type-client", Project: "gs-type-deal", Task: "gs-type-task", Contact: "gs-type-contact" };
+  const totalMatches = results.length + Object.values(moreCounts).reduce((a, b) => a + b, 0);
 
   return (
     <div ref={ref} className="gs-wrap">
@@ -122,40 +133,45 @@ export default function GlobalSearch({ data, onNavigate, onOpenClient, onOpenDea
           ref={inputRef}
           className="gs-input"
           value={q}
-          placeholder="Cari client, project, task…"
+          placeholder="Cari client, project, task, kontak…"
           onChange={e => { setQ(e.target.value); setOpen(true); setActiveIdx(0); }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
         />
         {q
-          ? <button className="gs-clear" onClick={() => { setQ(""); setOpen(false); }}>×</button>
+          ? <button className="gs-clear" aria-label="Tutup pencarian" onClick={() => { setQ(""); setOpen(false); }}>×</button>
           : <span className="gs-kbd">Ctrl K</span>}
       </div>
       {open && term.length >= 2 && (
         <div className="gs-dropdown">
           {results.length === 0 ? (
             <div className="gs-empty">Tidak ada hasil untuk &quot;{q}&quot;</div>
-          ) : results.map((r, i) => {
-            const isLastOfType = i === results.length - 1 || results[i + 1].type !== r.type;
-            const more = isLastOfType ? moreCounts[r.type] : 0;
-            return (
-              <div key={i}>
-                <div className={`gs-item${i === activeIdx ? " gs-item-active" : ""}`}
-                  onClick={() => pick(r)} onMouseEnter={() => setActiveIdx(i)}>
-                  <span className={`gs-type ${typeCls[r.type]}`}>{r.type}</span>
-                  <div className="gs-item-text">
-                    <div className="gs-item-label">{r.label}</div>
-                    <div className="gs-item-sub">{r.sub}</div>
+          ) : (
+            <>
+              <div className="gs-count">{totalMatches} hasil</div>
+              {results.map((r, i) => {
+                const isLastOfType = i === results.length - 1 || results[i + 1].type !== r.type;
+                const more = isLastOfType ? moreCounts[r.type] : 0;
+                return (
+                  <div key={i}>
+                    <div className={`gs-item${i === activeIdx ? " gs-item-active" : ""}`}
+                      onClick={() => pick(r)} onMouseEnter={() => setActiveIdx(i)}>
+                      <span className={`gs-type ${typeCls[r.type]}`}>{r.type}</span>
+                      <div className="gs-item-text">
+                        <div className="gs-item-label">{r.label}</div>
+                        <div className="gs-item-sub">{r.sub}</div>
+                      </div>
+                    </div>
+                    {more > 0 && (
+                      <div className="gs-more" onClick={() => seeMore(r.type)}>
+                        +{more} {RESULT_LABEL[r.type]} lainnya →
+                      </div>
+                    )}
                   </div>
-                </div>
-                {more > 0 && (
-                  <div className="gs-more" onClick={() => seeMore(r.type)}>
-                    +{more} {RESULT_LABEL[r.type]} lainnya →
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                );
+              })}
+            </>
+          )}
         </div>
       )}
     </div>

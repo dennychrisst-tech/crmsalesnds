@@ -12,6 +12,12 @@ const TABLES = [
   { key: "products", label: "Produk", desc: "Katalog produk dan layanan" },
   { key: "activities", label: "Aktivitas", desc: "Log aktivitas (call, email, meeting, dll)" },
   { key: "events", label: "Event", desc: "Jadwal event dan meeting" },
+  { key: "talent_roles", label: "Talent Role", desc: "Requisition staffing per role dan status CV" },
+  { key: "revenue_targets", label: "Revenue Target", desc: "Target tahunan revenue dan mandays" },
+  { key: "revenue_lines", label: "Revenue Line", desc: "Kontrak/maintenance beserta milestone invoicing" },
+  { key: "revenue_opportunities", label: "Revenue Opportunity", desc: "Pipeline opportunity revenue forecast" },
+  { key: "mandays_roles", label: "Mandays Rate Card", desc: "Benchmark rate COGS/Low/Medium/Max per role" },
+  { key: "mandays_client_rates", label: "Mandays Client Rate", desc: "Rate aktual/quote per client dan periode kontrak" },
 ] as const;
 
 type TableKey = typeof TABLES[number]["key"];

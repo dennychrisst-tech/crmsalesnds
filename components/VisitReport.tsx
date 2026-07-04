@@ -22,6 +22,11 @@ export default function VisitReport({ data }: Props) {
   const [filterMonth, setFilterMonth] = useState(`${thisYear}-${thisMonth}`);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [collapsedClients, setCollapsedClients] = useState<Set<string>>(new Set());
+  const defaultMonth = `${thisYear}-${thisMonth}`;
+  const hasActiveFilters = search !== "" || filterSales !== "all" || filterMonth !== defaultMonth;
+  function clearFilters() {
+    setSearch(""); setFilterSales("all"); setFilterMonth(defaultMonth);
+  }
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
@@ -131,6 +136,9 @@ export default function VisitReport({ data }: Props) {
           <option value="all">Semua Sales</option>
           {salesList.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
+        {hasActiveFilters && (
+          <button className="btn-clear-filters" onClick={clearFilters} title="Bersihkan semua filter">× Bersihkan filter</button>
+        )}
         <button className="btn btn-ghost btn-sm" onClick={expandAll}>Buka Semua</button>
         <button className="btn btn-ghost btn-sm" onClick={collapseAll}>Tutup Semua</button>
         <button className="btn btn-ghost btn-sm" onClick={() => shareToWhatsApp(buildShareText())}>

@@ -8,7 +8,7 @@ export default function FilterSheet({ children, label = "Filter" }: { children: 
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" className="btn btn-ghost btn-sm filter-sheet-trigger" onClick={() => setOpen(true)}>
+      <button type="button" className="btn btn-ghost btn-sm filter-sheet-trigger" aria-label={label} onClick={() => setOpen(true)}>
         ▤ {label}
       </button>
       {open && (

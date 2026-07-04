@@ -231,7 +231,7 @@ export default function DealModal({
           <ModalActions>
             {isEdit && <button className="btn btn-danger" onClick={handleDelete} disabled={savingMain}>Hapus</button>}
             <button className="btn btn-ghost" onClick={onClose}>Batal</button>
-            <button className="btn" onClick={handleSave} disabled={savingMain}>{savingMain ? "Menyimpan…" : "Simpan"}</button>
+            <button className="btn" onClick={handleSave} disabled={savingMain}>{savingMain && <span className="btn-spinner" />}{savingMain ? "Menyimpan…" : "Simpan"}</button>
           </ModalActions>
         </>
       )}

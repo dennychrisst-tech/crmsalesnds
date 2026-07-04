@@ -17,6 +17,21 @@ model User {
   @@map("users")
 }
 
+// Web Push subscriptions for reminder notifications — one row per device a
+// user has enabled push on. endpoint is unique so re-subscribing the same
+// device (e.g. after clearing site data) upserts instead of duplicating.
+model PushSubscription {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@map("push_subscriptions")
+}
+
 model Client {
   id           String   @id @default(uuid()) @db.Uuid
   name         String

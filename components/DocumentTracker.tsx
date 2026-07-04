@@ -92,7 +92,7 @@ export default function DocumentTracker({ dealId, documents, onAdd, onDelete }: 
           </div>
           <input className={inputCls + " mb-2"} placeholder="Catatan (opsional)" value={form.notes || ""} onChange={e => set("notes", e.target.value)} />
           <div className="flex gap-2">
-            <button className="btn" onClick={handleAdd} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
+            <button className="btn" onClick={handleAdd} disabled={saving}>{saving && <span className="btn-spinner" />}{saving ? "Menyimpan…" : "Simpan"}</button>
             <button className="btn btn-ghost" onClick={() => setShowForm(false)}>Batal</button>
           </div>
         </div>

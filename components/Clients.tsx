@@ -107,6 +107,10 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
   const [sectorFilter, setSectorFilter] = useState("all");
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [viewMode, setViewMode] = useState<ViewMode>("detail");
+  const hasActiveFilters = search !== "" || salesFilter !== "all" || sectorFilter !== "all" || sortBy !== "name";
+  function clearFilters() {
+    setSearch(""); setSalesFilter("all"); setSectorFilter("all"); setSortBy("name");
+  }
 
   // Force card view on mobile — the compact table doesn't fit small screens.
   useEffect(() => {
@@ -201,6 +205,9 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
             <option value="contact_newest">Urutkan: Kontak Terbaru</option>
             <option value="deal_value">Urutkan: Nilai Project Tertinggi</option>
           </select>
+          {hasActiveFilters && (
+            <button className="btn-clear-filters" onClick={clearFilters} title="Bersihkan semua filter">× Bersihkan filter</button>
+          )}
         </span>
         <FilterSheet>
           <FilterField label="Sales">
@@ -223,10 +230,13 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
               <option value="deal_value">Nilai Project Tertinggi</option>
             </select>
           </FilterField>
+          {hasActiveFilters && (
+            <button className="btn-clear-filters" onClick={clearFilters}>× Bersihkan filter</button>
+          )}
         </FilterSheet>
         <div className="view-toggle">
-          <button className={viewMode === "detail" ? "active" : ""} onClick={() => setViewMode("detail")} title="Tampilan detail">☰ Detail</button>
-          <button className={viewMode === "compact" ? "active" : ""} onClick={() => setViewMode("compact")} title="Tampilan tabel ringkas">▦ Tabel</button>
+          <button className={viewMode === "detail" ? "active" : ""} onClick={() => setViewMode("detail")} title="Tampilan detail" aria-label="Tampilan detail">☰ Detail</button>
+          <button className={viewMode === "compact" ? "active" : ""} onClick={() => setViewMode("compact")} title="Tampilan tabel ringkas" aria-label="Tampilan tabel ringkas">▦ Tabel</button>
         </div>
         <button className="btn btn-ghost btn-sm" onClick={() => exportClients(clients, openDealsCount)}><Download size={13} /> Export Excel</button>
         {!isViewer && <button className="btn add-btn-desktop" onClick={() => { setEditClient(null); setClientModalOpen(true); }}>+ Client Baru</button>}
@@ -401,7 +411,12 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
                           <div className="contact-name">{ct.name}</div>
                           {ct.title && <div className="contact-title">{ct.title}</div>}
                           <div className="contact-meta">
-                            {ct.email && <span>✉ {ct.email}</span>}
+                            {ct.email && (
+                              <span className="pic-actions">
+                                <a className="pic-action-btn pic-email" href={`mailto:${ct.email}`} title="Kirim email" onClick={e => e.stopPropagation()}>✉</a>
+                                <span>{ct.email}</span>
+                              </span>
+                            )}
                             {ct.phone && (
                               <span className="pic-actions" style={{ marginTop: 2 }}>
                                 <a className="pic-action-btn pic-call" href={`tel:${ct.phone}`} title="Telepon" onClick={e => e.stopPropagation()}>☎</a>

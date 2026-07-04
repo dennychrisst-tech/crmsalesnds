@@ -1,9 +1,11 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Bell } from "lucide-react";
+import { Bell, BellRing, BellOff } from "lucide-react";
 import { AppData } from "@/hooks/useData";
 import { ActiveView } from "@/types";
 import { fmtDate, todayStr } from "@/lib/utils";
+import { computeReminders } from "@/lib/reminders";
+import { usePushSubscription } from "@/hooks/usePushSubscription";
 
 interface Props {
   data: AppData;
@@ -109,25 +111,32 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
   const clientName = (id: string) => data.clients.find(c => c.id === id)?.name || "—";
   const mine = (owner: string) => isAdmin || owner === currentUserName;
 
-  const reminders: Reminder[] = [];
-
-  data.visits.filter(v => mine(v.pic)).forEach(v => {
-    if (v.status === "Planned" && v.date && v.date < today) {
-      reminders.push({ id: `v-overdue-${v.id}`, title: `Visit ke ${clientName(v.client_id)} terlewat`, sub: `${fmtDate(v.date)} · ${v.pic || "—"}`, severity: "overdue", view: "calendar" });
-    } else if (v.status === "Planned" && v.date === today) {
-      reminders.push({ id: `v-today-${v.id}`, title: `Visit ke ${clientName(v.client_id)} hari ini`, sub: `${v.purpose || "—"} · ${v.pic || "—"}`, severity: "today", view: "calendar" });
-    } else if (v.status === "Reschedule") {
-      reminders.push({ id: `v-resched-${v.id}`, title: `Follow-up: ${clientName(v.client_id)} perlu dijadwalkan ulang`, sub: `${fmtDate(v.date)} · ${v.pic || "—"}`, severity: "overdue", view: "calendar" });
-    }
-  });
-
-  data.tasks.filter(t => t.status === "Open" && mine(t.assigned_to)).forEach(t => {
-    if (t.due_date && t.due_date < today) {
-      reminders.push({ id: `t-overdue-${t.id}`, title: `Task terlambat: ${t.title}`, sub: `${fmtDate(t.due_date)} · ${t.assigned_to || "—"}`, severity: "overdue", view: "tasks", taskId: t.id });
-    } else if (t.due_date === today) {
-      reminders.push({ id: `t-today-${t.id}`, title: `Task jatuh tempo hari ini: ${t.title}`, sub: `${t.assigned_to || "—"}`, severity: "today", view: "tasks", taskId: t.id });
-    }
-  });
+  // computeReminders (lib/reminders.ts) holds the shared due-date/status rules
+  // — also reused server-side by the push-notification cron route. This
+  // component just filters to "mine" and builds the display strings, which
+  // need data.clients/data.tasks lookups the server side doesn't have.
+  const reminders: Reminder[] = computeReminders(data.visits, data.tasks, today)
+    .filter(r => mine(r.owner))
+    .map((r): Reminder | null => {
+      if (r.source === "visits") {
+        const v = data.visits.find(x => x.id === r.recordId);
+        if (!v) return null;
+        if (r.id.startsWith("v-overdue-")) {
+          return { id: r.id, title: `Visit ke ${clientName(v.client_id)} terlewat`, sub: `${fmtDate(v.date)} · ${v.pic || "—"}`, severity: "overdue", view: "calendar" };
+        }
+        if (r.id.startsWith("v-today-")) {
+          return { id: r.id, title: `Visit ke ${clientName(v.client_id)} hari ini`, sub: `${v.purpose || "—"} · ${v.pic || "—"}`, severity: "today", view: "calendar" };
+        }
+        return { id: r.id, title: `Follow-up: ${clientName(v.client_id)} perlu dijadwalkan ulang`, sub: `${fmtDate(v.date)} · ${v.pic || "—"}`, severity: "overdue", view: "calendar" };
+      }
+      const t = data.tasks.find(x => x.id === r.recordId);
+      if (!t) return null;
+      if (r.severity === "overdue") {
+        return { id: r.id, title: `Task terlambat: ${t.title}`, sub: `${fmtDate(t.due_date)} · ${t.assigned_to || "—"}`, severity: "overdue", view: "tasks", taskId: t.id };
+      }
+      return { id: r.id, title: `Task jatuh tempo hari ini: ${t.title}`, sub: `${t.assigned_to || "—"}`, severity: "today", view: "tasks", taskId: t.id };
+    })
+    .filter((r): r is Reminder => r !== null);
 
   reminders.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === "overdue" ? -1 : 1));
 
@@ -143,6 +152,8 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
     setOpen(false);
   }
 
+  const push = usePushSubscription();
+
   return (
     <div ref={ref} className="rb-wrap">
       <button ref={bellRef} className="rb-bell" onClick={toggle} title="Reminder" aria-label="Reminder">
@@ -153,7 +164,19 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
       </button>
       {open && pos && (
         <div className="rb-dropdown" style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width }}>
-          <div className="rb-header">Reminder{!isAdmin && currentUserName ? ` — ${currentUserName}` : ""}</div>
+          <div className="rb-header">
+            <span>Reminder{!isAdmin && currentUserName ? ` — ${currentUserName}` : ""}</span>
+            {push.supported && (
+              <button
+                className="rb-push-toggle"
+                title={push.subscribed ? "Matikan notifikasi HP" : "Aktifkan notifikasi HP"}
+                disabled={push.busy}
+                onClick={push.toggle}
+              >
+                {push.subscribed ? <BellRing size={14} /> : <BellOff size={14} />}
+              </button>
+            )}
+          </div>
           {visibleReminders.length === 0 ? (
             <div className="rb-empty">Tidak ada reminder. Semua aman 🎉</div>
           ) : visibleReminders.map(r => (

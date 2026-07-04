@@ -23,6 +23,18 @@ export function isWonStage(stage: string): boolean {
 export function isClosedStage(stage: string): boolean {
   return isWonStage(stage) || stage === "Dropped";
 }
+// Days since this deal last moved stage — shared by Pipeline's AgingBadge and
+// the Dashboard's "at-risk" KPI so both use the exact same threshold.
+export function dealAgingDays(deal: { stage_updated_at?: string | null; created_at?: string }): number {
+  const ref = deal.stage_updated_at || deal.created_at || todayStr();
+  return Math.floor((Date.now() - new Date(ref).getTime()) / 86_400_000);
+}
+// A deal is "at risk" once it's sat 30+ days in the same active stage —
+// "On Hold" is deliberately excluded since parking a deal there is intentional,
+// not neglect.
+export function isDealAtRisk(deal: { stage: string; stage_updated_at?: string | null; created_at?: string }): boolean {
+  return !isClosedStage(deal.stage) && deal.stage !== "On Hold" && dealAgingDays(deal) >= 30;
+}
 export const TASK_STATUS_COLOR: Record<string, { bg: string; fg: string }> = {
   Open: { bg: "#FEF3C7", fg: "#B45309" },
   Done: { bg: "#DCFCE7", fg: "#15803D" },

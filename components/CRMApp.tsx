@@ -168,7 +168,7 @@ export default function CRMApp() {
     router.replace("/login");
   }
   const {
-    data, loading, currentProfile,
+    data, loading, currentProfile, pendingSyncCount,
     upsertClient, deleteClient,
     upsertContact, deleteContact,
     upsertVisit, deleteVisit,
@@ -207,6 +207,11 @@ export default function CRMApp() {
           {!loading && <GlobalSearch data={data} onNavigate={setView} onOpenClient={openClient} onOpenDeal={openDeal} onOpenTask={openTask} />}
           {!loading && (
             <RemindersBell data={data} currentUserName={currentProfile?.name ?? ""} isAdmin={isAdmin} onNavigate={setView} onOpenTask={openTask} />
+          )}
+          {pendingSyncCount > 0 && (
+            <span className="pending-sync-badge" title="Menunggu koneksi untuk disinkronkan">
+              {pendingSyncCount} tersimpan offline
+            </span>
           )}
           <button onClick={toggleTheme} className="btn-theme-toggle" title={theme === "dark" ? "Mode Terang" : "Mode Gelap"} aria-label="Ganti tema">
             {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}

@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
 import { ActiveView, Client, Deal, Visit, Project, Task, Contact, CRMDocument, Activity } from "@/types";
-import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches, fmtDateStr, isWonStage, isClosedStage } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches, fmtDateStr, isWonStage, isClosedStage, isDealAtRisk } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import EmptyState from "./ui/EmptyState";
 import ClientModal from "./ClientModal";
@@ -213,6 +213,7 @@ export default function Dashboard({
 
   // Deals
   const openDeals   = filteredDeals.filter(d => !isClosedStage(d.stage));
+  const atRiskDeals = openDeals.filter(isDealAtRisk);
   const wonDeals    = filteredDeals.filter(d => isWonStage(d.stage));
   const lostDeals   = filteredDeals.filter(d => d.stage === "Dropped");
   const closedTotal = wonDeals.length + lostDeals.length;
@@ -300,6 +301,13 @@ export default function Dashboard({
       sub: closedTotal > 0 ? `dari ${closedTotal} closed` : "belum ada closed",
       accent: "var(--brand)", view: "pipeline" as ActiveView,
       spark: sparkWon, warn: false,
+    },
+    {
+      label: "Deal Macet", num: atRiskDeals.length,
+      sub: atRiskDeals.length > 0 ? "30+ hari tanpa perpindahan stage" : "semua deal bergerak",
+      accent: atRiskDeals.length > 0 ? "var(--danger)" : "var(--brand)",
+      view: "pipeline" as ActiveView,
+      spark: sparkDeals, warn: atRiskDeals.length > 0,
     },
     {
       label: `Closing ${periodLabel}`, num: closingInPeriod.length,

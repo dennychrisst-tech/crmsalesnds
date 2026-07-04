@@ -6,7 +6,7 @@ import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Deal, CRMDocument, Attachment, Activity, Project } from "@/types";
-import { STAGES, STAGE_COLOR, fmtIDR, todayStr, isClosedStage, colorForSales } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, isClosedStage, colorForSales, dealAgingDays, isDealAtRisk } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 import { toast } from "./ui/Toast";
 import Modal, { Field, ModalActions, inputCls, textareaCls } from "./ui/Modal";
@@ -17,11 +17,6 @@ const PROJECT_DRAG_PREFIX = "project:";
 
 function projectKey(name: string, clientId: string): string {
   return `${name.trim().toLowerCase()}::${clientId}`;
-}
-
-function agingDays(deal: Deal): number {
-  const ref = deal.stage_updated_at || deal.created_at || todayStr();
-  return Math.floor((Date.now() - new Date(ref).getTime()) / 86_400_000);
 }
 
 function AgingBadge({ days }: { days: number }) {
@@ -62,7 +57,7 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer, draggable 
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: deal.id, disabled: !draggable || selectMode });
   const style = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
-  const days = agingDays(deal);
+  const days = dealAgingDays(deal);
   const isClosed = isClosedStage(deal.stage);
   const stageColor = STAGE_COLOR[deal.stage] || "var(--brand)";
   const ownerColor = deal.owner ? colorForSales(deal.owner).bg : null;
@@ -286,6 +281,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [showArchived, setShowArchived] = useState(false);
+  const [atRiskOnly, setAtRiskOnly] = useState(false);
   // Deal being dropped into Won/Lost — prompts for win/loss reason before saving
   const [closing, setClosing] = useState<{ deal: Deal; stage: string } | null>(null);
   const [closeReason, setCloseReason] = useState("");
@@ -335,7 +331,11 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
 
   const ownedDeals = ownerFilter === "all" ? deals : deals.filter(d => d.owner === ownerFilter);
   const archivedCount = ownedDeals.filter(isArchived).length;
-  const visibleDeals = showArchived ? ownedDeals : ownedDeals.filter(d => !isArchived(d));
+  // Deals stuck 30+ days in the same active stage — same threshold AgingBadge
+  // already flags as "critical", just surfaced here as a filterable count too.
+  const atRiskCount = ownedDeals.filter(isDealAtRisk).length;
+  let visibleDeals = showArchived ? ownedDeals : ownedDeals.filter(d => !isArchived(d));
+  if (atRiskOnly) visibleDeals = visibleDeals.filter(isDealAtRisk);
 
   // On Hold always gets a column (deals parked there aren't "closed", so they're
   // never archived); Dropped only appears once the archive toggle reveals it.
@@ -526,6 +526,16 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
         {archivedCount > 0 && (
           <button className="btn btn-ghost btn-sm" onClick={() => setShowArchived(s => !s)}>
             {showArchived ? "Sembunyikan arsip" : `Arsip closed (${archivedCount})`}
+          </button>
+        )}
+        {atRiskCount > 0 && (
+          <button
+            className={`btn btn-sm${atRiskOnly ? "" : " btn-ghost"}`}
+            style={atRiskOnly ? undefined : { color: "var(--danger)", borderColor: "var(--danger)" }}
+            onClick={() => setAtRiskOnly(s => !s)}
+            title="Deal yang belum berpindah stage 30+ hari"
+          >
+            ⚠ Deal Macet ({atRiskCount})
           </button>
         )}
         <button className="btn btn-ghost btn-sm" onClick={() => exportDeals(deals, clientName)}><Download size={13} /> Export Excel</button>

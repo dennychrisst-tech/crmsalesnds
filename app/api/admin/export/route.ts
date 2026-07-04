@@ -18,7 +18,7 @@ function toCSV(rows: Record<string, unknown>[]): string {
   ].join("\n");
 }
 
-const TABLES = ["clients", "contacts", "visits", "deals", "projects", "tasks", "products", "activities", "events"] as const;
+const TABLES = ["clients", "contacts", "visits", "deals", "projects", "tasks", "products", "activities", "events", "talent_roles", "revenue_targets", "revenue_lines", "revenue_opportunities", "mandays_roles", "mandays_client_rates"] as const;
 type TableName = typeof TABLES[number];
 
 async function fetchRows(table: TableName): Promise<Record<string, unknown>[]> {
@@ -50,6 +50,24 @@ async function fetchRows(table: TableName): Promise<Record<string, unknown>[]> {
       return prisma.activity.findMany({ orderBy: { created_at: "desc" } });
     case "events":
       return prisma.event.findMany({ orderBy: { date: "asc" } });
+    case "talent_roles":
+      return (await prisma.talentRole.findMany({ orderBy: { created_at: "asc" } }))
+        .map(r => ({ ...r, ratecard: Number(r.ratecard) }));
+    case "revenue_targets":
+      return (await prisma.revenueTarget.findMany({ orderBy: { year: "asc" } }))
+        .map(r => ({ ...r, target_revenue: Number(r.target_revenue), rate: Number(r.rate) }));
+    case "revenue_lines":
+      return (await prisma.revenueLine.findMany({ orderBy: { year: "asc" } }))
+        .map(r => ({ ...r, milestones: JSON.stringify(r.milestones) }));
+    case "revenue_opportunities":
+      return (await prisma.revenueOpportunity.findMany({ orderBy: { year: "asc" } }))
+        .map(r => ({ ...r, amount: Number(r.amount), potentially_billed_amount: Number(r.potentially_billed_amount) }));
+    case "mandays_roles":
+      return (await prisma.mandaysRole.findMany({ orderBy: { role_name: "asc" } }))
+        .map(r => ({ ...r, cogs: Number(r.cogs), low_rate: Number(r.low_rate), med_rate: Number(r.med_rate), max_price: Number(r.max_price) }));
+    case "mandays_client_rates":
+      return (await prisma.mandaysClientRate.findMany({ orderBy: { created_at: "asc" } }))
+        .map(r => ({ ...r, rate_value: Number(r.rate_value) }));
     default:
       return [];
   }

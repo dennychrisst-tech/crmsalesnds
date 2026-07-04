@@ -4,6 +4,13 @@ import { v4 as uuid } from "uuid";
 import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity, CalendarEvent, Profile, TalentRole, RevenueTarget, RevenueLine, RevenueOpportunity, MandaysRole, MandaysClientRate } from "@/types";
 import { STAGES } from "@/lib/utils";
 import { toast } from "@/components/ui/Toast";
+import { enqueue, getQueue, removeFromQueue } from "@/lib/offlineQueue";
+
+// Thrown only when fetch() itself rejects (browser offline/DNS failure) — as
+// opposed to a real HTTP error status, which keeps throwing a plain Error.
+// Lets upsert() tell "queue this for later" apart from "show the user a real
+// server/validation error".
+class NetworkError extends Error {}
 
 export interface AppData {
   clients: Client[];
@@ -65,11 +72,16 @@ function normalizeRow(table: TableKey, row: any): any {
 }
 
 async function api(path: string, method = "GET", body?: unknown) {
-  const res = await fetch(path, {
-    method,
-    headers: body ? { "Content-Type": "application/json" } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      method,
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new NetworkError("Tidak ada koneksi internet");
+  }
   if (res.status === 401) {
     // Session expired (JWT is valid for 24h) — force logout. The 30s poll goes
     // through here too, so an idle open tab/PWA lands on /login within ~30s.
@@ -108,6 +120,9 @@ export function useData() {
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState("Memuat…");
+  // Visit/Task saves made while offline — getQueue() returns [] on the server
+  // (no window), so this is already hydration-safe without an effect.
+  const [pendingSyncCount, setPendingSyncCount] = useState(() => getQueue().length);
 
   const commit = useCallback((updater: (prev: AppData) => AppData) => {
     setData(prev => {
@@ -116,6 +131,32 @@ export function useData() {
       return next;
     });
   }, []);
+
+  // Replays queued offline Visit/Task saves in order once back online. Stops
+  // at the first item that still fails on a network error (leaving the rest
+  // queued for the next attempt); a non-network failure (e.g. the record was
+  // invalid) instead drops that one item so it can't block the queue forever.
+  const flushQueue = useCallback(async () => {
+    for (const item of getQueue()) {
+      try {
+        const result = await api(`/api/data/${item.table}`, "POST", item.record);
+        const normalized = normalizeRow(item.table, result);
+        commit(prev => ({ ...prev, [item.table]: mergeRecord(prev[item.table], normalized) }));
+        removeFromQueue(item.queueId);
+      } catch (e) {
+        if (e instanceof NetworkError) break;
+        removeFromQueue(item.queueId);
+        toast(`Gagal sinkron data offline: ${e instanceof Error ? e.message : "error"}`, { type: "error" });
+      }
+    }
+    setPendingSyncCount(getQueue().length);
+  }, [commit]);
+
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && navigator.onLine) flushQueue();
+    window.addEventListener("online", flushQueue);
+    return () => window.removeEventListener("online", flushQueue);
+  }, [flushQueue]);
 
   // Fetches only `tables` (defaults to everything) and merges the result into
   // local state, leaving any table not included in this call untouched.
@@ -185,6 +226,16 @@ export function useData() {
       toast("Tersimpan");
       return normalized;
     } catch (e) {
+      // Only Visit/Task saves — the field-capture entry points — get queued
+      // for later sync; every other table still surfaces the error as before.
+      if (e instanceof NetworkError && (table === "visits" || table === "tasks")) {
+        const pending = { ...record, _pending: true };
+        commit(prev => ({ ...prev, [table]: mergeRecord(prev[table], pending) }));
+        enqueue(table, record);
+        setPendingSyncCount(getQueue().length);
+        toast("Tersimpan offline — akan disinkronkan otomatis");
+        return pending;
+      }
       toast(e instanceof Error ? e.message : "Gagal menyimpan", { type: "error" });
       throw e;
     }
@@ -227,7 +278,11 @@ export function useData() {
   const deleteContact = makeRemove("contacts");
 
   async function upsertVisit(v: Visit) {
-    await upsert("visits", v as unknown as Record<string, unknown>);
+    const result = await upsert("visits", v as unknown as Record<string, unknown>);
+    // Offline-queued — defer the deal-stage-advance/activity-mirror side
+    // effects below until this visit actually syncs (they'd otherwise run
+    // against local `deals`/`activities` state that may itself be stale).
+    if ((result as { _pending?: boolean } | null)?._pending) return;
 
     // Advance the linked deal to Present Solution if it's still earlier in the
     // pipeline (visit approach "First Meeting" is a Visit-side label, distinct
@@ -369,7 +424,7 @@ export function useData() {
   }
 
   return {
-    data, loading, syncStatus, currentProfile,
+    data, loading, syncStatus, currentProfile, pendingSyncCount,
     upsertClient, deleteClient,
     upsertContact, deleteContact,
     upsertVisit, deleteVisit,
