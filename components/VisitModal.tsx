@@ -4,6 +4,7 @@ import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import SearchableSelect from "./ui/SearchableSelect";
 import { VisitBadge } from "./ui/Badge";
+import { toast } from "./ui/Toast";
 import { Visit, Client, Contact, Deal, Task } from "@/types";
 import { VISIT_STATUS, STAGE_COLOR, todayStr, picList, fmtDate } from "@/lib/utils";
 
@@ -144,9 +145,9 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   }
 
   async function handleSave() {
-    if (!form.client_id) { alert("Client wajib dipilih."); return; }
-    if (!form.date) { alert("Tanggal approach wajib diisi."); return; }
-    if (isReschedule && !form.followup_date) { alert("Tanggal reschedule wajib diisi untuk membuat jadwal baru."); return; }
+    if (!form.client_id) { toast("Client wajib dipilih.", { type: "error" }); return; }
+    if (!form.date) { toast("Tanggal approach wajib diisi.", { type: "error" }); return; }
+    if (isReschedule && !form.followup_date) { toast("Tanggal reschedule wajib diisi untuk membuat jadwal baru.", { type: "error" }); return; }
 
     setSaving(true);
     try {

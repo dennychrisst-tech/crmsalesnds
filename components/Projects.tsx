@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
 import { AppData } from "@/hooks/useData";
+import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Project, TalentRole, PIC } from "@/types";
 import { fmtIDR, fmtDate } from "@/lib/utils";
 import ProjectModal from "./ProjectModal";
 import TalentManageModal from "./TalentManageModal";
+import EmptyState from "./ui/EmptyState";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
 import SortableTh, { SortDir } from "./ui/SortableTh";
 
@@ -49,7 +51,15 @@ export default function Projects({
   data, isViewer, onSaveProject, onDeleteProject,
   onSaveTalentRole, onDeleteTalentRole, onOpenClient,
 }: Props) {
-  const { clients, projects, profiles, talent_roles } = data;
+  const { clients, profiles, talent_roles } = data;
+  // Soft-delete: "Hapus" hides the project immediately, real delete happens
+  // after the Undo window passes — see useUndoableDelete.
+  const { isPending, requestDelete } = useUndoableDelete(onDeleteProject);
+  const projects = data.projects.filter(p => !isPending(p.id));
+  async function handleDeleteProject(id: string) {
+    const p = data.projects.find(x => x.id === id);
+    requestDelete(id, p ? `Project "${p.name}"` : "Project");
+  }
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
   const [salesFilter, setSalesFilter] = useState("all");
@@ -181,9 +191,15 @@ export default function Projects({
                   </td>
                 </tr>
               );
-            }) : <tr><td colSpan={8} className="empty-state">Belum ada project.</td></tr>}
+            }) : <tr><td colSpan={8}><EmptyState icon="📁" label="Belum ada project" sub="Coba ubah filter, atau tambah project pertama Anda" /></td></tr>}
           </tbody>
         </table>
+
+        {!sorted.length && (
+          <div className="mobile-only">
+            <EmptyState icon="📁" label="Belum ada project" sub="Coba ubah filter, atau tambah project pertama Anda" />
+          </div>
+        )}
 
         {sorted.length > 0 && (
           <div className="mobile-cards">
@@ -224,7 +240,7 @@ export default function Projects({
         )}
       </div>
       <ProjectModal open={modalOpen} project={editProject} clients={clients}
-        onSave={onSaveProject} onDelete={onDeleteProject} onClose={() => setModalOpen(false)} />
+        onSave={onSaveProject} onDelete={handleDeleteProject} onClose={() => setModalOpen(false)} />
 
       <TalentManageModal
         open={talentModalOpen} project={talentProject}

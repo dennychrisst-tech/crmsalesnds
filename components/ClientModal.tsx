@@ -4,6 +4,7 @@ import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import { Client } from "@/types";
 import { SECTORS, COMPANY_SIZES } from "@/lib/utils";
+import { toast } from "./ui/Toast";
 
 interface Props {
   open: boolean;
@@ -63,7 +64,7 @@ export default function ClientModal({ open, client, team, onSave, onDelete, onUp
       set("logo_url", url);
       if (oldUrl) await onDeleteLogo(oldUrl).catch(() => {});
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Gagal upload logo.");
+      toast(err instanceof Error ? err.message : "Gagal upload logo.", { type: "error" });
     } finally {
       setUploadingLogo(false);
     }
@@ -77,7 +78,7 @@ export default function ClientModal({ open, client, team, onSave, onDelete, onUp
   }
 
   async function handleSave() {
-    if (!form.name.trim()) { alert("Nama client wajib diisi."); return; }
+    if (!form.name.trim()) { toast("Nama client wajib diisi.", { type: "error" }); return; }
     setSaving(true);
     try {
       const pic = assigned.map(name => ({ name, phone: "" }));
@@ -89,7 +90,8 @@ export default function ClientModal({ open, client, team, onSave, onDelete, onUp
   }
 
   async function handleDelete() {
-    if (!confirm("Hapus client ini?")) return;
+    // No confirm() dialog — the Undo toast (see useUndoableDelete) is the
+    // safety net: the record isn't actually deleted until that window passes.
     await onDelete(form.id);
     onClose();
   }

@@ -4,6 +4,7 @@ import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import { RevenueLine, RevenueMilestone } from "@/types";
 import { REVENUE_LINE_CATEGORIES, REVENUE_MILESTONE_STATUS, fmtIDR } from "@/lib/utils";
+import { toast } from "./ui/Toast";
 
 interface Props {
   open: boolean;
@@ -51,7 +52,7 @@ export default function RevenueLineModal({ open, line, year, team, onSave, onDel
   const totalAmount = form.milestones.reduce((s, m) => s + (m.amount || 0), 0);
 
   async function handleSave() {
-    if (!form.project_name.trim()) { alert("Nama project wajib diisi."); return; }
+    if (!form.project_name.trim()) { toast("Nama project wajib diisi.", { type: "error" }); return; }
     setSaving(true);
     try {
       await onSave(form);

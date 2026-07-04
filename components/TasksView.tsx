@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, RotateCcw } from "lucide-react";
 import { AppData } from "@/hooks/useData";
 import { Task, Client, Deal } from "@/types";
@@ -18,6 +18,9 @@ interface Props {
   onSaveTask: (t: Task) => Promise<void>;
   onDeleteTask: (id: string) => Promise<void>;
   onCreateDeal: (d: Deal) => Promise<void>;
+  // Deep-link: open this task's detail modal on mount (e.g. from GlobalSearch/RemindersBell)
+  openTaskId?: string | null;
+  onOpenTaskHandled?: () => void;
 }
 
 function statusBadge(status: string) {
@@ -39,7 +42,7 @@ function urgencyClass(dueDate: string, status: string): string {
   return "";
 }
 
-export default function TasksView({ data, currentUserName, isViewer, onSaveTask, onDeleteTask, onCreateDeal }: Props) {
+export default function TasksView({ data, currentUserName, isViewer, onSaveTask, onDeleteTask, onCreateDeal, openTaskId, onOpenTaskHandled }: Props) {
   const { tasks, clients, contacts, deals, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [modalOpen, setModalOpen] = useState(false);
@@ -97,6 +100,14 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
 
   function openNew() { setEditTask(null); setModalOpen(true); }
   function openEdit(t: Task) { setEditTask(t); setModalOpen(true); }
+
+  useEffect(() => {
+    if (!openTaskId) return;
+    const task = tasks.find(t => t.id === openTaskId);
+    if (task) openEdit(task);
+    onOpenTaskHandled?.();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openTaskId]);
 
   return (
     <section>

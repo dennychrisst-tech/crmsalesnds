@@ -5,6 +5,7 @@ import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./
 import SearchableSelect from "./ui/SearchableSelect";
 import { Project, Client } from "@/types";
 import { PROJ_STATUS, fmtIDR as fmtIDRFull, fmtDate } from "@/lib/utils";
+import { toast } from "./ui/Toast";
 
 interface Props {
   open: boolean;
@@ -70,8 +71,8 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
   }
 
   async function handleSave() {
-    if (!form.name.trim()) { alert("Nama project wajib diisi."); return; }
-    if (!form.client_id) { alert("Client wajib dipilih."); return; }
+    if (!form.name.trim()) { toast("Nama project wajib diisi.", { type: "error" }); return; }
+    if (!form.client_id) { toast("Client wajib dipilih.", { type: "error" }); return; }
     setSaving(true);
     try {
       await onSave(form);
@@ -82,7 +83,8 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
   }
 
   async function handleDelete() {
-    if (!confirm("Hapus project ini?")) return;
+    // No confirm() dialog — the Undo toast (see useUndoableDelete) is the
+    // safety net: the record isn't actually deleted until that window passes.
     await onDelete(form.id);
     onClose();
   }

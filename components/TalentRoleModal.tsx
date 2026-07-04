@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import { TalentRole } from "@/types";
-import { TALENT_LEVELS, TALENT_ROLE_STATUS } from "@/lib/utils";
+import { TALENT_LEVELS, TALENT_ROLE_STATUS, fmtDate } from "@/lib/utils";
+import { toast } from "./ui/Toast";
 
 interface Props {
   open: boolean;
@@ -40,11 +41,13 @@ export default function TalentRoleModal({ open, role, projectId, team, onSave, o
   const [form, setForm] = useState<TalentRole>(emptyRole(projectId));
   const [ratecardDisplay, setRatecardDisplay] = useState("");
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState<"detail" | "edit">("edit");
 
   useEffect(() => {
     const base = role || emptyRole(projectId);
     setForm(base);
     setRatecardDisplay(base.ratecard ? base.ratecard.toLocaleString("id-ID") : "");
+    setTab(role ? "detail" : "edit");
   // Re-init only when the modal opens or a different role is opened.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role?.id, open]);
@@ -52,7 +55,7 @@ export default function TalentRoleModal({ open, role, projectId, team, onSave, o
   const set = (k: keyof TalentRole, v: string | number | null) => setForm(f => ({ ...f, [k]: v }));
 
   async function handleSave() {
-    if (!form.role_name.trim()) { alert("Role wajib diisi."); return; }
+    if (!form.role_name.trim()) { toast("Role wajib diisi.", { type: "error" }); return; }
     setSaving(true);
     try {
       await onSave(form);
@@ -68,8 +71,47 @@ export default function TalentRoleModal({ open, role, projectId, team, onSave, o
     onClose();
   }
 
+  const tabCls = (t: string) => `modal-tab${tab === t ? " modal-tab-active" : ""}`;
+
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? "Edit Requisition" : "Tambah Requisition"}>
+    <Modal open={open} onClose={onClose} title={isEdit ? (tab === "detail" ? "Detail Requisition" : "Edit Requisition") : "Tambah Requisition"}>
+      {isEdit && (
+        <div className="modal-tabs">
+          <button className={tabCls("detail")} onClick={() => setTab("detail")}>Detail</button>
+          <button className={tabCls("edit")} onClick={() => setTab("edit")}>Edit</button>
+        </div>
+      )}
+
+      {isEdit && tab === "detail" && (
+        <>
+          <div className="dd-title-row">
+            <div>
+              <div className="dd-name">{form.role_name}</div>
+              <div className="dd-client">{form.level || "—"}{form.pic ? ` · PIC: ${form.pic}` : ""}</div>
+            </div>
+            <span className="badge">{form.status}</span>
+          </div>
+          <div className="dd-grid">
+            <div className="dd-item"><div className="dd-label">Ratecard (per bulan)</div><div className="dd-value">{form.ratecard ? `Rp ${form.ratecard.toLocaleString("id-ID")}` : "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Deadline</div><div className="dd-value">{form.deadline ? fmtDate(form.deadline) : "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Req CV</div><div className="dd-value">{form.req_cv}</div></div>
+            <div className="dd-item"><div className="dd-label">CV Submitted</div><div className="dd-value">{form.cv_submitted}</div></div>
+            <div className="dd-item"><div className="dd-label">CV Reject</div><div className="dd-value">{form.cv_reject}</div></div>
+            <div className="dd-item"><div className="dd-label">CV Not Response / Not Avail</div><div className="dd-value">{form.cv_not_response}</div></div>
+            <div className="dd-item"><div className="dd-label">PO Issued</div><div className="dd-value">{form.po_issued}</div></div>
+          </div>
+          <div className="dd-block">
+            <div className="dd-label">Note</div>
+            <div className="dd-text">{form.notes || "—"}</div>
+          </div>
+          <ModalActions>
+            <button className="btn btn-ghost" onClick={onClose}>Tutup</button>
+          </ModalActions>
+        </>
+      )}
+
+      {tab === "edit" && (
+        <>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Role">
           <input className={inputCls} value={form.role_name} onChange={e => set("role_name", e.target.value)} placeholder="Mis. Fullstack Developer" />
@@ -142,6 +184,8 @@ export default function TalentRoleModal({ open, role, projectId, team, onSave, o
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
         <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
+        </>
+      )}
     </Modal>
   );
 }

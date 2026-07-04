@@ -6,11 +6,14 @@ import { AppData } from "@/hooks/useData";
 import { Visit, CalendarEvent, Task, Deal, Contact } from "@/types";
 import { fmtDate, todayStr, picList, picMatches, colorForSales } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
+import EmptyState from "./ui/EmptyState";
 import VisitModal from "./VisitModal";
 import EventModal from "./EventModal";
 import { exportVisits } from "@/lib/export";
 import { v4 as uuid } from "uuid";
 import { Download } from "lucide-react";
+import { toast } from "./ui/Toast";
+import FilterSheet, { FilterField } from "./ui/FilterSheet";
 
 const WFO_DRAG_PREFIX = "wfo:";
 const LEAVE_DRAG_PREFIX = "leave:";
@@ -294,7 +297,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
     const key = `${name}::${ds}`;
     if (pendingWfo.has(key)) return;
     const exists = events.some(ev => ev.type === "WFO" && ev.date === ds && ev.created_by === name);
-    if (exists) { alert(`${name} sudah ditandai WFO pada tanggal ${ds}.`); return; }
+    if (exists) { toast(`${name} sudah ditandai WFO pada tanggal ${ds}.`, { type: "error" }); return; }
     setPendingWfo(prev => new Set(prev).add(key));
     try {
       await onSaveEvent({
@@ -312,7 +315,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
     const key = `${name}::${ds}`;
     if (pendingLeave.has(key)) return;
     const exists = events.some(ev => ev.type === "Cuti" && ev.date === ds && ev.created_by === name);
-    if (exists) { alert(`${name} sudah ditandai Cuti pada tanggal ${ds}.`); return; }
+    if (exists) { toast(`${name} sudah ditandai Cuti pada tanggal ${ds}.`, { type: "error" }); return; }
     setPendingLeave(prev => new Set(prev).add(key));
     try {
       await onSaveEvent({
@@ -358,14 +361,24 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
           <button className="cal-nav-btn" onClick={nextMonth}>›</button>
         </div>
         <div className="cal-toolbar-actions">
-          <select
-            value={salesFilter}
-            onChange={e => setSalesFilter(e.target.value)}
-            style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)", cursor: "pointer" }}
-          >
-            <option value="all">Semua Sales</option>
-            {team.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
+          <span className="filter-inline">
+            <select
+              value={salesFilter}
+              onChange={e => setSalesFilter(e.target.value)}
+              style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)", cursor: "pointer" }}
+            >
+              <option value="all">Semua Sales</option>
+              {team.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </span>
+          <FilterSheet>
+            <FilterField label="Sales">
+              <select value={salesFilter} onChange={e => setSalesFilter(e.target.value)}>
+                <option value="all">Semua Sales</option>
+                {team.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </FilterField>
+          </FilterSheet>
           <button className="btn btn-ghost btn-sm" onClick={() => exportVisits(visits, id => clients.find(c => c.id === id)?.name || "—")}><Download size={13} /> Export Excel</button>
           {!isViewer && (
             <button className="btn btn-ghost" onClick={() => setShowWfoPanel(s => !s)}>
@@ -457,7 +470,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
       {/* Agenda list — mobile only, replaces the month grid above */}
       <div className="cal-agenda">
         {agendaDays.length === 0 ? (
-          <div className="agenda-empty">Tidak ada visit atau event bulan ini.</div>
+          <EmptyState icon="🗓️" label="Tidak ada jadwal" sub="Belum ada visit atau event bulan ini" />
         ) : agendaDays.map(({ ds, day, isWeekend, dayVisits, dayEvents }) => (
           <AgendaDayCard key={ds} ds={ds} day={day} y={y} m={m} today={today} isWeekend={isWeekend} dayVisits={dayVisits} dayEvents={dayEvents}
             clientName={clientName} isViewer={isViewer}
@@ -485,7 +498,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
                 <td>{v.pic || <span className="muted">—</span>}</td>
                 <td>{!isViewer && <button className="btn btn-ghost btn-sm" onClick={() => openEditVisit(v)}>Edit</button>}</td>
               </tr>
-            )) : <tr><td colSpan={7} className="empty-state">Belum ada visit.</td></tr>}
+            )) : <tr><td colSpan={7}><EmptyState icon="🚗" label="Belum ada visit" /></td></tr>}
           </tbody>
         </table>
       </div>
@@ -507,7 +520,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
                 <td className="muted" style={{ fontSize: 12 }}>{ev.description || "—"}</td>
                 <td>{!isViewer && <button className="btn btn-ghost btn-sm" onClick={() => openEditEvent(ev)}>Edit</button>}</td>
               </tr>
-            )) : <tr><td colSpan={6} className="empty-state">Belum ada event.</td></tr>}
+            )) : <tr><td colSpan={6}><EmptyState icon="📅" label="Belum ada event" /></td></tr>}
           </tbody>
         </table>
       </div>

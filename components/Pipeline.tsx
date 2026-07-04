@@ -4,11 +4,13 @@ import { v4 as uuid } from "uuid";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
+import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Deal, CRMDocument, Attachment, Activity, Project } from "@/types";
 import { STAGES, STAGE_COLOR, fmtIDR, todayStr, isClosedStage, colorForSales } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 import { toast } from "./ui/Toast";
 import Modal, { Field, ModalActions, inputCls, textareaCls } from "./ui/Modal";
+import FilterSheet, { FilterField } from "./ui/FilterSheet";
 import { Download, User } from "lucide-react";
 
 const PROJECT_DRAG_PREFIX = "project:";
@@ -259,7 +261,16 @@ function Column({ stage, deals, clientName, onDealClick, onMoveStage, isViewer, 
 }
 
 export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity, openDealId, onOpenDealHandled, openStage, onOpenStageHandled }: Props) {
-  const { clients, deals, products, documents, attachments, activities, profiles, projects } = data;
+  const { clients, products, documents, attachments, activities, profiles, projects } = data;
+  // Soft-delete: a deal "Hapus" (from DealModal) hides it immediately, real
+  // delete happens after the Undo window passes — see useUndoableDelete.
+  // Bulk delete below is unaffected — it already has its own confirm() step.
+  const { isPending, requestDelete } = useUndoableDelete(onDeleteDeal);
+  const deals = data.deals.filter(d => !isPending(d.id));
+  async function handleDeleteDeal(id: string) {
+    const d = data.deals.find(x => x.id === id);
+    requestDelete(id, d ? `Deal "${d.name}"` : "Deal");
+  }
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [modalOpen, setModalOpen] = useState(false);
   const [editDeal, setEditDeal] = useState<Deal | null>(null);
@@ -498,11 +509,20 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
     <section>
       <div className="toolbar">
         <span className="muted desktop-only">Tarik proyek atau kartu antar kolom untuk ubah stage.</span>
-        <select className="search" style={{ flex: "none", width: "auto" }}
-          value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)}>
-          <option value="all">Semua Sales</option>
-          {team.map(name => <option key={name} value={name}>{name}</option>)}
-        </select>
+        <span className="filter-inline">
+          <select className="select-sm" value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)}>
+            <option value="all">Semua Sales</option>
+            {team.map(name => <option key={name} value={name}>{name}</option>)}
+          </select>
+        </span>
+        <FilterSheet>
+          <FilterField label="Sales">
+            <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)}>
+              <option value="all">Semua Sales</option>
+              {team.map(name => <option key={name} value={name}>{name}</option>)}
+            </select>
+          </FilterField>
+        </FilterSheet>
         {archivedCount > 0 && (
           <button className="btn btn-ghost btn-sm" onClick={() => setShowArchived(s => !s)}>
             {showArchived ? "Sembunyikan arsip" : `Arsip closed (${archivedCount})`}
@@ -639,7 +659,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
       <DealModal
         open={modalOpen} deal={editDeal} clients={clients} products={products} team={team} defaultOwner={currentUserName}
         documents={dealDocuments} attachments={dealAttachments} activities={dealActivities}
-        onSave={onSaveDeal} onDelete={onDeleteDeal}
+        onSave={onSaveDeal} onDelete={handleDeleteDeal}
         onAddDocument={onAddDocument} onDeleteDocument={onDeleteDocument}
         onUploadAttachment={onUploadAttachment} onDeleteAttachment={onDeleteAttachment}
         onAddActivity={onAddActivity} onDeleteActivity={onDeleteActivity}

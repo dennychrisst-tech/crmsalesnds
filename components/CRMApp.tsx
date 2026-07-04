@@ -25,7 +25,7 @@ import WeeklyReport from "./WeeklyReport";
 import RevenueForecastView from "./RevenueForecastView";
 import TalentFillRateView from "./TalentFillRateView";
 import MandaysRateView from "./MandaysRateView";
-import ToastHost from "./ui/Toast";
+import ToastHost, { toast } from "./ui/Toast";
 import Logo from "./ui/Logo";
 
 const TABS: { id: ActiveView; label: string; icon: LucideIcon }[] = [
@@ -124,6 +124,7 @@ export default function CRMApp() {
   const [pendingClientId, setPendingClientId] = useState<string | null>(null);
   const [pendingDealId, setPendingDealId] = useState<string | null>(null);
   const [pendingVisitId, setPendingVisitId] = useState<string | null>(null);
+  const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
   const [pendingStage, setPendingStage] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [openNavDropdown, setOpenNavDropdown] = useState<string | null>(null);
@@ -149,6 +150,11 @@ export default function CRMApp() {
   function openVisit(visitId: string) {
     setPendingVisitId(visitId);
     setView("calendar");
+  }
+
+  function openTask(taskId: string) {
+    setPendingTaskId(taskId);
+    setView("tasks");
   }
 
   function openStage(stage: string) {
@@ -183,7 +189,7 @@ export default function CRMApp() {
 
   const isViewer = currentProfile?.role === "viewer";
   const isAdmin = !!currentProfile && ["super_admin", "admin"].includes(currentProfile.role);
-  const warnViewer = () => { alert("Anda hanya memiliki akses lihat (view only)."); return Promise.resolve(); };
+  const warnViewer = () => { toast("Anda hanya memiliki akses lihat (view only).", { type: "error" }); return Promise.resolve(); };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ro = (fn: any) => isViewer ? (() => warnViewer()) : fn;
 
@@ -196,9 +202,9 @@ export default function CRMApp() {
           <div className="header-crm-tag">Sales CRM</div>
         </div>
         <div className="header-search-row">
-          {!loading && <GlobalSearch data={data} onNavigate={setView} onOpenClient={openClient} onOpenDeal={openDeal} />}
+          {!loading && <GlobalSearch data={data} onOpenClient={openClient} onOpenDeal={openDeal} onOpenTask={openTask} />}
           {!loading && (
-            <RemindersBell data={data} currentUserName={currentProfile?.name ?? ""} isAdmin={isAdmin} onNavigate={setView} />
+            <RemindersBell data={data} currentUserName={currentProfile?.name ?? ""} isAdmin={isAdmin} onNavigate={setView} onOpenTask={openTask} />
           )}
         </div>
         {currentProfile && ["super_admin", "admin"].includes(currentProfile.role) && (
@@ -327,7 +333,8 @@ export default function CRMApp() {
                     onOpenClient={openClient} />
                 )}
                 {view === "tasks" && (
-                  <TasksView data={data} currentUserName={currentUserName} isViewer={isViewer} onSaveTask={ro(upsertTask)} onDeleteTask={ro(deleteTask)} onCreateDeal={ro(upsertDeal)} />
+                  <TasksView data={data} currentUserName={currentUserName} isViewer={isViewer} onSaveTask={ro(upsertTask)} onDeleteTask={ro(deleteTask)} onCreateDeal={ro(upsertDeal)}
+                    openTaskId={pendingTaskId} onOpenTaskHandled={() => setPendingTaskId(null)} />
                 )}
                 {view === "catalog" && (
                   <ProductsView data={data} isViewer={isViewer} onSaveProduct={ro(upsertProduct)} onDeleteProduct={ro(deleteProduct)} />

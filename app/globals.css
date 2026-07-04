@@ -145,6 +145,7 @@ nav.tabs button.active::after {
 .pipeline-stage-tabs { display: none; }
 .pipeline-mobile-list { display: none; }
 .desktop-only { }
+.mobile-only { display: none; }
 
 /* Calendar agenda list — mobile-only, replaces the month grid */
 .cal-agenda { display: none; }
@@ -833,6 +834,7 @@ tr.task-soon td { background: #fffbeb; }
      track of while swiping) is replaced by a stage-tab bar + a single
      vertical list of full-width cards for that stage. */
   .desktop-only { display: none; }
+  .mobile-only { display: block; }
   .board { display: none; }
   .pipeline-stage-tabs {
     display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
@@ -949,7 +951,6 @@ tr.task-soon td { background: #fffbeb; }
   .agenda-item-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .agenda-item-title { font-weight: 600; }
   .agenda-item-sub { color: var(--ink-soft); font-size: 11px; }
-  .agenda-empty { text-align: center; padding: 24px 0; color: var(--ink-soft); font-size: 12.5px; }
 
   /* WFO quick form — plain date+name picker, replaces drag-and-drop on mobile */
   .wfo-quick-form-wrap { display: block; margin-bottom: 14px; }

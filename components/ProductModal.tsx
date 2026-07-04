@@ -4,6 +4,7 @@ import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import { Product } from "@/types";
 import { PRODUCT_CATEGORIES } from "@/lib/utils";
+import { toast } from "./ui/Toast";
 
 interface Props {
   open: boolean;
@@ -25,7 +26,7 @@ export default function ProductModal({ open, product, onSave, onDelete, onClose 
   const set = <K extends keyof Product>(k: K, v: Product[K]) => setForm(f => ({ ...f, [k]: v }));
 
   async function handleSave() {
-    if (!form.name.trim()) { alert("Nama produk wajib diisi."); return; }
+    if (!form.name.trim()) { toast("Nama produk wajib diisi.", { type: "error" }); return; }
     setSaving(true);
     try {
       await onSave(form);

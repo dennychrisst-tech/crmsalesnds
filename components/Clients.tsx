@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { AppData } from "@/hooks/useData";
+import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Client, Contact, Visit, Deal, PIC, Activity, ActiveView } from "@/types";
 import { fmtDate, fmtIDR, isoWeekLabel, CLIENT_STATUS_COLOR, SECTORS, isClosedStage } from "@/lib/utils";
 import EmptyState from "./ui/EmptyState";
@@ -90,7 +91,15 @@ function lastContactDate(clientId: string, visits: Visit[], activities: Activity
 }
 
 export default function Clients({ data, currentUserName, isViewer, onNavigate, onSaveClient, onDeleteClient, onUploadLogo, onDeleteLogo, onSaveContact, onDeleteContact, onSaveVisit, onDeleteVisit, onCreateDeal, openClientId, onOpenClientHandled }: Props) {
-  const { clients, contacts, visits, deals, activities, profiles, projects } = data;
+  const { contacts, visits, deals, activities, profiles, projects } = data;
+  // Soft-delete: a client "Hapus" hides it here immediately and only really
+  // deletes it after the Undo window passes — see useUndoableDelete.
+  const { isPending, requestDelete } = useUndoableDelete(onDeleteClient);
+  const clients = data.clients.filter(c => !isPending(c.id));
+  async function handleDeleteClient(id: string) {
+    const c = data.clients.find(x => x.id === id);
+    requestDelete(id, c ? `Client "${c.name}"` : "Client");
+  }
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
   const [salesFilter, setSalesFilter] = useState("all");
@@ -463,7 +472,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
       })}
 
       <ClientModal open={clientModalOpen} client={editClient} team={team}
-        onSave={onSaveClient} onDelete={onDeleteClient}
+        onSave={onSaveClient} onDelete={handleDeleteClient}
         onUploadLogo={onUploadLogo} onDeleteLogo={onDeleteLogo}
         onClose={() => setClientModalOpen(false)} />
       <ContactModal open={contactModalOpen} contact={editContact} clientId={contactClientId}

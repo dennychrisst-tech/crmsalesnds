@@ -5,6 +5,7 @@ import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./
 import { Deal, Client } from "@/types";
 import { STAGES, REVENUE_OPP_CATEGORIES } from "@/lib/utils";
 import SearchableSelect from "./ui/SearchableSelect";
+import { toast } from "./ui/Toast";
 
 interface Props {
   open: boolean;
@@ -51,8 +52,8 @@ export default function DealOpportunityModal({ open, deal, year, team, clients, 
   const set = <K extends keyof Deal>(k: K, v: Deal[K]) => setForm(f => ({ ...f, [k]: v }));
 
   async function handleSave() {
-    if (!form.name.trim()) { alert("Nama project wajib diisi."); return; }
-    if (!form.client_id) { alert("Client wajib dipilih."); return; }
+    if (!form.name.trim()) { toast("Nama project wajib diisi.", { type: "error" }); return; }
+    if (!form.client_id) { toast("Client wajib dipilih.", { type: "error" }); return; }
     setSaving(true);
     try {
       await onSave(form);

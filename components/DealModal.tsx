@@ -7,6 +7,7 @@ import { STAGES, DEAL_TYPES, ACTIVITY_TYPES, STAGE_COLOR, fmtDate, fmtIDR, today
 import DocumentTracker from "./DocumentTracker";
 import AttachmentSection from "./AttachmentSection";
 import SearchableSelect from "./ui/SearchableSelect";
+import { toast } from "./ui/Toast";
 
 interface Props {
   open: boolean;
@@ -69,8 +70,8 @@ export default function DealModal({
   const set = <K extends keyof Deal>(k: K, v: Deal[K]) => setForm(f => ({ ...f, [k]: v }));
 
   async function handleSave() {
-    if (!form.name.trim()) { alert("Nama project wajib diisi."); return; }
-    if (!form.client_id) { alert("Client wajib dipilih."); return; }
+    if (!form.name.trim()) { toast("Nama project wajib diisi.", { type: "error" }); return; }
+    if (!form.client_id) { toast("Client wajib dipilih.", { type: "error" }); return; }
     setSavingMain(true);
     try {
       await onSave(form);
@@ -81,13 +82,14 @@ export default function DealModal({
   }
 
   async function handleDelete() {
-    if (!confirm("Hapus project ini?")) return;
+    // No confirm() dialog — the Undo toast (see useUndoableDelete) is the
+    // safety net: the record isn't actually deleted until that window passes.
     await onDelete(form.id);
     onClose();
   }
 
   async function handleAddActivity() {
-    if (!actForm.description.trim()) { alert("Deskripsi aktivitas wajib diisi."); return; }
+    if (!actForm.description.trim()) { toast("Deskripsi aktivitas wajib diisi.", { type: "error" }); return; }
     setSaving(true);
     try {
       await onAddActivity({ ...actForm, id: uuid(), deal_id: form.id });

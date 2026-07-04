@@ -5,6 +5,7 @@ import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./
 import SearchableSelect from "./ui/SearchableSelect";
 import { Task, Client, Contact, Deal } from "@/types";
 import { todayStr, picList, fmtDate } from "@/lib/utils";
+import { toast } from "./ui/Toast";
 
 interface Props {
   open: boolean;
@@ -51,7 +52,7 @@ export default function TaskModal({ open, task, clients, contacts, deals, team, 
   const set = <K extends keyof Task>(k: K, v: Task[K]) => setForm(f => ({ ...f, [k]: v }));
 
   async function handleSave() {
-    if (!form.title.trim()) { alert("Judul task wajib diisi."); return; }
+    if (!form.title.trim()) { toast("Judul task wajib diisi.", { type: "error" }); return; }
     setSaving(true);
     try {
       await onSave(form);

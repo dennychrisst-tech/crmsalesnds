@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, textareaCls, ModalActions } from "./ui/Modal";
+import { toast } from "./ui/Toast";
 import { Contact } from "@/types";
 
 interface Props {
@@ -63,10 +64,10 @@ export default function ContactModal({ open, contact, clientId, onSave, onDelete
 
   async function handleSave() {
     if (isEdit) {
-      if (!form.name.trim()) { alert("Nama kontak wajib diisi."); return; }
+      if (!form.name.trim()) { toast("Nama kontak wajib diisi.", { type: "error" }); return; }
     } else {
       const valid = rows.filter(r => r.name.trim());
-      if (!valid.length) { alert("Isi minimal satu nama kontak."); return; }
+      if (!valid.length) { toast("Isi minimal satu nama kontak.", { type: "error" }); return; }
     }
     setSaving(true);
     try {

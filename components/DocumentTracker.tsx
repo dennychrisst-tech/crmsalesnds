@@ -4,6 +4,7 @@ import { v4 as uuid } from "uuid";
 import { CRMDocument } from "@/types";
 import { DOC_TYPES, DOC_STATUSES, fmtDate, todayStr } from "@/lib/utils";
 import { inputCls, selectCls } from "./ui/Modal";
+import { toast } from "./ui/Toast";
 
 interface Props {
   dealId: string;
@@ -32,7 +33,7 @@ export default function DocumentTracker({ dealId, documents, onAdd, onDelete }: 
   const set = <K extends keyof CRMDocument>(k: K, v: CRMDocument[K]) => setForm(f => ({ ...f, [k]: v }));
 
   async function handleAdd() {
-    if (!form.name?.trim()) { alert("Nama dokumen wajib diisi."); return; }
+    if (!form.name?.trim()) { toast("Nama dokumen wajib diisi.", { type: "error" }); return; }
     setSaving(true);
     try {
       await onAdd({ id: uuid(), deal_id: dealId, name: form.name!, type: form.type!, status: form.status!, date: form.date || "", notes: form.notes || "" });

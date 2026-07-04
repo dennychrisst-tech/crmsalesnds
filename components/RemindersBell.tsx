@@ -10,6 +10,7 @@ interface Props {
   currentUserName: string;
   isAdmin: boolean;
   onNavigate: (view: ActiveView) => void;
+  onOpenTask: (id: string) => void;
 }
 
 interface Reminder {
@@ -18,9 +19,13 @@ interface Reminder {
   sub: string;
   severity: "overdue" | "today";
   view: ActiveView;
+  // Only set for task reminders — lets pick() open that task directly instead
+  // of just landing on the Tasks tab (matches how Client/Deal search results
+  // already deep-link straight to the record).
+  taskId?: string;
 }
 
-export default function RemindersBell({ data, currentUserName, isAdmin, onNavigate }: Props) {
+export default function RemindersBell({ data, currentUserName, isAdmin, onNavigate, onOpenTask }: Props) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -71,9 +76,9 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
 
   data.tasks.filter(t => t.status === "Open" && mine(t.assigned_to)).forEach(t => {
     if (t.due_date && t.due_date < today) {
-      reminders.push({ id: `t-overdue-${t.id}`, title: `Task terlambat: ${t.title}`, sub: `${fmtDate(t.due_date)} · ${t.assigned_to || "—"}`, severity: "overdue", view: "tasks" });
+      reminders.push({ id: `t-overdue-${t.id}`, title: `Task terlambat: ${t.title}`, sub: `${fmtDate(t.due_date)} · ${t.assigned_to || "—"}`, severity: "overdue", view: "tasks", taskId: t.id });
     } else if (t.due_date === today) {
-      reminders.push({ id: `t-today-${t.id}`, title: `Task jatuh tempo hari ini: ${t.title}`, sub: `${t.assigned_to || "—"}`, severity: "today", view: "tasks" });
+      reminders.push({ id: `t-today-${t.id}`, title: `Task jatuh tempo hari ini: ${t.title}`, sub: `${t.assigned_to || "—"}`, severity: "today", view: "tasks", taskId: t.id });
     }
   });
 
@@ -82,8 +87,9 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
   const overdueCount = reminders.filter(r => r.severity === "overdue").length;
   const badgeColor = overdueCount > 0 ? "var(--danger)" : reminders.length > 0 ? "var(--gold)" : null;
 
-  function pick(view: ActiveView) {
-    onNavigate(view);
+  function pick(r: Reminder) {
+    if (r.taskId) onOpenTask(r.taskId);
+    else onNavigate(r.view);
     setOpen(false);
   }
 
@@ -101,7 +107,7 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
           {reminders.length === 0 ? (
             <div className="rb-empty">Tidak ada reminder. Semua aman 🎉</div>
           ) : reminders.map(r => (
-            <div key={r.id} className="rb-item" onClick={() => pick(r.view)}>
+            <div key={r.id} className="rb-item" onClick={() => pick(r)}>
               <span className={`rb-dot rb-dot-${r.severity}`} />
               <div className="rb-item-text">
                 <div className="rb-item-title">{r.title}</div>

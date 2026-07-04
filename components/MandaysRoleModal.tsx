@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, ModalActions } from "./ui/Modal";
+import { toast } from "./ui/Toast";
 import { MandaysRole } from "@/types";
 
 interface Props {
@@ -49,7 +50,7 @@ export default function MandaysRoleModal({ open, role, onSave, onDelete, onClose
   }, [role?.id, open]);
 
   async function handleSave() {
-    if (!form.role_name.trim()) { alert("Nama role wajib diisi."); return; }
+    if (!form.role_name.trim()) { toast("Nama role wajib diisi.", { type: "error" }); return; }
     setSaving(true);
     try {
       await onSave(form);

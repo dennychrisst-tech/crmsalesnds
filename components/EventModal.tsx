@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import SearchableSelect from "./ui/SearchableSelect";
+import { toast } from "./ui/Toast";
 import { CalendarEvent, Client } from "@/types";
-import { EVENT_TYPES, EVENT_STATUS, todayStr } from "@/lib/utils";
+import { EVENT_TYPES, EVENT_STATUS, todayStr, fmtDate } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -38,6 +39,9 @@ export default function EventModal({ open, event, preDate, team, clients, defaul
   const [form, setForm] = useState<CalendarEvent>(emptyEvent(preDate));
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState<"detail" | "edit">("edit");
+
+  const clientName = (id: string | null) => id ? (clients.find(c => c.id === id)?.name || "—") : "—";
 
   // Re-init only when the modal opens or a different event is opened — not on
   // every background poll (see VisitModal/ProjectModal for the same fix).
@@ -51,6 +55,7 @@ export default function EventModal({ open, event, preDate, team, clients, defaul
     const members = parseMembers(base.created_by);
     // Auto-select current user when creating a new event
     setSelected(event ? members : (defaultMember && !members.includes(defaultMember) ? [defaultMember] : members));
+    setTab(event ? "detail" : "edit");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event?.id, preDate, open]);
 
@@ -65,7 +70,7 @@ export default function EventModal({ open, event, preDate, team, clients, defaul
   }
 
   async function handleSave() {
-    if (!form.title.trim()) { alert("Judul event wajib diisi."); return; }
+    if (!form.title.trim()) { toast("Judul event wajib diisi.", { type: "error" }); return; }
     setSaving(true);
     try {
       await onSave({ ...form, created_by: joinMembers(selected) });
@@ -81,8 +86,45 @@ export default function EventModal({ open, event, preDate, team, clients, defaul
     onClose();
   }
 
+  const tabCls = (t: string) => `modal-tab${tab === t ? " modal-tab-active" : ""}`;
+
   return (
-    <Modal open={open} onClose={onClose} title={`${isEdit ? "Edit" : "Tambah"} Event`}>
+    <Modal open={open} onClose={onClose} title={isEdit ? (tab === "detail" ? "Detail Event" : "Edit Event") : "Tambah Event"}>
+      {isEdit && (
+        <div className="modal-tabs">
+          <button className={tabCls("detail")} onClick={() => setTab("detail")}>Detail</button>
+          <button className={tabCls("edit")} onClick={() => setTab("edit")}>Edit</button>
+        </div>
+      )}
+
+      {isEdit && tab === "detail" && (
+        <>
+          <div className="dd-title-row">
+            <div>
+              <div className="dd-name">{form.title}</div>
+              <div className="dd-client">{form.type}{form.client_id ? ` · ${clientName(form.client_id)}` : ""}</div>
+            </div>
+            <span className="badge">{form.status}</span>
+          </div>
+          <div className="dd-grid">
+            <div className="dd-item"><div className="dd-label">Tanggal</div><div className="dd-value">{fmtDate(form.date)}</div></div>
+            {form.status === "Reschedule" && (
+              <div className="dd-item"><div className="dd-label">Tanggal Baru</div><div className="dd-value">{form.followup_date ? fmtDate(form.followup_date) : "—"}</div></div>
+            )}
+            <div className="dd-item"><div className="dd-label">Peserta</div><div className="dd-value">{joinMembers(selected) || "—"}</div></div>
+          </div>
+          <div className="dd-block">
+            <div className="dd-label">Keterangan</div>
+            <div className="dd-text">{form.description || "—"}</div>
+          </div>
+          <ModalActions>
+            <button className="btn btn-ghost" onClick={onClose}>Tutup</button>
+          </ModalActions>
+        </>
+      )}
+
+      {tab === "edit" && (
+        <>
       <Field label="Judul">
         <input className={inputCls} value={form.title} onChange={e => set("title", e.target.value)} placeholder="Nama kegiatan" />
       </Field>
@@ -153,6 +195,8 @@ export default function EventModal({ open, event, preDate, team, clients, defaul
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
         <button className="btn" onClick={handleSave} disabled={saving}>{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
+        </>
+      )}
     </Modal>
   );
 }

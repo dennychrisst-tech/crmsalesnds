@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
+import { toast } from "./ui/Toast";
 import { MandaysRole, MandaysClientRate } from "@/types";
 
 const CLASSIFICATIONS = ["< Low", "Low", "< Medium", "Medium", "< Max", "> Max"];
@@ -34,9 +35,9 @@ export default function MandaysClientRateModal({ open, rate, roles, defaultRoleI
   }, [rate?.id, open, defaultRoleId]);
 
   async function handleSave() {
-    if (!form.client_label.trim()) { alert("Nama client wajib diisi."); return; }
-    if (!form.rate_label.trim()) { alert("Label rate/periode wajib diisi."); return; }
-    if (!form.role_id) { alert("Role wajib dipilih."); return; }
+    if (!form.client_label.trim()) { toast("Nama client wajib diisi.", { type: "error" }); return; }
+    if (!form.rate_label.trim()) { toast("Label rate/periode wajib diisi.", { type: "error" }); return; }
+    if (!form.role_id) { toast("Role wajib dipilih.", { type: "error" }); return; }
     setSaving(true);
     try {
       await onSave(form);

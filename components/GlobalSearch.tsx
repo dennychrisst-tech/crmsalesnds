@@ -2,13 +2,12 @@
 import { useState, useRef, useEffect } from "react";
 import { Search } from "lucide-react";
 import { AppData } from "@/hooks/useData";
-import { ActiveView } from "@/types";
 
 interface Props {
   data: AppData;
-  onNavigate: (view: ActiveView) => void;
   onOpenClient: (id: string) => void;
   onOpenDeal: (id: string) => void;
+  onOpenTask: (id: string) => void;
 }
 
 interface Result {
@@ -18,7 +17,7 @@ interface Result {
   go: () => void;
 }
 
-export default function GlobalSearch({ data, onNavigate, onOpenClient, onOpenDeal }: Props) {
+export default function GlobalSearch({ data, onOpenClient, onOpenDeal, onOpenTask }: Props) {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -74,7 +73,7 @@ export default function GlobalSearch({ data, onNavigate, onOpenClient, onOpenDea
       .slice(0, 3)
       .forEach(t => results.push({
         type: "Task", label: t.title, sub: `${t.due_date || "—"} · ${t.assigned_to || "—"}`,
-        go: () => onNavigate("tasks"),
+        go: () => onOpenTask(t.id),
       }));
   }
 
