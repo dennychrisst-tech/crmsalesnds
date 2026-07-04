@@ -133,7 +133,7 @@ export default function AdminSettings() {
                 type="submit"
                 disabled={saving}
                 style={{
-                  background: "var(--ink)", color: "#fff", border: "none", padding: "10px 22px",
+                  background: "var(--surface-strong)", color: "#fff", border: "none", padding: "10px 22px",
                   borderRadius: "8px", fontWeight: 700, fontSize: "13px",
                   cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1,
                 }}

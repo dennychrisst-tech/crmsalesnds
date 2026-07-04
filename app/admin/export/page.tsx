@@ -61,7 +61,7 @@ export default function AdminExport() {
               disabled={downloading === t.key}
               style={{
                 flexShrink: 0, padding: "8px 14px", borderRadius: "8px",
-                background: downloading === t.key ? "#94a3b8" : "var(--ink)",
+                background: downloading === t.key ? "#94a3b8" : "var(--surface-strong)",
                 color: "#fff", border: "none", fontSize: "12px", fontWeight: 700,
                 cursor: downloading === t.key ? "not-allowed" : "pointer",
                 whiteSpace: "nowrap",

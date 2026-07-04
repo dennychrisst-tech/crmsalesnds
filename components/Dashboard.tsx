@@ -117,7 +117,7 @@ function FilterBar({
     padding: "6px 14px", borderRadius: 6, fontSize: 12, fontWeight: 700,
     cursor: "pointer", border: "1px solid var(--line)", transition: "all .15s",
   };
-  const active: React.CSSProperties = { background: "var(--ink)", color: "#fff", border: "1px solid var(--ink)" };
+  const active: React.CSSProperties = { background: "var(--surface-strong)", color: "#fff", border: "1px solid var(--surface-strong)" };
   const inactive: React.CSSProperties = { background: "var(--paper)", color: "var(--ink-soft)" };
 
   return (
@@ -140,7 +140,7 @@ function FilterBar({
         onChange={e => setSalesFilter(e.target.value)}
         style={{
           padding: "5px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
-          border: "1px solid var(--line)", background: salesFilter !== "all" ? "var(--ink)" : "var(--paper)",
+          border: "1px solid var(--line)", background: salesFilter !== "all" ? "var(--surface-strong)" : "var(--paper)",
           color: salesFilter !== "all" ? "#fff" : "var(--ink)", cursor: "pointer",
         }}
       >

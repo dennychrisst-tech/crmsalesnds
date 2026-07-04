@@ -237,7 +237,7 @@ export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSa
             {(["Active", "Hold", "Drop"] as OppBucket[]).map(s => (
               <button key={s} type="button"
                 style={{
-                  border: "1.5px solid var(--line)", background: oppFilter === s ? "var(--ink)" : "var(--card)",
+                  border: "1.5px solid var(--line)", background: oppFilter === s ? "var(--surface-strong)" : "var(--card)",
                   color: oppFilter === s ? "#fff" : "var(--ink-soft)", padding: "6px 12px", borderRadius: 999,
                   fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
                 }}

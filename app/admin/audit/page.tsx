@@ -188,7 +188,7 @@ export default function AdminAudit() {
 
   const tabBtn = (active: boolean): React.CSSProperties => ({
     padding: "8px 16px", borderRadius: "7px", border: "1px solid var(--line)",
-    background: active ? "var(--ink)" : "transparent", color: active ? "#fff" : "var(--ink)",
+    background: active ? "var(--surface-strong)" : "transparent", color: active ? "#fff" : "var(--ink)",
     fontWeight: 700, fontSize: "13px", cursor: "pointer",
   });
 

@@ -70,7 +70,7 @@ export default function AdminDashboard() {
         </div>
         <Link href="/?view=summary" style={{
           display: "inline-flex", alignItems: "center", gap: "6px", padding: "9px 16px",
-          borderRadius: "8px", background: "var(--ink)", color: "#fff", fontWeight: 700,
+          borderRadius: "8px", background: "var(--surface-strong)", color: "#fff", fontWeight: 700,
           fontSize: "13px", textDecoration: "none", whiteSpace: "nowrap",
         }}>
           Lihat Performa per Sales →

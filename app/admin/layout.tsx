@@ -25,7 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div style={{ minHeight: "100vh", background: "var(--paper)" }}>
       <header style={{
-        background: "var(--ink)", color: "#fff", padding: "14px 24px",
+        background: "var(--surface-strong)", color: "#fff", padding: "14px 24px",
         display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap",
       }}>
         <Link href="/" style={{ color: "#94a3b8", fontSize: "13px", textDecoration: "none" }}>

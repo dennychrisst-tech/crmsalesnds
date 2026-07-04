@@ -132,7 +132,7 @@ export default function UsersClient({ currentRole, currentUserId }: { currentRol
         <button
           onClick={() => { setInviteOpen(true); setError(""); setSuccess(""); }}
           style={{
-            background: "var(--ink)", color: "#fff", border: "none", padding: "10px 18px",
+            background: "var(--surface-strong)", color: "#fff", border: "none", padding: "10px 18px",
             borderRadius: "8px", fontWeight: 700, fontSize: "13px", cursor: "pointer",
           }}
         >
@@ -184,7 +184,7 @@ export default function UsersClient({ currentRole, currentUserId }: { currentRol
               )}
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "4px" }}>
                 <button type="button" onClick={() => setInviteOpen(false)} style={{ padding: "9px 16px", borderRadius: "7px", border: "1px solid var(--line)", background: "transparent", cursor: "pointer", fontSize: "13px" }}>Batal</button>
-                <button type="submit" disabled={inviting} style={{ padding: "9px 18px", borderRadius: "7px", background: "var(--ink)", color: "#fff", border: "none", cursor: inviting ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "13px" }}>
+                <button type="submit" disabled={inviting} style={{ padding: "9px 18px", borderRadius: "7px", background: "var(--surface-strong)", color: "#fff", border: "none", cursor: inviting ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "13px" }}>
                   {inviting ? "Menyimpan…" : "Buat User"}
                 </button>
               </div>
@@ -224,7 +224,7 @@ export default function UsersClient({ currentRole, currentUserId }: { currentRol
                 type="button"
                 disabled={resetting}
                 onClick={async () => { await confirmReset(); setResetFor(null); }}
-                style={{ padding: "9px 18px", borderRadius: "7px", background: "var(--ink)", color: "#fff", border: "none", cursor: resetting ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "13px" }}
+                style={{ padding: "9px 18px", borderRadius: "7px", background: "var(--surface-strong)", color: "#fff", border: "none", cursor: resetting ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "13px" }}
               >
                 {resetting ? "Menyimpan…" : "Simpan Password Baru"}
               </button>
