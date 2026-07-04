@@ -211,7 +211,7 @@ function PipelineFunnel({ deals, onStageClick }: { deals: Deal[]; onStageClick: 
           <div key={stage} className={`pl-funnel-label${hoverStage === stage ? " pl-funnel-label-active" : ""}`}
             onMouseEnter={() => setHoverStage(stage)} onMouseLeave={() => setHoverStage(null)}
             onClick={() => onStageClick(stage)}>
-            <div className="pl-funnel-label-stage" style={{ color: STAGE_COLOR[stage] }}>{stage}</div>
+            <div className="pl-funnel-label-stage stage-text" style={{ color: STAGE_COLOR[stage] }}>{stage}</div>
             <div className="pl-funnel-label-count">{ownCount[i]}</div>
             <div className="pl-funnel-label-value">{ownValue[i] > 0 ? fmtCompact(ownValue[i]) : "—"}</div>
           </div>
@@ -246,7 +246,7 @@ function Column({ stage, deals, clientName, onDealClick, onMoveStage, isViewer, 
   return (
     <div ref={setNodeRef} className={`col${isOver ? " over" : ""}${deals.length === 0 ? " col-empty" : ""}`} data-stage={stage} style={{ borderTop: `3px solid ${stageColor}` }}>
       <div className="col-head">
-        <h3 style={{ color: stageColor }}>{stage}</h3>
+        <h3 className="stage-text" style={{ color: stageColor }}>{stage}</h3>
         <div className="colval">{deals.length} · {fmtIDR(val)}</div>
       </div>
       <div className="col-list">

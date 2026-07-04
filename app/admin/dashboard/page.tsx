@@ -102,7 +102,7 @@ export default function AdminDashboard() {
               <div key={stage} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <div style={{ width: "10px", height: "10px", borderRadius: "3px", background: STAGE_COLOR[stage], flexShrink: 0 }} />
                 <div style={{ fontSize: "12px", flex: 1, color: "var(--ink)" }}>{stage}</div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: STAGE_COLOR[stage] }}>{stageMap[stage]}</div>
+                <div className="stage-text" style={{ fontSize: "13px", fontWeight: 700, color: STAGE_COLOR[stage] }}>{stageMap[stage]}</div>
               </div>
             ))}
           </div>

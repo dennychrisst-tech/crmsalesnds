@@ -150,7 +150,7 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
                       <div className="wr-updates">
                         {deal && (
                           <span
-                            className="wr-update-chip wr-update-chip-clickable"
+                            className="wr-update-chip wr-update-chip-clickable stage-text"
                             style={{ borderColor: STAGE_COLOR[deal.stage] || "var(--brand)", color: STAGE_COLOR[deal.stage] || "var(--brand)" }}
                             onClick={() => onOpenDeal(deal.id)}
                             title="Buka detail pipeline"

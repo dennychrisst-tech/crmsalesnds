@@ -6,6 +6,7 @@
   --paper: #EEF2F1;
   --card: #FAFCFB;
   --line: #D8D3C6;
+  --hover-line: #C7C0AE;
   /* --brand (hijau tua): teks, tombol, dan elemen interaktif — kontras cukup di atas putih.
      --accent (teal logo NDS): aksen dekoratif brand — tag, highlight nav, theme PWA. */
   --brand: #0A6E5C;
@@ -50,6 +51,7 @@
   --paper: #0A121C;
   --card: #131E2C;
   --line: #263548;
+  --hover-line: #3D5062;
   --brand: #1FBE9C;
   --brand-soft: rgba(31,190,156,.16);
   --accent: #2AD1BF;
@@ -220,7 +222,7 @@ nav.tabs button.active::after {
 .kpi-num { font-size: 18px; font-weight: 800; margin-top: 6px; letter-spacing: -.5px; overflow-wrap: break-word; word-break: break-word; }
 .kpi-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
 .kpi-v2 { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; overflow: hidden; min-width: 0; }
-.kpi-v2:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: #C7C0AE; }
+.kpi-v2:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: var(--hover-line, #C7C0AE); }
 
 /* Grid */
 .grid2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
@@ -352,6 +354,13 @@ nav.tabs button.active::after {
 .cal-dot-leave { background: #FEE2E2; border: 1px solid #991B1B; }
 .wfo-drop-target { background: #FFF7ED; border-color: #F97316 !important; }
 .leave-drop-target { background: #FEF2F2; border-color: #DC2626 !important; }
+/* These highlight states hardcode a light tint with no color override, which
+   left inherited (dark-mode-light) text invisible on top of them — swap the
+   solid light fill for a translucent tint of the same hue instead, so the
+   existing --ink text keeps working against it. */
+[data-theme="dark"] .cell.weekend { background: rgba(227,172,85,.10); }
+[data-theme="dark"] .wfo-drop-target { background: rgba(249,115,22,.16); }
+[data-theme="dark"] .leave-drop-target { background: rgba(220,38,38,.16); }
 
 .wfo-panel {
   background: var(--paper); border: 1px dashed #F97316; border-radius: 12px;
@@ -422,6 +431,20 @@ tr:hover td { background: var(--paper); }
 .st-followup { background: #FBF0DA; color: #9A6E12; }
 .st-nogo { background: #EFE2E2; color: var(--lost); }
 
+/* Bare (no background box of their own) text using an inline stage/status
+   color meant for a light background — e.g. Pipeline kanban column headers,
+   the funnel labels, a deal's stage shown in a modal's read-only Detail view.
+   Self-contained badges (background + color together, like .badge-* above)
+   already work fine on dark; these bare ones don't, since several of the
+   underlying hex values are too dark/muted to read against a dark card. A
+   blanket brightness bump is a rough-but-broad first fix rather than tuning
+   each of the ~15 stage colors individually. */
+[data-theme="dark"] .stage-text { filter: brightness(1.35) saturate(1.15); }
+/* Same idea for large KPI numbers using an inline accent color (most already
+   use var(--brand)/var(--danger), which are already dark-mode-tuned, but a
+   few dashboards hardcode a hex accent instead). */
+[data-theme="dark"] .kpi-num { filter: brightness(1.2) saturate(1.1); }
+
 /* Buttons */
 .btn {
   border: none; background: var(--brand); color: #fff; padding: 9px 16px; border-radius: 10px;
@@ -442,7 +465,7 @@ tr:hover td { background: var(--paper); }
 /* Toolbar */
 .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
 .search { flex: 1; min-width: 180px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); font-size: 13px; font-family: inherit; transition: border-color .15s, box-shadow .15s; }
-.search:hover { border-color: #C7C0AE; }
+.search:hover { border-color: var(--hover-line, #C7C0AE); }
 .search:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--accent-soft); }
 
 /* Utilities */
@@ -493,7 +516,7 @@ tr:hover td { background: var(--paper); }
 
 /* Client toolbar controls */
 .select-sm { font-size: 13px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; font-family: inherit; transition: border-color .15s, box-shadow .15s; }
-.select-sm:hover { border-color: #C7C0AE; }
+.select-sm:hover { border-color: var(--hover-line, #C7C0AE); }
 .select-sm:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--accent-soft); }
 .view-toggle { display: flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
 .view-toggle button { background: var(--card); border: none; padding: 8px 12px; font-size: 12px; font-weight: 600; color: var(--ink-soft); cursor: pointer; font-family: inherit; }
@@ -538,11 +561,16 @@ tr:hover td { background: var(--paper); }
 /* KPI warning */
 .kpi-warn { border-color: #f59e0b; }
 .kpi-warn .kpi-sub { color: #b45309; font-weight: 700; }
+[data-theme="dark"] .kpi-warn .kpi-sub { color: #f0b429; }
 .overdue-chip { display: inline-block; background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 8px; }
 
 /* Task items on dashboard */
 .task-item { background: var(--paper); border: 1px solid var(--line); border-left: 3px solid var(--brand); border-radius: 8px; padding: 10px 12px; }
 .task-item-overdue { border-left-color: var(--danger); background: #fff5f5; }
+/* Solid light-pink fill + no color override meant the (dark-mode-light)
+   inherited text turned invisible on it — same fix as the calendar
+   highlights above: a translucent tint instead of a solid light fill. */
+[data-theme="dark"] .task-item-overdue { background: rgba(226,102,95,.14); }
 .task-item-title { font-size: 13px; font-weight: 600; }
 .task-item-meta { font-size: 11px; color: var(--ink-soft); margin-top: 3px; }
 
@@ -552,6 +580,8 @@ tr:hover td { background: var(--paper); }
 .task-overdue-badge { color: var(--danger); }
 tr.task-overdue td { background: #fff5f5; }
 tr.task-soon td { background: #fffbeb; }
+[data-theme="dark"] tr.task-overdue td { background: rgba(226,102,95,.12); }
+[data-theme="dark"] tr.task-soon td { background: rgba(227,172,85,.12); }
 
 /* Document tracker */
 .doc-tracker { padding: 4px 0; }

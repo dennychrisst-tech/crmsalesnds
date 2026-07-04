@@ -252,7 +252,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
             <div className="dd-item">
               <div className="dd-label">Stage</div>
               <div className="dd-value">
-                {visitDeal ? <span style={{ color: STAGE_COLOR[visitDeal.stage] || "var(--brand)" }}>{visitDeal.stage}</span> : "—"}
+                {visitDeal ? <span className="stage-text" style={{ color: STAGE_COLOR[visitDeal.stage] || "var(--brand)" }}>{visitDeal.stage}</span> : "—"}
               </div>
             </div>
             <div className="dd-item"><div className="dd-label">PIC Client</div><div className="dd-value">{form.pic_client || "—"}</div></div>
