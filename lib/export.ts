@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { Client, Deal, Visit, PIC } from "@/types";
+import { Client, Deal, Visit, PIC, Project, Task } from "@/types";
 import { todayStr } from "./utils";
 
 const HEADER_FILL: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0A6E5C" } };
@@ -92,6 +92,36 @@ export async function exportVisits(visits: Visit[], clientName: (id: string) => 
   ];
   const wb = await buildWorkbook("Visits", columns, visits);
   await download(`visits_${today()}.xlsx`, wb);
+}
+
+export async function exportProjects(projects: Project[], clientName: (id: string) => string) {
+  const columns: ColumnDef<Project>[] = [
+    { header: "Nama Project", width: 30, wrap: true, value: p => p.name },
+    { header: "Client", width: 22, value: p => clientName(p.client_id) },
+    { header: "Partner", width: 20, value: p => p.partner || "" },
+    { header: "Produk / Solusi", width: 20, value: p => p.product || "" },
+    { header: "Status", width: 14, value: p => p.status },
+    { header: "Nilai (Rp)", width: 18, numFmt: "#,##0", value: p => p.value },
+    { header: "Target Go-Live", width: 14, value: p => p.golive || "" },
+    { header: "Catatan", width: 30, wrap: true, value: p => p.notes || "" },
+  ];
+  const wb = await buildWorkbook("Projects", columns, projects);
+  await download(`projects_${today()}.xlsx`, wb);
+}
+
+export async function exportTasks(tasks: Task[], clientName: (id: string | null) => string, dealName: (id: string | null) => string) {
+  const columns: ColumnDef<Task>[] = [
+    { header: "Task", width: 30, wrap: true, value: t => t.title },
+    { header: "Deadline", width: 14, value: t => t.due_date || "" },
+    { header: "Assigned To", width: 18, value: t => t.assigned_to || "" },
+    { header: "Client", width: 22, value: t => clientName(t.client_id) },
+    { header: "Project", width: 26, value: t => dealName(t.deal_id) },
+    { header: "PIC Client", width: 18, value: t => t.pic_client || "" },
+    { header: "Status", width: 12, value: t => t.status },
+    { header: "Catatan", width: 30, wrap: true, value: t => t.notes || "" },
+  ];
+  const wb = await buildWorkbook("Tasks", columns, tasks);
+  await download(`tasks_${today()}.xlsx`, wb);
 }
 
 export async function exportVisitReport(visits: Visit[], clientName: (id: string) => string) {

@@ -9,6 +9,8 @@ import TalentManageModal from "./TalentManageModal";
 import EmptyState from "./ui/EmptyState";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
 import SortableTh, { SortDir } from "./ui/SortableTh";
+import { exportProjects } from "@/lib/export";
+import { Download } from "lucide-react";
 
 type ProjectSortKey = "name" | "client" | "status" | "value" | "golive";
 
@@ -134,6 +136,7 @@ export default function Projects({
             </select>
           </FilterField>
         </FilterSheet>
+        <button className="btn btn-ghost btn-sm" onClick={() => exportProjects(projects, clientName)}><Download size={13} /> Export Excel</button>
         {!isViewer && <button className="btn add-btn-desktop" onClick={() => { setEditProject(null); setModalOpen(true); }}>+ Project Baru</button>}
       </div>
 

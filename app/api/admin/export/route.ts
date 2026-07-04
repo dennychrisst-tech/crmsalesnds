@@ -25,7 +25,13 @@ async function fetchRows(table: TableName): Promise<Record<string, unknown>[]> {
   switch (table) {
     case "clients":
       return (await prisma.client.findMany({ orderBy: { created_at: "asc" } }))
-        .map(r => ({ ...r, pic: JSON.stringify(r.pic) }));
+        .map(r => ({
+          ...r,
+          // r.pic is PIC[] ({name, phone}) as JSON — export the names Excel-
+          // readable instead of raw JSON.stringify output.
+          pic: (Array.isArray(r.pic) ? r.pic as unknown as { name?: string }[] : [])
+            .map(p => p?.name || "").filter(Boolean).join("; "),
+        }));
     case "contacts":
       return prisma.contact.findMany({ orderBy: { created_at: "asc" } });
     case "visits":

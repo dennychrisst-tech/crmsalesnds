@@ -2,13 +2,18 @@
 import { useState, useRef, useEffect } from "react";
 import { Search } from "lucide-react";
 import { AppData } from "@/hooks/useData";
+import { ActiveView } from "@/types";
 
 interface Props {
   data: AppData;
+  onNavigate: (view: ActiveView) => void;
   onOpenClient: (id: string) => void;
   onOpenDeal: (id: string) => void;
   onOpenTask: (id: string) => void;
 }
+
+const RESULT_VIEW: Record<Result["type"], ActiveView> = { Client: "clients", Project: "pipeline", Task: "tasks" };
+const RESULT_LABEL: Record<Result["type"], string> = { Client: "client", Project: "project", Task: "task" };
 
 interface Result {
   type: "Client" | "Project" | "Task";
@@ -17,7 +22,7 @@ interface Result {
   go: () => void;
 }
 
-export default function GlobalSearch({ data, onOpenClient, onOpenDeal, onOpenTask }: Props) {
+export default function GlobalSearch({ data, onNavigate, onOpenClient, onOpenDeal, onOpenTask }: Props) {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -47,34 +52,40 @@ export default function GlobalSearch({ data, onOpenClient, onOpenDeal, onOpenTas
 
   const term = q.trim().toLowerCase();
   const results: Result[] = [];
+  // How many matches exist beyond what's shown per category — surfaced as a
+  // "+N lainnya" line so a truncated list doesn't read as "no more results".
+  const moreCounts: Record<Result["type"], number> = { Client: 0, Project: 0, Task: 0 };
 
   if (term.length >= 2) {
-    data.clients
-      .filter(c => c.name.toLowerCase().includes(term) || c.sector.toLowerCase().includes(term))
-      .slice(0, 4)
-      .forEach(c => results.push({
-        type: "Client", label: c.name, sub: `${c.sector} · ${c.status}`,
-        go: () => onOpenClient(c.id),
-      }));
+    const clientMatches = data.clients.filter(c => c.name.toLowerCase().includes(term) || c.sector.toLowerCase().includes(term));
+    clientMatches.slice(0, 4).forEach(c => results.push({
+      type: "Client", label: c.name, sub: `${c.sector} · ${c.status}`,
+      go: () => onOpenClient(c.id),
+    }));
+    moreCounts.Client = Math.max(0, clientMatches.length - 4);
 
-    data.deals
-      .filter(d => d.name.toLowerCase().includes(term) || (d.product || "").toLowerCase().includes(term))
-      .slice(0, 4)
-      .forEach(d => {
-        const cn = data.clients.find(c => c.id === d.client_id)?.name || "—";
-        results.push({
-          type: "Project", label: d.name, sub: `${cn} · ${d.stage}`,
-          go: () => onOpenDeal(d.id),
-        });
+    const dealMatches = data.deals.filter(d => d.name.toLowerCase().includes(term) || (d.product || "").toLowerCase().includes(term));
+    dealMatches.slice(0, 4).forEach(d => {
+      const cn = data.clients.find(c => c.id === d.client_id)?.name || "—";
+      results.push({
+        type: "Project", label: d.name, sub: `${cn} · ${d.stage}`,
+        go: () => onOpenDeal(d.id),
       });
+    });
+    moreCounts.Project = Math.max(0, dealMatches.length - 4);
 
-    data.tasks
-      .filter(t => t.title.toLowerCase().includes(term))
-      .slice(0, 3)
-      .forEach(t => results.push({
-        type: "Task", label: t.title, sub: `${t.due_date || "—"} · ${t.assigned_to || "—"}`,
-        go: () => onOpenTask(t.id),
-      }));
+    const taskMatches = data.tasks.filter(t => t.title.toLowerCase().includes(term));
+    taskMatches.slice(0, 3).forEach(t => results.push({
+      type: "Task", label: t.title, sub: `${t.due_date || "—"} · ${t.assigned_to || "—"}`,
+      go: () => onOpenTask(t.id),
+    }));
+    moreCounts.Task = Math.max(0, taskMatches.length - 3);
+  }
+
+  function seeMore(type: Result["type"]) {
+    onNavigate(RESULT_VIEW[type]);
+    setQ("");
+    setOpen(false);
   }
 
   function pick(r: Result) {
@@ -124,16 +135,27 @@ export default function GlobalSearch({ data, onOpenClient, onOpenDeal, onOpenTas
         <div className="gs-dropdown">
           {results.length === 0 ? (
             <div className="gs-empty">Tidak ada hasil untuk &quot;{q}&quot;</div>
-          ) : results.map((r, i) => (
-            <div key={i} className={`gs-item${i === activeIdx ? " gs-item-active" : ""}`}
-              onClick={() => pick(r)} onMouseEnter={() => setActiveIdx(i)}>
-              <span className={`gs-type ${typeCls[r.type]}`}>{r.type}</span>
-              <div className="gs-item-text">
-                <div className="gs-item-label">{r.label}</div>
-                <div className="gs-item-sub">{r.sub}</div>
+          ) : results.map((r, i) => {
+            const isLastOfType = i === results.length - 1 || results[i + 1].type !== r.type;
+            const more = isLastOfType ? moreCounts[r.type] : 0;
+            return (
+              <div key={i}>
+                <div className={`gs-item${i === activeIdx ? " gs-item-active" : ""}`}
+                  onClick={() => pick(r)} onMouseEnter={() => setActiveIdx(i)}>
+                  <span className={`gs-type ${typeCls[r.type]}`}>{r.type}</span>
+                  <div className="gs-item-text">
+                    <div className="gs-item-label">{r.label}</div>
+                    <div className="gs-item-sub">{r.sub}</div>
+                  </div>
+                </div>
+                {more > 0 && (
+                  <div className="gs-more" onClick={() => seeMore(r.type)}>
+                    +{more} {RESULT_LABEL[r.type]} lainnya →
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

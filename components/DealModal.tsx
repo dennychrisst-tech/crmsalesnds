@@ -294,6 +294,7 @@ export default function DealModal({
 
       {tab === "docs" && isEdit && (
         <>
+          <div className="panel-hint">📌 Catatan status dokumen (Proposal, Kontrak, dll) — tanpa file fisik. Untuk upload file-nya, pakai tab &quot;File&quot;.</div>
           <DocumentTracker dealId={form.id} documents={documents} onAdd={onAddDocument} onDelete={onDeleteDocument} />
           <ModalActions>
             <button className="btn btn-ghost" onClick={onClose}>Tutup</button>
@@ -303,6 +304,7 @@ export default function DealModal({
 
       {tab === "files" && isEdit && (
         <>
+          <div className="panel-hint">📌 Upload file fisik (PDF, kontrak, dll). Untuk mencatat status dokumen tanpa file, pakai tab &quot;Dokumen&quot;.</div>
           <AttachmentSection dealId={form.id} attachments={attachments} onUpload={onUploadAttachment} onDelete={onDeleteAttachment} />
           <ModalActions>
             <button className="btn btn-ghost" onClick={onClose}>Tutup</button>

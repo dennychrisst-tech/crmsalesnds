@@ -202,7 +202,7 @@ export default function CRMApp() {
           <div className="header-crm-tag">Sales CRM</div>
         </div>
         <div className="header-search-row">
-          {!loading && <GlobalSearch data={data} onOpenClient={openClient} onOpenDeal={openDeal} onOpenTask={openTask} />}
+          {!loading && <GlobalSearch data={data} onNavigate={setView} onOpenClient={openClient} onOpenDeal={openDeal} onOpenTask={openTask} />}
           {!loading && (
             <RemindersBell data={data} currentUserName={currentProfile?.name ?? ""} isAdmin={isAdmin} onNavigate={setView} onOpenTask={openTask} />
           )}

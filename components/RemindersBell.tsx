@@ -25,7 +25,54 @@ interface Reminder {
   taskId?: string;
 }
 
+// Snoozed reminders (dismissed by the user) live in localStorage, keyed by the
+// reminder's own id, mapped to a "snoozed until" timestamp — the reminder
+// itself is derived fresh from data on every render, so this is the only
+// state that needs to persist. Snoozing until the next local midnight (rather
+// than a rolling 24h) means "dismiss for today" always means the same thing
+// regardless of what time it was dismissed.
+const SNOOZE_KEY = "crm_reminder_snoozed";
+
+function loadSnoozed(): Record<string, number> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(SNOOZE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveSnoozed(map: Record<string, number>) {
+  try { window.localStorage.setItem(SNOOZE_KEY, JSON.stringify(map)); } catch {}
+}
+
 export default function RemindersBell({ data, currentUserName, isAdmin, onNavigate, onOpenTask }: Props) {
+  // Starts empty (not read from localStorage) so server-rendered and first-
+  // client-render markup match; the real snoozed set loads a moment later
+  // via the effect below, once we're safely past hydration.
+  const [snoozed, setSnoozed] = useState<Record<string, number>>({});
+  useEffect(() => {
+    const loaded = loadSnoozed();
+    const now = Date.now();
+    // Garbage-collect entries whose snooze window already passed instead of
+    // letting the map grow forever.
+    const pruned = Object.fromEntries(Object.entries(loaded).filter(([, until]) => until > now));
+    setSnoozed(pruned);
+    if (Object.keys(pruned).length !== Object.keys(loaded).length) saveSnoozed(pruned);
+  }, []);
+
+  function snoozeReminder(id: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    const until = new Date();
+    until.setDate(until.getDate() + 1);
+    until.setHours(0, 0, 0, 0);
+    setSnoozed(prev => {
+      const next = { ...prev, [id]: until.getTime() };
+      saveSnoozed(next);
+      return next;
+    });
+  }
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -84,8 +131,11 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
 
   reminders.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === "overdue" ? -1 : 1));
 
-  const overdueCount = reminders.filter(r => r.severity === "overdue").length;
-  const badgeColor = overdueCount > 0 ? "var(--danger)" : reminders.length > 0 ? "var(--gold)" : null;
+  const now = Date.now();
+  const visibleReminders = reminders.filter(r => !(snoozed[r.id] && snoozed[r.id] > now));
+
+  const overdueCount = visibleReminders.filter(r => r.severity === "overdue").length;
+  const badgeColor = overdueCount > 0 ? "var(--danger)" : visibleReminders.length > 0 ? "var(--gold)" : null;
 
   function pick(r: Reminder) {
     if (r.taskId) onOpenTask(r.taskId);
@@ -97,22 +147,23 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
     <div ref={ref} className="rb-wrap">
       <button ref={bellRef} className="rb-bell" onClick={toggle} title="Reminder" aria-label="Reminder">
         <Bell size={17} />
-        {reminders.length > 0 && (
-          <span className="rb-badge" style={{ background: badgeColor || undefined }}>{reminders.length > 9 ? "9+" : reminders.length}</span>
+        {visibleReminders.length > 0 && (
+          <span className="rb-badge" style={{ background: badgeColor || undefined }}>{visibleReminders.length > 9 ? "9+" : visibleReminders.length}</span>
         )}
       </button>
       {open && pos && (
         <div className="rb-dropdown" style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width }}>
           <div className="rb-header">Reminder{!isAdmin && currentUserName ? ` — ${currentUserName}` : ""}</div>
-          {reminders.length === 0 ? (
+          {visibleReminders.length === 0 ? (
             <div className="rb-empty">Tidak ada reminder. Semua aman 🎉</div>
-          ) : reminders.map(r => (
+          ) : visibleReminders.map(r => (
             <div key={r.id} className="rb-item" onClick={() => pick(r)}>
               <span className={`rb-dot rb-dot-${r.severity}`} />
               <div className="rb-item-text">
                 <div className="rb-item-title">{r.title}</div>
                 <div className="rb-item-sub">{r.sub}</div>
               </div>
+              <button className="rb-item-dismiss" title="Tunda sampai besok" onClick={e => snoozeReminder(r.id, e)}>×</button>
             </div>
           ))}
         </div>

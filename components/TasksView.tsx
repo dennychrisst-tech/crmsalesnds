@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Check, RotateCcw } from "lucide-react";
+import { Check, RotateCcw, Download } from "lucide-react";
 import { AppData } from "@/hooks/useData";
 import { Task, Client, Deal } from "@/types";
 import { fmtDate, todayStr, TASK_STATUS_COLOR } from "@/lib/utils";
+import { exportTasks } from "@/lib/export";
 import TaskModal from "./TaskModal";
 import EmptyState from "./ui/EmptyState";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
@@ -137,6 +138,7 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
             </select>
           </FilterField>
         </FilterSheet>
+        <button className="btn btn-ghost btn-sm" onClick={() => exportTasks(tasks, clientName, dealName)}><Download size={13} /> Export Excel</button>
         {!isViewer && <button className="btn add-btn-desktop" onClick={openNew}>+ Task Baru</button>}
       </div>
 

@@ -15,6 +15,17 @@ function fmtSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+// Matches the "PDF, Word, Excel, gambar" description shown next to the
+// upload button — checked client-side before the (slow, up to 20MB) upload
+// even starts, so a wrong file is caught instantly instead of after the fact.
+const ACCEPTED_EXTENSIONS = [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".jpg", ".jpeg", ".png", ".gif", ".webp"];
+const ACCEPT_ATTR = ACCEPTED_EXTENSIONS.join(",");
+
+function isAcceptedFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+  return ACCEPTED_EXTENSIONS.some(ext => name.endsWith(ext));
+}
+
 export default function AttachmentSection({ dealId, attachments, onUpload, onDelete }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -23,7 +34,8 @@ export default function AttachmentSection({ dealId, attachments, onUpload, onDel
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 20 * 1024 * 1024) { setError("Maksimal ukuran file 20 MB."); return; }
+    if (!isAcceptedFile(file)) { setError("Tipe file tidak didukung. Hanya PDF, Word, Excel, atau gambar."); e.target.value = ""; return; }
+    if (file.size > 20 * 1024 * 1024) { setError("Maksimal ukuran file 20 MB."); e.target.value = ""; return; }
     setError("");
     setUploading(true);
     try {
@@ -39,7 +51,7 @@ export default function AttachmentSection({ dealId, attachments, onUpload, onDel
   return (
     <div className="attachment-section">
       <div className="attachment-upload">
-        <input ref={fileRef} type="file" style={{ display: "none" }} onChange={handleFile} />
+        <input ref={fileRef} type="file" accept={ACCEPT_ATTR} style={{ display: "none" }} onChange={handleFile} />
         <button className="btn btn-ghost btn-sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
           {uploading ? "Mengupload…" : "+ Upload File"}
         </button>
