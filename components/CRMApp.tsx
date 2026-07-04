@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard, Building2, CalendarDays, FolderKanban, Briefcase,
   ListChecks, TrendingUp, ClipboardList, CalendarRange, Wallet, Users, MoreHorizontal, Calculator,
@@ -65,6 +65,15 @@ const DESKTOP_DROPDOWN_GROUPS: { label: string; icon: LucideIcon; ids: ActiveVie
   { label: "Analitik", icon: BarChart3, ids: ["revenue-forecast", "talent-fill-rate", "mandays-rate"] },
 ];
 
+// All views the app can render — used to validate the "?view=" deep-link
+// param (e.g. from Admin Dashboard/Tim linking straight to Summary Activity)
+// so an unknown/typo'd value falls back to the default view instead of
+// rendering nothing.
+const ALL_VIEW_IDS: ActiveView[] = [
+  "dashboard", "calendar", "clients", "pipeline", "projects", "tasks", "catalog",
+  "summary", "visit-report", "weekly-report", "revenue-forecast", "talent-fill-rate", "mandays-rate",
+];
+
 function NavDropdown({ label, icon: Icon, items, view, onSelect, open, onToggle, onCloseRequest }: {
   label: string; icon: LucideIcon; items: { id: ActiveView; label: string; icon: LucideIcon }[];
   view: ActiveView; onSelect: (id: ActiveView) => void;
@@ -104,13 +113,28 @@ function NavDropdown({ label, icon: Icon, items, view, onSelect, open, onToggle,
 
 export default function CRMApp() {
   const router = useRouter();
-  const [view, setView] = useState<ActiveView>("dashboard");
+  const searchParams = useSearchParams();
+  // Deep-link support for "/?view=summary" etc. (e.g. Admin Dashboard/Tim
+  // linking straight to Summary Activity instead of duplicating its tables).
+  // Read once via lazy initial state — no effect/setState needed for this part.
+  const [view, setView] = useState<ActiveView>(() => {
+    const requested = searchParams.get("view") as ActiveView | null;
+    return requested && ALL_VIEW_IDS.includes(requested) ? requested : "dashboard";
+  });
   const [pendingClientId, setPendingClientId] = useState<string | null>(null);
   const [pendingDealId, setPendingDealId] = useState<string | null>(null);
   const [pendingVisitId, setPendingVisitId] = useState<string | null>(null);
   const [pendingStage, setPendingStage] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [openNavDropdown, setOpenNavDropdown] = useState<string | null>(null);
+
+  // Strip the "?view=" param once consumed above so it doesn't fight the
+  // app's own tab-switching (e.g. clicking another tab shouldn't leave a
+  // stale ?view= in the address bar).
+  useEffect(() => {
+    if (searchParams.get("view")) router.replace("/");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function openClient(clientId: string) {
     setPendingClientId(clientId);

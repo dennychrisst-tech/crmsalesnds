@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface Stats {
   counts: {
@@ -62,9 +63,18 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-      <div>
-        <h1 style={{ fontSize: "20px", fontWeight: 800, color: "var(--ink)", margin: 0 }}>Dashboard Admin</h1>
-        <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginTop: "4px" }}>Ringkasan data seluruh sistem</p>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+        <div>
+          <h1 style={{ fontSize: "20px", fontWeight: 800, color: "var(--ink)", margin: 0 }}>Dashboard Admin</h1>
+          <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginTop: "4px" }}>Ringkasan data seluruh sistem — untuk performa per sales, lihat Summary Activity</p>
+        </div>
+        <Link href="/?view=summary" style={{
+          display: "inline-flex", alignItems: "center", gap: "6px", padding: "9px 16px",
+          borderRadius: "8px", background: "var(--ink)", color: "#fff", fontWeight: 700,
+          fontSize: "13px", textDecoration: "none", whiteSpace: "nowrap",
+        }}>
+          Lihat Performa per Sales →
+        </Link>
       </div>
 
       {/* Stat cards */}

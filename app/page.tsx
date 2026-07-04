@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import CRMApp from "@/components/CRMApp";
 
 export default function Home() {
-  return <CRMApp />;
+  return (
+    <Suspense fallback={null}>
+      <CRMApp />
+    </Suspense>
+  );
 }

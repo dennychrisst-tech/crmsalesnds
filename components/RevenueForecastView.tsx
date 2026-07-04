@@ -248,6 +248,7 @@ export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSa
           </div>
           {!isViewer && <button className="btn btn-sm" onClick={openNewOpp}>+ Tambah Opportunity</button>}
         </div>
+        <div className="panel-hint">📌 Data yang sama dengan menu Pipeline — mengedit di sini otomatis mengubah deal yang sama di Pipeline, dan sebaliknya.</div>
 
         {filteredOpps.length === 0 ? <EmptyState icon="💼" label={`Belum ada opportunity berstatus ${oppFilter}.`} /> : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

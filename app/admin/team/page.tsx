@@ -1,23 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface TeamMember {
   id: string; name: string; email: string; role: string; created_at: string;
-  clients: number; deals: number; dealValue: number; visits: number; activities: number;
 }
 
 const ROLE_LABEL: Record<string, string> = {
-  employee: "Employee", admin: "Admin", super_admin: "Super Admin",
+  viewer: "Viewer", employee: "Employee", admin: "Admin", super_admin: "Super Admin",
 };
 const ROLE_COLOR: Record<string, string> = {
-  employee: "#64748b", admin: "#3b82f6", super_admin: "#8b5cf6",
+  viewer: "#94a3b8", employee: "#64748b", admin: "#3b82f6", super_admin: "#8b5cf6",
 };
-
-function formatIDR(n: number) {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}M`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(0)}jt`;
-  return n.toLocaleString("id-ID");
-}
 
 export default function AdminTeam() {
   const [team, setTeam] = useState<TeamMember[]>([]);
@@ -35,10 +29,23 @@ export default function AdminTeam() {
 
   return (
     <div>
-      <div style={{ marginBottom: "24px" }}>
-        <h1 style={{ fontSize: "20px", fontWeight: 800, color: "var(--ink)", margin: 0 }}>Manajemen Tim</h1>
-        <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginTop: "4px" }}>Performa setiap anggota tim berdasarkan data CRM</p>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", marginBottom: "24px", flexWrap: "wrap" }}>
+        <div>
+          <h1 style={{ fontSize: "20px", fontWeight: 800, color: "var(--ink)", margin: 0 }}>Manajemen Tim</h1>
+          <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginTop: "4px" }}>Daftar anggota tim dan role mereka</p>
+        </div>
+        <Link href="/?view=summary" style={{
+          display: "inline-flex", alignItems: "center", gap: "6px", padding: "9px 16px",
+          borderRadius: "8px", background: "var(--ink)", color: "#fff", fontWeight: 700,
+          fontSize: "13px", textDecoration: "none", whiteSpace: "nowrap",
+        }}>
+          Lihat Performa per Sales →
+        </Link>
       </div>
+
+      <p style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: "-14px", marginBottom: "18px" }}>
+        📌 Angka performa (jumlah client, deal, kunjungan, aktivitas) dipindahkan ke <strong>Summary Activity</strong> di menu utama — sudah ada filter periode (mingguan/bulanan) di sana, jadi tidak ada dua tabel dengan angka yang beda cakupan untuk pertanyaan yang sama.
+      </p>
 
       <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "12px", overflow: "hidden" }}>
         {loading ? (
@@ -49,34 +56,23 @@ export default function AdminTeam() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--line)" }}>
-                {["Nama", "Role", "Client", "Project", "Nilai Project", "Kunjungan", "Aktivitas", "Bergabung"].map(h => (
-                  <th key={h} style={th}>{h}</th>
-                ))}
+                {["Nama", "Email", "Role", "Bergabung"].map(h => <th key={h} style={th}>{h}</th>)}
               </tr>
             </thead>
             <tbody>
               {team.map((m, i) => (
                 <tr key={m.id} style={{ borderBottom: i < team.length - 1 ? "1px solid var(--line)" : "none" }}>
-                  <td style={td}>
-                    <div style={{ fontWeight: 600 }}>{m.name || "—"}</div>
-                    <div style={{ fontSize: "11px", color: "var(--ink-soft)", marginTop: "2px" }}>{m.email}</div>
-                  </td>
+                  <td style={{ ...td, fontWeight: 600 }}>{m.name || "—"}</td>
+                  <td style={{ ...td, color: "var(--ink-soft)" }}>{m.email}</td>
                   <td style={td}>
                     <span style={{
                       display: "inline-block", padding: "3px 8px", borderRadius: "20px",
                       fontSize: "11px", fontWeight: 700,
-                      background: `${ROLE_COLOR[m.role]}20`, color: ROLE_COLOR[m.role],
+                      background: `${ROLE_COLOR[m.role] ?? "#64748b"}20`, color: ROLE_COLOR[m.role] ?? "#64748b",
                     }}>
                       {ROLE_LABEL[m.role] ?? m.role}
                     </span>
                   </td>
-                  <td style={{ ...td, fontWeight: 600, color: "#0ea5e9" }}>{m.clients}</td>
-                  <td style={{ ...td, fontWeight: 600, color: "#8b5cf6" }}>{m.deals}</td>
-                  <td style={{ ...td, fontWeight: 600, color: "#10b981", fontSize: "12px" }}>
-                    {m.dealValue > 0 ? `Rp ${formatIDR(m.dealValue)}` : "—"}
-                  </td>
-                  <td style={{ ...td, fontWeight: 600, color: "#f59e0b" }}>{m.visits}</td>
-                  <td style={{ ...td, fontWeight: 600, color: "#ec4899" }}>{m.activities}</td>
                   <td style={{ ...td, color: "var(--ink-soft)", fontSize: "12px" }}>
                     {new Date(m.created_at).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
                   </td>

@@ -313,6 +313,10 @@ nav.tabs button.active::after {
 }
 .leave-panel-hint { font-size: 12px; color: var(--ink-soft); margin-bottom: 10px; }
 .leave-panel-list { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+
+/* Generic muted note under a panel title — e.g. clarifying a panel reuses
+   another menu's data (see Opportunity panel in RevenueForecastView). */
+.panel-hint { font-size: 12px; color: var(--ink-soft); margin: -6px 0 12px; }
 .leave-chip {
   background: var(--card); border: 1px solid #DC2626; border-left: 3px solid #DC2626;
   border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 600; color: #991B1B;
