@@ -1,5 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
+
+// Self-hosted via next/font (no runtime request to Google Fonts, no CLS) —
+// exposed as a CSS variable so globals.css can layer system-font fallbacks
+// after it instead of hard-depending on the font object being in scope there.
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 
 export const metadata: Metadata = {
   title: "NDS Sales CRM",
@@ -18,7 +24,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id">
+    <html lang="id" className={inter.variable}>
       <body>{children}</body>
     </html>
   );
