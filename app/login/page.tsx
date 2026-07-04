@@ -37,7 +37,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+    <div className="lp-page" style={{ minHeight: "100vh", display: "flex", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
 
       {/* ── Left: Branding panel ── */}
       <div className="lp-brand" style={{
@@ -119,42 +119,6 @@ export default function LoginPage() {
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: "48px 40px",
       }}>
-        {/* Mobile-only hero — fills the gradient area above the form card */}
-        <div className="lp-mobile-hero" style={{
-          display: "none", position: "relative", flexDirection: "column",
-          alignItems: "center", justifyContent: "center",
-          padding: "36px 24px 24px", overflow: "hidden",
-        }}>
-          <div style={{
-            position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
-            width: 230, height: 230, borderRadius: "50%",
-            border: "1px solid rgba(255,255,255,.07)", pointerEvents: "none",
-          }} />
-          <div style={{
-            position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
-            width: 150, height: 150, borderRadius: "50%",
-            border: "1px solid rgba(0,175,160,.16)", pointerEvents: "none",
-          }} />
-          <div style={{
-            position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
-            width: 90, height: 90, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(0,175,160,.18) 0%, transparent 70%)", pointerEvents: "none",
-          }} />
-
-          <div style={{ position: "relative", textAlign: "center" }}>
-            <Logo height={48} />
-            <div style={{ width: 32, height: 2, background: "#00AFA0", borderRadius: 999, margin: "14px auto 12px" }} />
-            <div style={{
-              display: "inline-block", fontSize: 9.5, fontWeight: 800, letterSpacing: ".2em",
-              textTransform: "uppercase", background: "#00AFA0", color: "#fff",
-              padding: "3px 12px", borderRadius: 6,
-            }}>Sales CRM</div>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,.55)", marginTop: 12, lineHeight: 1.5 }}>
-              Pipeline · Kunjungan · Laporan · Project
-            </p>
-          </div>
-        </div>
-
         <div className="lp-form-card" style={{ width: "100%", maxWidth: 360 }}>
           {/* Heading */}
           <div style={{ marginBottom: 32 }}>
@@ -269,21 +233,13 @@ export default function LoginPage() {
         .lp-form-card { animation: lpFadeIn .45s ease .08s both; }
 
         @media (max-width: 720px) {
-          .lp-brand { display: none !important; }
-          .lp-form {
-            background: linear-gradient(145deg, #0A6E5C 0%, #0B2540 55%, #081624 100%) !important;
-            align-items: stretch !important;
-            flex-direction: column !important;
-            padding: 0 !important;
+          .lp-page { flex-direction: column !important; }
+          .lp-brand {
+            flex: none !important; width: 100%; padding: 36px 24px 32px !important;
           }
-          .lp-mobile-hero { display: flex !important; flex: 1; min-height: 160px; }
-          .lp-form-card {
-            background: #EEF2F1;
-            border-radius: 20px 20px 0 0;
-            margin-top: auto;
-            padding: 32px 24px 44px;
-            max-width: 100% !important;
-          }
+          .lp-brand h2 { font-size: 22px !important; }
+          .lp-form { padding: 32px 24px 44px !important; }
+          .lp-form-card { max-width: 100% !important; }
         }
       `}</style>
     </div>
