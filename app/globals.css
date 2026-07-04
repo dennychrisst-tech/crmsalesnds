@@ -319,7 +319,11 @@ nav.tabs button.active::after {
 .project-panel-list { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
 .project-chip {
   background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--brand);
-  border-radius: 8px; padding: 10px; font-size: 13px; cursor: grab; touch-action: none;
+  border-radius: 8px; padding: 10px; font-size: 13px; cursor: grab;
+  /* pan-x (not none) — lets the browser handle horizontal swipe-to-scroll
+     through this row natively, while vertical movement (dragging a chip down
+     onto the stage list below) is still left for dnd-kit to capture. */
+  touch-action: pan-x;
   flex: 0 0 180px;
 }
 .project-chip:active { cursor: grabbing; }
