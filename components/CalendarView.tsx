@@ -156,7 +156,7 @@ function AgendaDayCard({
             : isDone ? " · Selesai" : "";
           return (
             <button key={ev.id} type="button" className="agenda-item"
-              style={{ background: isWfo ? "var(--brand-soft)" : isLeave ? "#FEE2E2" : "var(--paper)", cursor: isSpecial ? "default" : "pointer", opacity: (isCancel || isDone) ? 0.6 : 1 }}
+              style={{ background: isWfo ? "var(--brand-soft)" : isLeave ? "#FEE2E2" : "var(--paper)", color: isLeave ? "#991B1B" : undefined, cursor: isSpecial ? "default" : "pointer", opacity: (isCancel || isDone) ? 0.6 : 1 }}
               onClick={() => { if (!isSpecial && !isViewer) onEditEvent(ev); }}>
               <span className="agenda-item-dot" style={{ background: isWfo ? "var(--brand)" : isLeave ? "#991B1B" : "var(--gold)" }} />
               <span>

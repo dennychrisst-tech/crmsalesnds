@@ -122,7 +122,7 @@ export default function AdminSettings() {
                 padding: "10px 14px", borderRadius: "7px", fontSize: "13px",
                 background: msg.type === "ok" ? "#f0fdf4" : "#fef2f2",
                 border: `1px solid ${msg.type === "ok" ? "#bbf7d0" : "#fecaca"}`,
-                color: msg.type === "ok" ? "#15803d" : "var(--danger)",
+                color: msg.type === "ok" ? "#15803d" : "#b91c1c",
               }}>
                 {msg.text}
               </div>

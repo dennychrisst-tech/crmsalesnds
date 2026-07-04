@@ -180,7 +180,7 @@ export default function UsersClient({ currentRole, currentUserId }: { currentRol
                 <input type="password" style={inputStyle} value={invite.password} onChange={e => setInvite(i => ({ ...i, password: e.target.value }))} required minLength={6} placeholder="Min. 6 karakter" />
               </div>
               {error && (
-                <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "7px", padding: "9px 12px", fontSize: "12px", color: "var(--danger)" }}>{error}</div>
+                <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "7px", padding: "9px 12px", fontSize: "12px", color: "#b91c1c" }}>{error}</div>
               )}
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "4px" }}>
                 <button type="button" onClick={() => setInviteOpen(false)} style={{ padding: "9px 16px", borderRadius: "7px", border: "1px solid var(--line)", background: "transparent", cursor: "pointer", fontSize: "13px" }}>Batal</button>

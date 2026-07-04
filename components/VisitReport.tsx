@@ -219,7 +219,7 @@ export default function VisitReport({ data }: Props) {
                             style={{
                               borderBottom: expanded === v.id ? "none" : "1px solid var(--line)",
                               cursor: "pointer",
-                              background: expanded === v.id ? "var(--bg)" : i % 2 === 0 ? "transparent" : "var(--paper)",
+                              background: expanded === v.id ? "var(--brand-soft)" : i % 2 === 0 ? "transparent" : "var(--paper)",
                             }}
                             onClick={() => toggleExpand(v.id)}
                           >

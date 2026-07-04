@@ -75,7 +75,7 @@ export default function AdminExport() {
 
       <div style={{
         marginTop: "24px", padding: "14px 18px", borderRadius: "10px",
-        background: "#f8fafc", border: "1px solid var(--line)", fontSize: "12px", color: "var(--ink-soft)",
+        background: "var(--paper)", border: "1px solid var(--line)", fontSize: "12px", color: "var(--ink-soft)",
       }}>
         <strong>Catatan:</strong> Export mencakup semua data tanpa filter. Gunakan Excel/Google Sheets untuk filtering dan analisis lanjutan.
       </div>
