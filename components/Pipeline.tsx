@@ -107,40 +107,18 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer, draggable 
   );
 }
 
-function ProjectChip({ project, clientName, onAddToStage }: { project: Project; clientName: string; onAddToStage: (project: Project, stage: string) => void }) {
+function ProjectChip({ project, clientName }: { project: Project; clientName: string }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `${PROJECT_DRAG_PREFIX}${project.id}` });
   const style = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
-  const [pickerOpen, setPickerOpen] = useState(false);
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style} className="project-chip">
       <div className="dn">{project.name}</div>
       <div className="dc">{clientName}{project.product ? ` · ${project.product}` : ""}</div>
-      {/* Drag works on desktop; mobile has no droppable column here (single-list
-          layout), so this tap alternative is the only way to add a project there
-          — same pattern as DealCard's "Pindah stage" button (CSS-hidden on desktop). */}
-      <div className="stage-move-wrap">
-        <button type="button" className="btn btn-ghost btn-sm stage-move-btn"
-          onClick={e => { e.stopPropagation(); setPickerOpen(o => !o); }}>
-          + Tambah ke stage →
-        </button>
-        {pickerOpen && (
-          <div className="stage-move-sheet-backdrop" onClick={e => { e.stopPropagation(); setPickerOpen(false); }}>
-            <div className="stage-move-sheet" onClick={e => e.stopPropagation()}>
-              <div className="stage-move-sheet-handle" />
-              <div className="stage-move-sheet-title">Tambah ke stage: {project.name}</div>
-              {STAGES.map(s => (
-                <button key={s} type="button" className="stage-move-sheet-item"
-                  onClick={() => { onAddToStage(project, s); setPickerOpen(false); }}>{s}</button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
 
-function ProjectPanel({ projects, clientName, search, onSearchChange, onAddToStage }: { projects: Project[]; clientName: (id: string) => string; search: string; onSearchChange: (v: string) => void; onAddToStage: (project: Project, stage: string) => void }) {
+function ProjectPanel({ projects, clientName, search, onSearchChange }: { projects: Project[]; clientName: (id: string) => string; search: string; onSearchChange: (v: string) => void }) {
   const filtered = projects.filter(p => p.name.toLowerCase().includes(search.trim().toLowerCase()));
   return (
     <div className="project-panel">
@@ -152,7 +130,7 @@ function ProjectPanel({ projects, clientName, search, onSearchChange, onAddToSta
       />
       <div className="project-panel-list">
         {filtered.length === 0 && <div className="empty-state" style={{ padding: "8px 0" }}>Tidak ada proyek tersedia.</div>}
-        {filtered.map(p => <ProjectChip key={p.id} project={p} clientName={clientName(p.client_id)} onAddToStage={onAddToStage} />)}
+        {filtered.map(p => <ProjectChip key={p.id} project={p} clientName={clientName(p.client_id)} />)}
       </div>
     </div>
   );
@@ -342,6 +320,10 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
   }, []);
+  // Makes the mobile list itself a drop target for the selected stage tab, so
+  // dragging a project chip down onto it works the same way desktop's kanban
+  // columns do — the tap-to-pick-stage button this replaced is gone.
+  const { isOver: mobileListOver, setNodeRef: setMobileListRef } = useDroppable({ id: mobileStage, disabled: selectMode });
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
@@ -614,10 +596,10 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
 
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         {showPanel && !isViewer && (
-          <ProjectPanel projects={availableProjects} clientName={clientName} search={projectSearch} onSearchChange={setProjectSearch} onAddToStage={addProjectToStage} />
+          <ProjectPanel projects={availableProjects} clientName={clientName} search={projectSearch} onSearchChange={setProjectSearch} />
         )}
         {isMobile ? (
-          <div className="pipeline-mobile-list">
+          <div ref={setMobileListRef} className={`pipeline-mobile-list${mobileListOver ? " over" : ""}`}>
             {visibleDeals.filter(d => d.stage === mobileStage).length === 0 ? (
               <div className="empty-state">Belum ada deal di stage ini.</div>
             ) : visibleDeals.filter(d => d.stage === mobileStage).map(d => (
