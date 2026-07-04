@@ -28,6 +28,7 @@ import TalentFillRateView from "./TalentFillRateView";
 import MandaysRateView from "./MandaysRateView";
 import ToastHost, { toast } from "./ui/Toast";
 import Logo from "./ui/Logo";
+import InstallPrompt from "./InstallPrompt";
 
 const TABS: { id: ActiveView; label: string; icon: LucideIcon }[] = [
   { id: "dashboard",    label: "Dashboard",         icon: LayoutDashboard },
@@ -222,6 +223,8 @@ export default function CRMApp() {
         )}
         <button onClick={handleLogout} className="btn-logout">Log Out</button>
       </header>
+
+      <InstallPrompt />
 
       <nav className="tabs">
         {TABS.filter(t => DESKTOP_PRIMARY_IDS.includes(t.id)).map(t => (
