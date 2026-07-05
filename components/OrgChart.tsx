@@ -387,73 +387,75 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
               <h3>🏢 Struktur Organisasi — {client.name}</h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setModalOpen(false)}>✕ Tutup</button>
             </div>
-            {levelToolbar}
-            <div className="orgchart-modal-body">
-              {isMobile ? (
-                <div className="orgchart-mobile-list">
-                  {contacts.length === 0 ? (
-                    <div className="vt-empty">Belum ada kontak untuk dipetakan.</div>
-                  ) : contacts
-                    .slice()
-                    .sort((a, b) => levels.indexOf(a.org_level || "") - levels.indexOf(b.org_level || ""))
-                    .map(ct => (
-                      <div key={ct.id} className="orgchart-mobile-row" style={{ marginLeft: depthOf(ct, byId) * 16 }}>
-                        <div onClick={() => onOpenContact(ct)}>
-                          <div className="orgchart-mobile-name">{ct.name || "(tanpa nama)"}</div>
-                          {ct.title && <div className="orgchart-mobile-title">{ct.title}</div>}
+            <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+              {levelToolbar}
+              <div className="orgchart-modal-body">
+                {isMobile ? (
+                  <div className="orgchart-mobile-list">
+                    {contacts.length === 0 ? (
+                      <div className="vt-empty">Belum ada kontak untuk dipetakan.</div>
+                    ) : contacts
+                      .slice()
+                      .sort((a, b) => levels.indexOf(a.org_level || "") - levels.indexOf(b.org_level || ""))
+                      .map(ct => (
+                        <div key={ct.id} className="orgchart-mobile-row" style={{ marginLeft: depthOf(ct, byId) * 16 }}>
+                          <div onClick={() => onOpenContact(ct)}>
+                            <div className="orgchart-mobile-name">{ct.name || "(tanpa nama)"}</div>
+                            {ct.title && <div className="orgchart-mobile-title">{ct.title}</div>}
+                          </div>
+                          {!isViewer && (
+                            <>
+                              <select className="select-sm" value={levels.includes(ct.org_level || "") ? ct.org_level : ""}
+                                onChange={e => onSaveContact({ ...ct, org_level: e.target.value })}>
+                                <option value="">Belum dipetakan</option>
+                                {levels.map(l => <option key={l} value={l}>{l}</option>)}
+                              </select>
+                              <select className="select-sm" value={ct.reports_to_id || ""}
+                                onChange={e => setReportsTo(ct, e.target.value || null)}>
+                                <option value="">Tidak lapor ke siapapun</option>
+                                {contacts.filter(c => c.id !== ct.id).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                              </select>
+                            </>
+                          )}
                         </div>
-                        {!isViewer && (
-                          <>
-                            <select className="select-sm" value={levels.includes(ct.org_level || "") ? ct.org_level : ""}
-                              onChange={e => onSaveContact({ ...ct, org_level: e.target.value })}>
-                              <option value="">Belum dipetakan</option>
-                              {levels.map(l => <option key={l} value={l}>{l}</option>)}
-                            </select>
-                            <select className="select-sm" value={ct.reports_to_id || ""}
-                              onChange={e => setReportsTo(ct, e.target.value || null)}>
-                              <option value="">Tidak lapor ke siapapun</option>
-                              {contacts.filter(c => c.id !== ct.id).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              ) : (
-                <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                  <div className="orgchart-scroll-area">
-                    <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
-                      <div className="orgchart-canvas" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
-                        <svg className="orgchart-svg" width={layout.width} height={layout.height}>
-                          {connectorPaths.map(p => <path key={p.key} d={p.d} className="orgchart-line" />)}
-                        </svg>
-                        {contacts.map(ct => {
-                          const pos = layout.positions.get(ct.id);
-                          if (!pos) return null;
-                          return <TreeNode key={ct.id} contact={ct} x={pos.x} y={pos.y} isViewer={isViewer} onOpenContact={onOpenContact} />;
-                        })}
+                      ))}
+                  </div>
+                ) : (
+                  <>
+                    <div className="orgchart-scroll-area">
+                      <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
+                        <div className="orgchart-canvas" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
+                          <svg className="orgchart-svg" width={layout.width} height={layout.height}>
+                            {connectorPaths.map(p => <path key={p.key} d={p.d} className="orgchart-line" />)}
+                          </svg>
+                          {contacts.map(ct => {
+                            const pos = layout.positions.get(ct.id);
+                            if (!pos) return null;
+                            return <TreeNode key={ct.id} contact={ct} x={pos.x} y={pos.y} isViewer={isViewer} onOpenContact={onOpenContact} />;
+                          })}
+                        </div>
                       </div>
                     </div>
+                    <div className="orgchart-pool-section">
+                      <div className="orgchart-pool-title">Belum Dipetakan <span className="orgchart-pool-hint">— seret ke atas untuk memetakan</span></div>
+                      <PoolDropZone>
+                        {unassigned.length === 0
+                          ? <div className="orgchart-pool-empty">Semua kontak sudah dipetakan.</div>
+                          : unassigned.map(ct => <PoolChip key={ct.id} contact={ct} isViewer={isViewer} onOpenContact={onOpenContact} />)}
+                      </PoolDropZone>
+                    </div>
+                  </>
+                )}
+              </div>
+              <DragOverlay>
+                {activeContact ? (
+                  <div className="orgchart-chip orgchart-chip-overlay" style={{ width: NODE_W, height: NODE_H }}>
+                    <div className="orgchart-chip-name">{activeContact.name || "(tanpa nama)"}</div>
+                    {activeContact.title && <div className="orgchart-chip-title">{activeContact.title}</div>}
                   </div>
-                  <div className="orgchart-pool-section">
-                    <div className="orgchart-pool-title">Belum Dipetakan <span className="orgchart-pool-hint">— seret ke atas untuk memetakan</span></div>
-                    <PoolDropZone>
-                      {unassigned.length === 0
-                        ? <div className="orgchart-pool-empty">Semua kontak sudah dipetakan.</div>
-                        : unassigned.map(ct => <PoolChip key={ct.id} contact={ct} isViewer={isViewer} onOpenContact={onOpenContact} />)}
-                    </PoolDropZone>
-                  </div>
-                  <DragOverlay>
-                    {activeContact ? (
-                      <div className="orgchart-chip orgchart-chip-overlay" style={{ width: NODE_W, height: NODE_H }}>
-                        <div className="orgchart-chip-name">{activeContact.name || "(tanpa nama)"}</div>
-                        {activeContact.title && <div className="orgchart-chip-title">{activeContact.title}</div>}
-                      </div>
-                    ) : null}
-                  </DragOverlay>
-                </DndContext>
-              )}
-            </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
           </div>
         </div>
       )}
