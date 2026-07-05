@@ -28,6 +28,7 @@ export interface Client {
   website?: string;
   company_size?: string;
   logo_url?: string | null;
+  org_levels?: string[];
   created_by_id?: string;
   created_at?: string;
 }
@@ -40,6 +41,9 @@ export interface Contact {
   email: string;
   phone: string;
   notes: string;
+  org_level?: string;
+  org_order?: number;
+  reports_to_id?: string | null;
   created_by_id?: string;
   created_at?: string;
 }

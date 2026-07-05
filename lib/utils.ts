@@ -76,6 +76,10 @@ export const REVENUE_OPP_STATUS_COLOR: Record<string, { bg: string; fg: string }
 export const SECTORS = ["Banking", "Multifinance", "Insurance", "Health Care", "Industrial", "Technology", "Telekomunikasi", "Infrastruktur", "Transportasi", "Energy", "Lainnya"] as const;
 export const TEAM = ["Denny", "Dova", "Rio", "Cris"] as const;
 
+// Fallback org-chart tiers for clients whose org_levels hasn't loaded yet /
+// was somehow cleared to empty — mirrors the DB column default.
+export const DEFAULT_ORG_LEVELS = ["Komisaris", "Direksi", "General Manager", "Manager", "Staff"];
+
 // Deterministic name -> color mapping so a salesperson keeps the same color
 // everywhere (Calendar visit pills, Pipeline deal cards) without a lookup table.
 export const SALES_COLOR_PALETTE = [

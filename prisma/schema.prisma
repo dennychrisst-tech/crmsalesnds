@@ -44,6 +44,11 @@ model Client {
   website      String   @default("")
   company_size String   @default("")
   logo_url     String?
+  // Ordered list of org-chart tier names for this client (e.g. ["Komisaris",
+  // "Direksi", "General Manager", "Manager", "Staff"]) — editable per client
+  // since not every company uses the same structure. Row order in the org
+  // chart follows this array's order.
+  org_levels   Json     @default("[\"Komisaris\", \"Direksi\", \"General Manager\", \"Manager\", \"Staff\"]")
   created_by_id String? @db.Uuid
   created_at   DateTime @default(now())
 
@@ -66,12 +71,24 @@ model Contact {
   email         String   @default("")
   phone         String   @default("")
   notes         String   @default("")
+  // Org-chart placement — org_level must match one of the client's
+  // org_levels entries to show up in that tier (empty/stale = falls back to
+  // the "belum dipetakan" pool). org_order sorts contacts left-to-right
+  // within the same tier. reports_to_id draws the "lapor ke" connector line;
+  // SetNull so deleting a manager just orphans their reports instead of
+  // cascading the delete.
+  org_level     String   @default("")
+  org_order     Int      @default(0)
+  reports_to_id String?  @db.Uuid
   created_by_id String?  @db.Uuid
   created_at    DateTime @default(now())
 
-  client Client @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  client       Client    @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  reports_to   Contact?  @relation("ContactReportsTo", fields: [reports_to_id], references: [id], onDelete: SetNull)
+  reports      Contact[] @relation("ContactReportsTo")
 
   @@index([client_id])
+  @@index([reports_to_id])
   @@map("contacts")
 }
 
