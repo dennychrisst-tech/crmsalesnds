@@ -18,17 +18,17 @@ const CHIP_PREFIX = "chip:";
 const LEVEL_PREFIX = "level:";
 const UNASSIGNED = "__unassigned__";
 
-const NODE_W = 190;
-const NODE_H = 62;
-const NODE_GAP = 30;
-const ROW_H = 130;
-const LABEL_H = 22;
-const BUS_GAP = 26; // vertical drop from a parent's bottom edge down to the horizontal "bus" line its children branch off of
+const NODE_W = 180;
+const NODE_H = 76;
+const NODE_GAP = 18;
+const ROW_H = 116;
+const LABEL_H = 12;
+const BUS_GAP = 22; // vertical drop from a parent's bottom edge down to the horizontal "bus" line its children branch off of
 
 // Solid tier color, top (Komisaris) to bottom — cycles if there are more
 // levels than colors. Boxes use the solid color as fill (white text), like a
 // classic printed org-chart poster rather than a pastel "card" look.
-const LEVEL_COLORS = ["#1E3A8A", "#B45309", "#0F766E", "#B91C1C", "#6D28D9", "#0369A1"];
+const LEVEL_COLORS = ["#0E7490", "#CA8A04", "#155E75", "#EA580C", "#16A34A", "#7C3AED"];
 
 function levelColor(levelIdx: number): string {
   return levelIdx < 0 ? "#64748B" : LEVEL_COLORS[levelIdx % LEVEL_COLORS.length];
