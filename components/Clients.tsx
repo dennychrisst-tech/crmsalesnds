@@ -122,14 +122,6 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
     return () => mq.removeEventListener("change", apply);
   }, []);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const [orgChartOpen, setOrgChartOpen] = useState<Set<string>>(new Set());
-  function toggleOrgChart(id: string) {
-    setOrgChartOpen(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  }
 
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [editClient, setEditClient] = useState<Client | null>(null);
@@ -409,10 +401,17 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
                 <div className="contact-section">
                   <div className="vt-title">
                     Kontak Person
-                    <button className="btn btn-ghost btn-sm vt-add" style={{ marginLeft: "auto" }} onClick={() => toggleOrgChart(c.id)}>
-                      {orgChartOpen.has(c.id) ? "🏢 Sembunyikan Struktur" : "🏢 Struktur Organisasi"}
-                    </button>
-                    {!isViewer && <button className="btn btn-ghost btn-sm vt-add" onClick={() => openContactNew(c.id)}>+ Kontak</button>}
+                    <span style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+                      <OrgChart
+                        client={c}
+                        contacts={clientContacts}
+                        isViewer={isViewer}
+                        onSaveClient={onSaveClient}
+                        onSaveContact={onSaveContact}
+                        onOpenContact={openContactEdit}
+                      />
+                      {!isViewer && <button className="btn btn-ghost btn-sm vt-add" onClick={() => openContactNew(c.id)}>+ Kontak</button>}
+                    </span>
                   </div>
                   {!clientContacts.length ? (
                     <div className="vt-empty">👤 Belum ada kontak person.</div>
@@ -440,16 +439,6 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
                         </div>
                       ))}
                     </div>
-                  )}
-                  {orgChartOpen.has(c.id) && (
-                    <OrgChart
-                      client={c}
-                      contacts={clientContacts}
-                      isViewer={isViewer}
-                      onSaveClient={onSaveClient}
-                      onSaveContact={onSaveContact}
-                      onOpenContact={openContactEdit}
-                    />
                   )}
                 </div>
 
