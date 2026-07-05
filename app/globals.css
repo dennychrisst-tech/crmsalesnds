@@ -573,30 +573,40 @@ tr:hover td { background: var(--paper); }
 
 /* Org chart */
 .orgchart-modal-backdrop { position: fixed; inset: 0; background: rgba(11,27,43,.55); z-index: 95; display: flex; align-items: center; justify-content: center; padding: 16px; }
-.orgchart-modal-card { background: var(--card); width: 100%; height: 100%; max-width: 1400px; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
-.orgchart-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
-.orgchart-modal-header h3 { font-size: 16px; font-weight: 700; }
-.orgchart-modal-body { flex: 1; overflow: auto; padding: 20px; min-height: 0; }
-.orgchart-levels-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 12px 20px 0; flex-shrink: 0; }
-.orgchart-level-tag { display: inline-flex; align-items: center; gap: 3px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; font-size: 12px; font-weight: 600; color: var(--ink-soft); }
-.orgchart-level-tag button { border: none; background: none; cursor: pointer; font-size: 11px; color: var(--ink-soft); padding: 0 2px; line-height: 1; }
-.orgchart-level-tag button:hover { color: var(--brand); }
-.orgchart-level-tag button:disabled { opacity: .3; cursor: default; }
+.orgchart-modal-card { background: var(--card); width: 100%; height: 100%; max-width: 1500px; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+.orgchart-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.orgchart-modal-header h3 { font-size: 17px; font-weight: 800; }
+.orgchart-modal-body { flex: 1; overflow: auto; padding: 32px; min-height: 0; background-image: radial-gradient(rgba(11,27,43,.08) 1px, transparent 1px); background-size: 22px 22px; }
+[data-theme="dark"] .orgchart-modal-body { background-image: radial-gradient(rgba(255,255,255,.08) 1px, transparent 1px); }
+.orgchart-levels-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 14px 22px 0; flex-shrink: 0; }
+.orgchart-level-tag { display: inline-flex; align-items: center; gap: 3px; border: 1px solid transparent; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; }
+.orgchart-level-tag button { border: none; background: none; cursor: pointer; font-size: 11px; color: inherit; opacity: .6; padding: 0 2px; line-height: 1; }
+.orgchart-level-tag button:hover { opacity: 1; }
+.orgchart-level-tag button:disabled { opacity: .2; cursor: default; }
 .orgchart-zoom-controls { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
 .orgchart-zoom-controls button { border: 1px solid var(--line); background: var(--paper); border-radius: 6px; width: 22px; height: 22px; cursor: pointer; line-height: 1; }
 .orgchart-zoom-controls button:hover { border-color: var(--brand); color: var(--brand); }
 .orgchart-canvas { position: relative; transform-origin: 0 0; }
-.orgchart-svg { position: absolute; left: 0; top: 0; pointer-events: none; }
-.orgchart-line { stroke: var(--brand); stroke-width: 1.5; fill: none; opacity: .6; }
+.orgchart-svg { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+.orgchart-line { stroke: var(--brand); stroke-width: 2; fill: none; opacity: .55; stroke-linecap: round; }
+.orgchart-joint { fill: var(--brand); opacity: .55; }
 .orgchart-row-band { border-bottom: 1px dashed var(--line); }
-.orgchart-row-band-over { background: var(--brand-soft); }
-.orgchart-row-label { position: sticky; left: 8px; display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft); background: var(--card); padding: 3px 8px; border-radius: 6px; margin: 6px 0 0 8px; }
-.orgchart-chip { position: absolute; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; cursor: pointer; }
-.orgchart-chip:hover { border-color: var(--brand); }
-.orgchart-chip-over { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-soft); }
-.orgchart-chip-overlay { position: static; cursor: grabbing; box-shadow: 0 4px 12px rgba(0,0,0,.15); }
-.orgchart-chip-name { font-size: 13px; font-weight: 700; color: var(--ink); }
-.orgchart-chip-title { font-size: 11px; color: var(--brand); font-weight: 600; margin-top: 2px; }
+.orgchart-row-band-unassigned { background: repeating-linear-gradient(135deg, transparent, transparent 12px, rgba(120,120,120,.05) 12px, rgba(120,120,120,.05) 24px); }
+.orgchart-row-band-over { outline: 2px dashed var(--brand); outline-offset: -2px; }
+.orgchart-row-label { position: sticky; left: 8px; display: inline-block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; background: var(--card); padding: 4px 10px; border-radius: 999px; margin: 8px 0 0 8px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.orgchart-chip {
+  position: absolute; display: flex; align-items: center; gap: 10px;
+  background: var(--paper); border: 1px solid var(--line); border-top-width: 3px;
+  border-radius: 12px; padding: 10px 12px; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06); transition: box-shadow .12s, transform .12s;
+}
+.orgchart-chip:hover { box-shadow: 0 6px 16px rgba(0,0,0,.12); transform: translateY(-1px); }
+.orgchart-chip-over { box-shadow: 0 0 0 3px var(--brand-soft); }
+.orgchart-chip-overlay { position: static; cursor: grabbing; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+.orgchart-chip-avatar { flex-shrink: 0; width: 32px; height: 32px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 800; }
+.orgchart-chip-body { min-width: 0; }
+.orgchart-chip-name { font-size: 13px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.orgchart-chip-title { font-size: 11px; color: var(--ink-soft); font-weight: 600; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .orgchart-mobile-list { display: flex; flex-direction: column; gap: 8px; }
 .orgchart-mobile-row { display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--paper); }
 .orgchart-mobile-row select { font-size: 12px; padding: 5px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
