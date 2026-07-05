@@ -423,18 +423,25 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
                 ) : (
                   <>
                     <div className="orgchart-scroll-area">
-                      <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
-                        <div className="orgchart-canvas" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
-                          <svg className="orgchart-svg" width={layout.width} height={layout.height}>
-                            {connectorPaths.map(p => <path key={p.key} d={p.d} className="orgchart-line" />)}
-                          </svg>
-                          {contacts.map(ct => {
-                            const pos = layout.positions.get(ct.id);
-                            if (!pos) return null;
-                            return <TreeNode key={ct.id} contact={ct} x={pos.x} y={pos.y} isViewer={isViewer} onOpenContact={onOpenContact} />;
-                          })}
+                      {layout.positions.size === 0 ? (
+                        <div className="orgchart-empty-hint">
+                          📥 Belum ada kontak yang dipetakan ke level manapun.<br />
+                          Seret kontak dari <strong>Belum Dipetakan</strong> di bawah ke salah satu chip level (KOMISARIS, DIREKSI, dst.) di toolbar atas untuk mulai membangun struktur.
                         </div>
-                      </div>
+                      ) : (
+                        <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
+                          <div className="orgchart-canvas" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
+                            <svg className="orgchart-svg" width={layout.width} height={layout.height}>
+                              {connectorPaths.map(p => <path key={p.key} d={p.d} className="orgchart-line" />)}
+                            </svg>
+                            {contacts.map(ct => {
+                              const pos = layout.positions.get(ct.id);
+                              if (!pos) return null;
+                              return <TreeNode key={ct.id} contact={ct} x={pos.x} y={pos.y} isViewer={isViewer} onOpenContact={onOpenContact} />;
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="orgchart-pool-section">
                       <div className="orgchart-pool-title">Belum Dipetakan <span className="orgchart-pool-hint">— seret ke atas untuk memetakan</span></div>

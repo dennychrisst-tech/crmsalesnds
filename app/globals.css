@@ -577,9 +577,9 @@ tr:hover td { background: var(--paper); }
 .orgchart-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
 .orgchart-modal-header h3 { font-size: 17px; font-weight: 800; }
 .orgchart-modal-body { flex: 1; display: flex; flex-direction: column; overflow: auto; min-height: 0; background: var(--bg); }
-.orgchart-levels-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 14px 22px; flex-shrink: 0; border-bottom: 1px solid var(--line); background: var(--card); }
-.orgchart-level-tag { display: inline-flex; align-items: center; gap: 3px; background: var(--paper); border: 1px dashed var(--line); border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 700; color: var(--ink); }
-.orgchart-level-tag-over { border-color: var(--brand); border-style: solid; background: var(--brand-soft); }
+.orgchart-levels-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 14px 22px; flex-shrink: 0; border-bottom: 1px solid var(--line); background: var(--card); }
+.orgchart-level-tag { display: inline-flex; align-items: center; gap: 4px; background: var(--paper); border: 2px dashed var(--line); border-radius: 8px; padding: 7px 12px; font-size: 12.5px; font-weight: 700; color: var(--ink); transition: border-color .12s, background .12s; }
+.orgchart-level-tag-over { border-color: var(--brand); border-style: solid; background: var(--brand-soft); transform: scale(1.05); }
 .orgchart-level-tag button { border: none; background: none; cursor: pointer; font-size: 11px; color: var(--ink-soft); opacity: .7; padding: 0 2px; line-height: 1; }
 .orgchart-level-tag button:hover { opacity: 1; color: var(--brand); }
 .orgchart-level-tag button:disabled { opacity: .2; cursor: default; }
@@ -588,6 +588,8 @@ tr:hover td { background: var(--paper); }
 .orgchart-zoom-controls button { border: 1px solid var(--line); background: var(--paper); border-radius: 6px; width: 22px; height: 22px; cursor: pointer; line-height: 1; }
 .orgchart-zoom-controls button:hover { border-color: var(--brand); color: var(--brand); }
 .orgchart-scroll-area { flex-shrink: 0; padding: 28px; }
+.orgchart-empty-hint { max-width: 480px; margin: 20px auto; text-align: center; font-size: 13px; line-height: 1.6; color: var(--ink-soft); background: var(--card); border: 1px dashed var(--line); border-radius: 12px; padding: 24px; }
+.orgchart-empty-hint strong { color: var(--brand); }
 .orgchart-canvas { position: relative; transform-origin: 0 0; }
 .orgchart-svg { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
 .orgchart-line { stroke: #64748B; stroke-width: 1.5; fill: none; stroke-linecap: square; }
