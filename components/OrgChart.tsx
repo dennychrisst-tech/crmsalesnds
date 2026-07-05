@@ -205,13 +205,29 @@ function TreeNode({ contact, x, y, isViewer, onOpenContact }: {
   );
 }
 
-function PoolChip({ contact, isViewer, onOpenContact }: { contact: Contact; isViewer?: boolean; onOpenContact: (c: Contact) => void }) {
+function PoolChip({ contact, isViewer, levels, onOpenContact, onAssignLevel }: {
+  contact: Contact; isViewer?: boolean; levels: string[]; onOpenContact: (c: Contact) => void; onAssignLevel: (c: Contact, level: string) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: contact.id, disabled: isViewer });
   const style: React.CSSProperties = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
   return (
-    <div ref={setNodeRef} {...(!isViewer ? { ...listeners, ...attributes } : {})} style={style} className="orgchart-pool-chip" onClick={() => onOpenContact(contact)}>
-      <div className="orgchart-pool-chip-name">{contact.name || "(tanpa nama)"}</div>
-      {contact.title && <div className="orgchart-pool-chip-title">{contact.title}</div>}
+    <div ref={setNodeRef} {...(!isViewer ? { ...listeners, ...attributes } : {})} style={style} className="orgchart-pool-chip">
+      <div onClick={() => onOpenContact(contact)}>
+        <div className="orgchart-pool-chip-name">{contact.name || "(tanpa nama)"}</div>
+        {contact.title && <div className="orgchart-pool-chip-title">{contact.title}</div>}
+      </div>
+      {!isViewer && (
+        <select
+          className="orgchart-pool-chip-select"
+          value=""
+          onPointerDown={e => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
+          onChange={e => { if (e.target.value) onAssignLevel(contact, e.target.value); }}
+        >
+          <option value="">↳ Pindahkan ke level…</option>
+          {levels.map(l => <option key={l} value={l}>{l}</option>)}
+        </select>
+      )}
     </div>
   );
 }
@@ -265,6 +281,16 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
   const layout = useMemo(() => layoutTree(contacts, levels), [contacts, levels]);
   const connectorPaths = useMemo(() => buildConnectors(layout.childrenMap, layout.listMode, layout.positions), [layout]);
   const unassigned = contacts.filter(c => !levels.includes(c.org_level || "")).sort((a, b) => (a.org_order || 0) - (b.org_order || 0));
+
+  // Explicit, always-works alternative to drag-and-drop for assigning a level —
+  // dragging a small chip precisely onto a small toolbar tag is fragile (easy to
+  // trigger native text selection instead of a drag), so this select-based path
+  // guarantees the feature is usable even when a drag gesture doesn't register.
+  async function assignLevel(contact: Contact, levelName: string) {
+    const siblingOrders = contacts.filter(c => c.org_level === levelName).map(c => c.org_order || 0);
+    const newOrder = siblingOrders.length ? Math.max(...siblingOrders) + 1 : 0;
+    await onSaveContact({ ...contact, org_level: levelName, org_order: newOrder, reports_to_id: null });
+  }
 
   async function addLevel() {
     const name = prompt("Nama level baru:");
@@ -426,7 +452,7 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
                       {layout.positions.size === 0 ? (
                         <div className="orgchart-empty-hint">
                           📥 Belum ada kontak yang dipetakan ke level manapun.<br />
-                          Seret kontak dari <strong>Belum Dipetakan</strong> di bawah ke salah satu chip level (KOMISARIS, DIREKSI, dst.) di toolbar atas untuk mulai membangun struktur.
+                          Seret kontak dari <strong>Belum Dipetakan</strong> di bawah ke salah satu chip level (KOMISARIS, DIREKSI, dst.) di toolbar atas, atau pakai dropdown <strong>&quot;↳ Pindahkan ke level…&quot;</strong> di tiap kartu kontak kalau drag terasa sulit.
                         </div>
                       ) : (
                         <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
@@ -448,7 +474,7 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
                       <PoolDropZone>
                         {unassigned.length === 0
                           ? <div className="orgchart-pool-empty">Semua kontak sudah dipetakan.</div>
-                          : unassigned.map(ct => <PoolChip key={ct.id} contact={ct} isViewer={isViewer} onOpenContact={onOpenContact} />)}
+                          : unassigned.map(ct => <PoolChip key={ct.id} contact={ct} isViewer={isViewer} levels={levels} onOpenContact={onOpenContact} onAssignLevel={assignLevel} />)}
                       </PoolDropZone>
                     </div>
                   </>
