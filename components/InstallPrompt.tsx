@@ -23,6 +23,7 @@ function isStandalone(): boolean {
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [dismissed, setDismissed] = useState(true);
 
   // Register the service worker unconditionally so the browser can recognize
@@ -37,6 +38,7 @@ export default function InstallPrompt() {
   useEffect(() => {
     setDismissed(window.localStorage.getItem(DISMISS_KEY) === "1");
     setIsIOS(/iphone|ipad|ipod/i.test(navigator.userAgent));
+    setIsMobile(/iphone|ipad|ipod|android|mobile/i.test(navigator.userAgent));
 
     function onBeforeInstall(e: Event) {
       e.preventDefault();
@@ -58,10 +60,11 @@ export default function InstallPrompt() {
     setDeferredPrompt(null);
   }
 
-  if (dismissed || isStandalone()) return null;
-  // Android/desktop Chrome/Edge: only show once the browser has actually
-  // offered install. iOS Safari never fires beforeinstallprompt at all, so
-  // show the manual "Add to Home Screen" instructions instead.
+  // Desktop browsers get no install banner at all — this is a mobile-only nudge.
+  if (dismissed || isStandalone() || !isMobile) return null;
+  // Android Chrome: only show once the browser has actually offered install.
+  // iOS Safari never fires beforeinstallprompt at all, so show the manual
+  // "Add to Home Screen" instructions instead.
   if (!deferredPrompt && !isIOS) return null;
 
   return (
@@ -71,7 +74,7 @@ export default function InstallPrompt() {
         {isIOS ? (
           <>Instal CRM ini ke HP: tombol <b>Share</b> di Safari → <b>Tambah ke Layar Utama</b></>
         ) : (
-          <>Instal CRM ini sebagai aplikasi di HP/laptop Anda untuk akses lebih cepat.</>
+          <>Instal CRM ini sebagai aplikasi di HP Anda untuk akses lebih cepat.</>
         )}
       </div>
       {!isIOS && <button className="btn btn-sm install-banner-btn" onClick={install}>Instal</button>}
