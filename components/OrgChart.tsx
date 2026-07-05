@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, pointerWithin, useSensor, useSensors, useDraggable, useDroppable } from "@dnd-kit/core";
 import { Client, Contact } from "@/types";
 import { DEFAULT_ORG_LEVELS } from "@/lib/utils";
 import { toast } from "./ui/Toast";
@@ -13,10 +12,6 @@ interface Props {
   onSaveContact: (c: Contact) => Promise<void>;
   onOpenContact: (contact: Contact) => void;
 }
-
-const CHIP_PREFIX = "chip:";
-const LEVEL_PREFIX = "level:";
-const UNASSIGNED = "__unassigned__";
 
 const NODE_W = 170;
 const NODE_H = 50;
@@ -48,8 +43,8 @@ function wouldCreateCycle(contacts: Contact[], childId: string, newParentId: str
 // while a node whose children have their own subordinates spreads them out
 // as a centered horizontal row (since those branches need the extra width
 // for their own descendants anyway). Only contacts already assigned to one
-// of `levels` participate — unassigned contacts render separately in the
-// "belum dipetakan" tray so they never distort the tree's coordinate space.
+// of `levels` participate — unassigned contacts don't show in the diagram
+// at all (they're edited via the list above it instead).
 function layoutTree(contacts: Contact[], levels: string[]) {
   const assigned = contacts.filter(c => levels.includes(c.org_level || ""));
   const assignedIds = new Set(assigned.map(c => c.id));
@@ -181,22 +176,13 @@ function depthOf(contact: Contact, byId: Map<string, Contact>): number {
   return d;
 }
 
-function TreeNode({ contact, x, y, isViewer, onOpenContact }: {
-  contact: Contact; x: number; y: number; isViewer?: boolean; onOpenContact: (c: Contact) => void;
+function TreeNode({ contact, x, y, onOpenContact }: {
+  contact: Contact; x: number; y: number; onOpenContact: (c: Contact) => void;
 }) {
-  const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({ id: contact.id, disabled: isViewer });
-  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `${CHIP_PREFIX}${contact.id}` });
-
-  const dragStyle: React.CSSProperties = transform
-    ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1, zIndex: 5 }
-    : {};
-
   return (
     <div
-      ref={node => { setDragRef(node); setDropRef(node); }}
-      {...(!isViewer ? { ...listeners, ...attributes } : {})}
-      style={{ position: "absolute", left: x, top: y, width: NODE_W, height: NODE_H, ...dragStyle }}
-      className={`orgchart-chip${isOver ? " orgchart-chip-over" : ""}`}
+      style={{ position: "absolute", left: x, top: y, width: NODE_W, height: NODE_H }}
+      className="orgchart-chip"
       onClick={() => onOpenContact(contact)}
     >
       <div className="orgchart-chip-name">{contact.name || "(tanpa nama)"}</div>
@@ -205,54 +191,45 @@ function TreeNode({ contact, x, y, isViewer, onOpenContact }: {
   );
 }
 
-function PoolChip({ contact, isViewer, levels, onOpenContact, onAssignLevel }: {
-  contact: Contact; isViewer?: boolean; levels: string[]; onOpenContact: (c: Contact) => void; onAssignLevel: (c: Contact, level: string) => void;
+// The one guaranteed-to-work way to build the structure: a plain table, one
+// row per contact, two dropdowns (level + who they report to). No dragging
+// anywhere — this is the primary editor; the diagram below it is just a
+// live-updating picture of whatever this table says.
+function StructureTable({ contacts, levels, isViewer, byId, onOpenContact, onSaveContact, onSetReportsTo }: {
+  contacts: Contact[]; levels: string[]; isViewer?: boolean; byId: Map<string, Contact>;
+  onOpenContact: (c: Contact) => void; onSaveContact: (c: Contact) => Promise<void>; onSetReportsTo: (c: Contact, id: string | null) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: contact.id, disabled: isViewer });
-  const style: React.CSSProperties = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
+  const sorted = contacts
+    .slice()
+    .sort((a, b) => (levels.indexOf(a.org_level || "") - levels.indexOf(b.org_level || "")) || depthOf(a, byId) - depthOf(b, byId));
+
   return (
-    <div ref={setNodeRef} {...(!isViewer ? { ...listeners, ...attributes } : {})} style={style} className="orgchart-pool-chip">
-      <div onClick={() => onOpenContact(contact)}>
-        <div className="orgchart-pool-chip-name">{contact.name || "(tanpa nama)"}</div>
-        {contact.title && <div className="orgchart-pool-chip-title">{contact.title}</div>}
-      </div>
-      {!isViewer && (
-        <select
-          className="orgchart-pool-chip-select"
-          value=""
-          onPointerDown={e => e.stopPropagation()}
-          onClick={e => e.stopPropagation()}
-          onChange={e => { if (e.target.value) onAssignLevel(contact, e.target.value); }}
-        >
-          <option value="">↳ Pindahkan ke level…</option>
-          {levels.map(l => <option key={l} value={l}>{l}</option>)}
-        </select>
-      )}
+    <div className="orgchart-table">
+      {sorted.length === 0 ? (
+        <div className="vt-empty">Belum ada kontak untuk dipetakan.</div>
+      ) : sorted.map(ct => (
+        <div key={ct.id} className="orgchart-table-row" style={{ paddingLeft: 12 + depthOf(ct, byId) * 16 }}>
+          <div className="orgchart-table-name" onClick={() => onOpenContact(ct)}>
+            <div className="orgchart-chip-name-plain">{ct.name || "(tanpa nama)"}</div>
+            {ct.title && <div className="orgchart-chip-title-plain">{ct.title}</div>}
+          </div>
+          {!isViewer && (
+            <div className="orgchart-table-controls">
+              <select className="select-sm" value={levels.includes(ct.org_level || "") ? ct.org_level : ""}
+                onChange={e => onSaveContact({ ...ct, org_level: e.target.value })}>
+                <option value="">Belum dipetakan</option>
+                {levels.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+              <select className="select-sm" value={ct.reports_to_id || ""}
+                onChange={e => onSetReportsTo(ct, e.target.value || null)}>
+                <option value="">Tidak lapor ke siapapun</option>
+                {contacts.filter(c => c.id !== ct.id).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
-  );
-}
-
-function PoolDropZone({ children }: { children: React.ReactNode }) {
-  const { setNodeRef, isOver } = useDroppable({ id: `${LEVEL_PREFIX}${UNASSIGNED}` });
-  return <div ref={setNodeRef} className={`orgchart-pool${isOver ? " orgchart-pool-over" : ""}`}>{children}</div>;
-}
-
-function LevelTag({ name, isViewer, onRename, onRemove, onMoveUp, onMoveDown, disableUp, disableDown }: {
-  name: string; isViewer?: boolean; onRename: () => void; onRemove: () => void; onMoveUp: () => void; onMoveDown: () => void; disableUp: boolean; disableDown: boolean;
-}) {
-  const { setNodeRef, isOver } = useDroppable({ id: `${LEVEL_PREFIX}${name}` });
-  return (
-    <span ref={setNodeRef} className={`orgchart-level-tag${isOver ? " orgchart-level-tag-over" : ""}`}>
-      {name}
-      {!isViewer && (
-        <>
-          <button onClick={onMoveUp} disabled={disableUp} title="Naikkan level">↑</button>
-          <button onClick={onMoveDown} disabled={disableDown} title="Turunkan level">↓</button>
-          <button onClick={onRename} title="Ganti nama level">✏</button>
-          <button onClick={onRemove} title="Hapus level">×</button>
-        </>
-      )}
-    </span>
   );
 }
 
@@ -261,14 +238,6 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
 
   const [modalOpen, setModalOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 640px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -280,17 +249,6 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
   const byId = useMemo(() => new Map(contacts.map(c => [c.id, c])), [contacts]);
   const layout = useMemo(() => layoutTree(contacts, levels), [contacts, levels]);
   const connectorPaths = useMemo(() => buildConnectors(layout.childrenMap, layout.listMode, layout.positions), [layout]);
-  const unassigned = contacts.filter(c => !levels.includes(c.org_level || "")).sort((a, b) => (a.org_order || 0) - (b.org_order || 0));
-
-  // Explicit, always-works alternative to drag-and-drop for assigning a level —
-  // dragging a small chip precisely onto a small toolbar tag is fragile (easy to
-  // trigger native text selection instead of a drag), so this select-based path
-  // guarantees the feature is usable even when a drag gesture doesn't register.
-  async function assignLevel(contact: Contact, levelName: string) {
-    const siblingOrders = contacts.filter(c => c.org_level === levelName).map(c => c.org_order || 0);
-    const newOrder = siblingOrders.length ? Math.max(...siblingOrders) + 1 : 0;
-    await onSaveContact({ ...contact, org_level: levelName, org_order: newOrder, reports_to_id: null });
-  }
 
   async function addLevel() {
     const name = prompt("Nama level baru:");
@@ -335,70 +293,27 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
     await onSaveContact({ ...contact, reports_to_id: newParentId });
   }
 
-  // --- Desktop drag & drop ---
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
-  const activeContact = contacts.find(c => c.id === activeId) || null;
-
-  function handleDragStart(e: DragStartEvent) {
-    setActiveId(String(e.active.id));
-  }
-
-  async function handleDragEnd(e: DragEndEvent) {
-    setActiveId(null);
-    const { active, over } = e;
-    if (!over) return;
-    const draggedId = String(active.id);
-    const overId = String(over.id);
-    const dragged = contacts.find(c => c.id === draggedId);
-    if (!dragged) return;
-
-    if (overId.startsWith(CHIP_PREFIX)) {
-      const targetId = overId.slice(CHIP_PREFIX.length);
-      if (targetId === draggedId) return;
-      const target = contacts.find(c => c.id === targetId);
-      if (!target) return;
-      if (wouldCreateCycle(contacts, draggedId, targetId)) {
-        toast("Tidak bisa: akan membentuk lingkaran struktur lapor.", { type: "error" });
-        return;
-      }
-      const targetLevelIdx = levels.indexOf(target.org_level || "");
-      const newLevel = targetLevelIdx >= 0 && targetLevelIdx + 1 < levels.length ? levels[targetLevelIdx + 1] : (target.org_level || levels[levels.length - 1] || "");
-      const siblingOrders = contacts.filter(c => c.org_level === newLevel).map(c => c.org_order || 0);
-      const newOrder = siblingOrders.length ? Math.max(...siblingOrders) + 1 : 0;
-      await onSaveContact({ ...dragged, org_level: newLevel, org_order: newOrder, reports_to_id: targetId });
-      return;
-    }
-
-    if (overId.startsWith(LEVEL_PREFIX)) {
-      const levelName = overId.slice(LEVEL_PREFIX.length);
-      if (levelName === UNASSIGNED) {
-        await onSaveContact({ ...dragged, org_level: "", reports_to_id: null });
-        return;
-      }
-      const siblingOrders = contacts.filter(c => c.org_level === levelName).map(c => c.org_order || 0);
-      const newOrder = siblingOrders.length ? Math.max(...siblingOrders) + 1 : 0;
-      await onSaveContact({ ...dragged, org_level: levelName, org_order: newOrder, reports_to_id: null });
-    }
-  }
-
   const levelToolbar = (
     <div className="orgchart-levels-toolbar">
       {levels.map((lvl, i) => (
-        <LevelTag key={lvl} name={lvl} isViewer={isViewer}
-          onMoveUp={() => moveLevel(lvl, -1)} onMoveDown={() => moveLevel(lvl, 1)}
-          onRename={() => renameLevel(lvl)} onRemove={() => removeLevel(lvl)}
-          disableUp={i === 0} disableDown={i === levels.length - 1} />
+        <span key={lvl} className="orgchart-level-tag">
+          {lvl}
+          {!isViewer && (
+            <>
+              <button onClick={() => moveLevel(lvl, -1)} disabled={i === 0} title="Naikkan level">↑</button>
+              <button onClick={() => moveLevel(lvl, 1)} disabled={i === levels.length - 1} title="Turunkan level">↓</button>
+              <button onClick={() => renameLevel(lvl)} title="Ganti nama level">✏</button>
+              <button onClick={() => removeLevel(lvl)} title="Hapus level">×</button>
+            </>
+          )}
+        </span>
       ))}
       {!isViewer && <button className="btn btn-ghost btn-sm" onClick={addLevel}>+ Tambah Level</button>}
-      <span className="orgchart-toolbar-hint">seret kontak ke sini untuk memetakan levelnya</span>
-      {!isMobile && (
-        <span className="orgchart-zoom-controls">
-          <button onClick={() => setZoom(z => Math.max(0.5, +(z - 0.1).toFixed(2)))} title="Perkecil">−</button>
-          <span>{Math.round(zoom * 100)}%</span>
-          <button onClick={() => setZoom(z => Math.min(1.5, +(z + 0.1).toFixed(2)))} title="Perbesar">+</button>
-        </span>
-      )}
+      <span className="orgchart-zoom-controls">
+        <button onClick={() => setZoom(z => Math.max(0.5, +(z - 0.1).toFixed(2)))} title="Perkecil">−</button>
+        <span>{Math.round(zoom * 100)}%</span>
+        <button onClick={() => setZoom(z => Math.min(1.5, +(z + 0.1).toFixed(2)))} title="Perbesar">+</button>
+      </span>
     </div>
   );
 
@@ -413,82 +328,35 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
               <h3>🏢 Struktur Organisasi — {client.name}</h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setModalOpen(false)}>✕ Tutup</button>
             </div>
-            <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-              {levelToolbar}
-              <div className="orgchart-modal-body">
-                {isMobile ? (
-                  <div className="orgchart-mobile-list">
-                    {contacts.length === 0 ? (
-                      <div className="vt-empty">Belum ada kontak untuk dipetakan.</div>
-                    ) : contacts
-                      .slice()
-                      .sort((a, b) => levels.indexOf(a.org_level || "") - levels.indexOf(b.org_level || ""))
-                      .map(ct => (
-                        <div key={ct.id} className="orgchart-mobile-row" style={{ marginLeft: depthOf(ct, byId) * 16 }}>
-                          <div onClick={() => onOpenContact(ct)}>
-                            <div className="orgchart-mobile-name">{ct.name || "(tanpa nama)"}</div>
-                            {ct.title && <div className="orgchart-mobile-title">{ct.title}</div>}
-                          </div>
-                          {!isViewer && (
-                            <>
-                              <select className="select-sm" value={levels.includes(ct.org_level || "") ? ct.org_level : ""}
-                                onChange={e => onSaveContact({ ...ct, org_level: e.target.value })}>
-                                <option value="">Belum dipetakan</option>
-                                {levels.map(l => <option key={l} value={l}>{l}</option>)}
-                              </select>
-                              <select className="select-sm" value={ct.reports_to_id || ""}
-                                onChange={e => setReportsTo(ct, e.target.value || null)}>
-                                <option value="">Tidak lapor ke siapapun</option>
-                                {contacts.filter(c => c.id !== ct.id).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                              </select>
-                            </>
-                          )}
-                        </div>
-                      ))}
-                  </div>
+            {levelToolbar}
+            <div className="orgchart-modal-body">
+              <div className="orgchart-table-section">
+                <div className="orgchart-table-title">1. Atur di sini — pilih level &amp; atasan tiap kontak</div>
+                <StructureTable contacts={contacts} levels={levels} isViewer={isViewer} byId={byId}
+                  onOpenContact={onOpenContact} onSaveContact={onSaveContact} onSetReportsTo={setReportsTo} />
+              </div>
+              <div className="orgchart-diagram-section">
+                <div className="orgchart-table-title">2. Hasilnya (otomatis, tidak perlu diapa-apakan)</div>
+                {layout.positions.size === 0 ? (
+                  <div className="orgchart-empty-hint">📊 Diagram akan muncul di sini setelah minimal satu kontak diberi level di tabel atas.</div>
                 ) : (
-                  <>
-                    <div className="orgchart-scroll-area">
-                      {layout.positions.size === 0 ? (
-                        <div className="orgchart-empty-hint">
-                          📥 Belum ada kontak yang dipetakan ke level manapun.<br />
-                          Seret kontak dari <strong>Belum Dipetakan</strong> di bawah ke salah satu chip level (KOMISARIS, DIREKSI, dst.) di toolbar atas, atau pakai dropdown <strong>&quot;↳ Pindahkan ke level…&quot;</strong> di tiap kartu kontak kalau drag terasa sulit.
-                        </div>
-                      ) : (
-                        <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
-                          <div className="orgchart-canvas" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
-                            <svg className="orgchart-svg" width={layout.width} height={layout.height}>
-                              {connectorPaths.map(p => <path key={p.key} d={p.d} className="orgchart-line" />)}
-                            </svg>
-                            {contacts.map(ct => {
-                              const pos = layout.positions.get(ct.id);
-                              if (!pos) return null;
-                              return <TreeNode key={ct.id} contact={ct} x={pos.x} y={pos.y} isViewer={isViewer} onOpenContact={onOpenContact} />;
-                            })}
-                          </div>
-                        </div>
-                      )}
+                  <div className="orgchart-scroll-area">
+                    <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
+                      <div className="orgchart-canvas" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
+                        <svg className="orgchart-svg" width={layout.width} height={layout.height}>
+                          {connectorPaths.map(p => <path key={p.key} d={p.d} className="orgchart-line" />)}
+                        </svg>
+                        {contacts.map(ct => {
+                          const pos = layout.positions.get(ct.id);
+                          if (!pos) return null;
+                          return <TreeNode key={ct.id} contact={ct} x={pos.x} y={pos.y} onOpenContact={onOpenContact} />;
+                        })}
+                      </div>
                     </div>
-                    <div className="orgchart-pool-section">
-                      <div className="orgchart-pool-title">Belum Dipetakan <span className="orgchart-pool-hint">— seret ke atas untuk memetakan</span></div>
-                      <PoolDropZone>
-                        {unassigned.length === 0
-                          ? <div className="orgchart-pool-empty">Semua kontak sudah dipetakan.</div>
-                          : unassigned.map(ct => <PoolChip key={ct.id} contact={ct} isViewer={isViewer} levels={levels} onOpenContact={onOpenContact} onAssignLevel={assignLevel} />)}
-                      </PoolDropZone>
-                    </div>
-                  </>
+                  </div>
                 )}
               </div>
-              <DragOverlay>
-                {activeContact ? (
-                  <div className="orgchart-chip orgchart-chip-overlay" style={{ width: NODE_W, height: NODE_H }}>
-                    <div className="orgchart-chip-name">{activeContact.name || "(tanpa nama)"}</div>
-                    {activeContact.title && <div className="orgchart-chip-title">{activeContact.title}</div>}
-                  </div>
-                ) : null}
-              </DragOverlay>
-            </DndContext>
+            </div>
           </div>
         </div>
       )}
