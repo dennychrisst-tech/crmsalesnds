@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Client, Contact } from "@/types";
 import { DEFAULT_ORG_LEVELS } from "@/lib/utils";
 import { toast } from "./ui/Toast";
@@ -238,6 +238,10 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
 
   const [modalOpen, setModalOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
+  // Hides the editor table so the diagram gets the whole modal — useful once
+  // there are enough people that the tree needs real room to breathe.
+  const [tableCollapsed, setTableCollapsed] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -249,6 +253,14 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
   const byId = useMemo(() => new Map(contacts.map(c => [c.id, c])), [contacts]);
   const layout = useMemo(() => layoutTree(contacts, levels), [contacts, levels]);
   const connectorPaths = useMemo(() => buildConnectors(layout.childrenMap, layout.listMode, layout.positions), [layout]);
+
+  function fitToScreen() {
+    const area = scrollAreaRef.current;
+    if (!area) return;
+    const pad = 56; // leaves breathing room instead of an exact edge-to-edge fit
+    const fit = Math.min((area.clientWidth - pad) / layout.width, (area.clientHeight - pad) / layout.height, 1);
+    setZoom(Math.max(0.2, +fit.toFixed(2)));
+  }
 
   async function addLevel() {
     const name = prompt("Nama level baru:");
@@ -310,9 +322,10 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
       ))}
       {!isViewer && <button className="btn btn-ghost btn-sm" onClick={addLevel}>+ Tambah Level</button>}
       <span className="orgchart-zoom-controls">
-        <button onClick={() => setZoom(z => Math.max(0.5, +(z - 0.1).toFixed(2)))} title="Perkecil">−</button>
+        <button onClick={() => setZoom(z => Math.max(0.2, +(z - 0.1).toFixed(2)))} title="Perkecil">−</button>
         <span>{Math.round(zoom * 100)}%</span>
         <button onClick={() => setZoom(z => Math.min(1.5, +(z + 0.1).toFixed(2)))} title="Perbesar">+</button>
+        <button className="orgchart-fit-btn" onClick={fitToScreen} title="Sesuaikan seluruh struktur ke layar">⤢ Fit</button>
       </span>
     </div>
   );
@@ -330,17 +343,24 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
             </div>
             {levelToolbar}
             <div className="orgchart-modal-body">
-              <div className="orgchart-table-section">
-                <div className="orgchart-table-title">1. Atur di sini — pilih level &amp; atasan tiap kontak</div>
-                <StructureTable contacts={contacts} levels={levels} isViewer={isViewer} byId={byId}
-                  onOpenContact={onOpenContact} onSaveContact={onSaveContact} onSetReportsTo={setReportsTo} />
-              </div>
+              {!tableCollapsed && (
+                <div className="orgchart-table-section">
+                  <div className="orgchart-table-title">1. Atur di sini — pilih level &amp; atasan tiap kontak</div>
+                  <StructureTable contacts={contacts} levels={levels} isViewer={isViewer} byId={byId}
+                    onOpenContact={onOpenContact} onSaveContact={onSaveContact} onSetReportsTo={setReportsTo} />
+                </div>
+              )}
               <div className="orgchart-diagram-section">
-                <div className="orgchart-table-title">2. Hasilnya (otomatis, tidak perlu diapa-apakan)</div>
+                <div className="orgchart-table-title">
+                  2. Hasilnya (otomatis, tidak perlu diapa-apakan)
+                  <button className="btn btn-ghost btn-sm orgchart-expand-btn" onClick={() => setTableCollapsed(v => !v)}>
+                    {tableCollapsed ? "▾ Tampilkan tabel" : "⛶ Perbesar diagram"}
+                  </button>
+                </div>
                 {layout.positions.size === 0 ? (
                   <div className="orgchart-empty-hint">📊 Diagram akan muncul di sini setelah minimal satu kontak diberi level di tabel atas.</div>
                 ) : (
-                  <div className="orgchart-scroll-area">
+                  <div className="orgchart-scroll-area" ref={scrollAreaRef}>
                     <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
                       <div className="orgchart-canvas" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
                         <svg className="orgchart-svg" width={layout.width} height={layout.height}>
