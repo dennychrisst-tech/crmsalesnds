@@ -18,35 +18,20 @@ const CHIP_PREFIX = "chip:";
 const LEVEL_PREFIX = "level:";
 const UNASSIGNED = "__unassigned__";
 
-const NODE_W = 200;
-const NODE_H = 70;
-const NODE_GAP = 32;
-const ROW_H = 160;
-const LABEL_H = 34;
-const BUS_GAP = 28; // vertical drop from a parent's bottom edge down to the horizontal "bus" line its children branch off of
+const NODE_W = 190;
+const NODE_H = 62;
+const NODE_GAP = 30;
+const ROW_H = 130;
+const LABEL_H = 22;
+const BUS_GAP = 26; // vertical drop from a parent's bottom edge down to the horizontal "bus" line its children branch off of
 
-// Soft tint per tier, top (Komisaris) to bottom — cycles if there are more
-// levels than colors. Reuses the same soft-bg/saturated-fg pairing already
-// used for status pills elsewhere in the app (e.g. CLIENT_STATUS_COLOR).
-const LEVEL_PALETTE = [
-  { bg: "#EEF2FF", fg: "#4338CA", accent: "#6366F1" },
-  { bg: "#ECFEFF", fg: "#0E7490", accent: "#06B6D4" },
-  { bg: "#F0FDF4", fg: "#15803D", accent: "#22C55E" },
-  { bg: "#FFFBEB", fg: "#B45309", accent: "#F59E0B" },
-  { bg: "#FDF2F8", fg: "#9D174D", accent: "#EC4899" },
-  { bg: "#F5F3FF", fg: "#6D28D9", accent: "#8B5CF6" },
-];
-const UNASSIGNED_COLOR = { bg: "transparent", fg: "var(--ink-soft)", accent: "#94A3B8" };
+// Solid tier color, top (Komisaris) to bottom — cycles if there are more
+// levels than colors. Boxes use the solid color as fill (white text), like a
+// classic printed org-chart poster rather than a pastel "card" look.
+const LEVEL_COLORS = ["#1E3A8A", "#B45309", "#0F766E", "#B91C1C", "#6D28D9", "#0369A1"];
 
-function levelColor(levelIdx: number): { bg: string; fg: string; accent: string } {
-  return levelIdx < 0 ? UNASSIGNED_COLOR : LEVEL_PALETTE[levelIdx % LEVEL_PALETTE.length];
-}
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+function levelColor(levelIdx: number): string {
+  return levelIdx < 0 ? "#64748B" : LEVEL_COLORS[levelIdx % LEVEL_COLORS.length];
 }
 
 // True if assigning child.reports_to_id = newParentId would create a cycle —
@@ -67,15 +52,18 @@ function wouldCreateCycle(contacts: Contact[], childId: string, newParentId: str
 
 // Classic "children centered under parent" tree layout, computed as a forest
 // (multiple roots allowed — e.g. two Komisaris with no shared superior).
-// Row (y) comes straight from org_level's index so it always lines up with
-// the level bands; only x is computed by the algorithm. A contact whose
-// reports_to_id is missing/dangling becomes a root of its own subtree.
+// Only contacts already assigned to one of `levels` participate — contacts
+// with no level render separately in the "belum dipetakan" tray below, so
+// they never eat into the tree's x-coordinate space or drag its width out
+// for no reason. Row (y) comes straight from org_level's index; only x is
+// computed by the algorithm.
 function layoutTree(contacts: Contact[], levels: string[]) {
-  const byId = new Map(contacts.map(c => [c.id, c]));
+  const assigned = contacts.filter(c => levels.includes(c.org_level || ""));
+  const assignedIds = new Set(assigned.map(c => c.id));
   const childrenMap = new Map<string, Contact[]>();
   const roots: Contact[] = [];
-  for (const c of contacts) {
-    const parentId = c.reports_to_id && byId.has(c.reports_to_id) ? c.reports_to_id : null;
+  for (const c of assigned) {
+    const parentId = c.reports_to_id && assignedIds.has(c.reports_to_id) ? c.reports_to_id : null;
     if (parentId) {
       if (!childrenMap.has(parentId)) childrenMap.set(parentId, []);
       childrenMap.get(parentId)!.push(c);
@@ -102,8 +90,7 @@ function layoutTree(contacts: Contact[], levels: string[]) {
       const xs = kids.map(place);
       x = (Math.min(...xs) + Math.max(...xs)) / 2;
     }
-    const rowIdx = levels.includes(node.org_level || "") ? levels.indexOf(node.org_level || "") : levels.length;
-    positions.set(node.id, { x, y: rowIdx * ROW_H });
+    positions.set(node.id, { x, y: levels.indexOf(node.org_level || "") * ROW_H });
     visiting.delete(node.id);
     return x;
   }
@@ -114,10 +101,9 @@ function layoutTree(contacts: Contact[], levels: string[]) {
 
 // Right-angle "elbow" connectors (trunk down from parent → horizontal bus →
 // drop into each child) — the standard look of org-chart / family-tree
-// diagrams, as opposed to one bezier curve per child.
+// diagrams, as opposed to one curve per child.
 function buildElbowPaths(childrenMap: Map<string, Contact[]>, positions: Map<string, { x: number; y: number }>) {
   const paths: { key: string; d: string }[] = [];
-  const joints: { key: string; x: number; y: number }[] = [];
   for (const [parentId, kids] of childrenMap.entries()) {
     const parentPos = positions.get(parentId);
     if (!parentPos) continue;
@@ -128,7 +114,6 @@ function buildElbowPaths(childrenMap: Map<string, Contact[]>, positions: Map<str
     const trunkY1 = parentPos.y + LABEL_H + NODE_H;
     const busY = trunkY1 + BUS_GAP;
     paths.push({ key: `${parentId}-trunk`, d: `M ${trunkX} ${trunkY1} L ${trunkX} ${busY}` });
-    joints.push({ key: `${parentId}-joint`, x: trunkX, y: trunkY1 });
 
     const childXs = validKids.map(k => positions.get(k.id)!.x + NODE_W / 2);
     const minX = Math.min(...childXs, trunkX);
@@ -139,10 +124,9 @@ function buildElbowPaths(childrenMap: Map<string, Contact[]>, positions: Map<str
       const kPos = positions.get(k.id)!;
       const kx = kPos.x + NODE_W / 2, ky = kPos.y + LABEL_H;
       paths.push({ key: `${parentId}-${k.id}-drop`, d: `M ${kx} ${busY} L ${kx} ${ky}` });
-      joints.push({ key: `${k.id}-joint`, x: kx, y: ky });
     }
   }
-  return { paths, joints };
+  return paths;
 }
 
 function depthOf(contact: Contact, byId: Map<string, Contact>): number {
@@ -159,7 +143,7 @@ function depthOf(contact: Contact, byId: Map<string, Contact>): number {
 }
 
 function TreeNode({ contact, x, y, color, isViewer, onOpenContact }: {
-  contact: Contact; x: number; y: number; color: { bg: string; fg: string; accent: string }; isViewer?: boolean; onOpenContact: (c: Contact) => void;
+  contact: Contact; x: number; y: number; color: string; isViewer?: boolean; onOpenContact: (c: Contact) => void;
 }) {
   const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({ id: contact.id, disabled: isViewer });
   const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `${CHIP_PREFIX}${contact.id}` });
@@ -172,30 +156,39 @@ function TreeNode({ contact, x, y, color, isViewer, onOpenContact }: {
     <div
       ref={node => { setDragRef(node); setDropRef(node); }}
       {...(!isViewer ? { ...listeners, ...attributes } : {})}
-      style={{ position: "absolute", left: x, top: y + LABEL_H, width: NODE_W, borderTopColor: color.accent, ...dragStyle }}
+      style={{ position: "absolute", left: x, top: y + LABEL_H, width: NODE_W, background: color, ...dragStyle }}
       className={`orgchart-chip${isOver ? " orgchart-chip-over" : ""}`}
       onClick={() => onOpenContact(contact)}
     >
-      <div className="orgchart-chip-avatar" style={{ background: color.accent }}>{initials(contact.name || "?")}</div>
-      <div className="orgchart-chip-body">
-        <div className="orgchart-chip-name">{contact.name || "(tanpa nama)"}</div>
-        {contact.title && <div className="orgchart-chip-title">{contact.title}</div>}
-      </div>
+      <div className="orgchart-chip-name">{contact.name || "(tanpa nama)"}</div>
+      {contact.title && <div className="orgchart-chip-title">{contact.title}</div>}
     </div>
   );
 }
 
-function RowBand({ id, label, top, width, color }: { id: string; label: string; top: number; width: number; color: { bg: string; fg: string; accent: string } }) {
+function RowBand({ id, label, top, width, color }: { id: string; label: string; top: number; width: number; color: string }) {
   const { setNodeRef, isOver } = useDroppable({ id: `${LEVEL_PREFIX}${id}` });
   return (
-    <div
-      ref={setNodeRef}
-      className={`orgchart-row-band${isOver ? " orgchart-row-band-over" : ""}${id === UNASSIGNED ? " orgchart-row-band-unassigned" : ""}`}
-      style={{ position: "absolute", left: 0, top, width, height: ROW_H, background: id === UNASSIGNED ? undefined : color.bg }}
-    >
-      <div className="orgchart-row-label" style={id === UNASSIGNED ? undefined : { color: color.fg }}>{label}</div>
+    <div ref={setNodeRef} className={`orgchart-row-band${isOver ? " orgchart-row-band-over" : ""}`} style={{ position: "absolute", left: 0, top, width, height: ROW_H }}>
+      <div className="orgchart-row-label" style={{ borderLeftColor: color }}>{label}</div>
     </div>
   );
+}
+
+function PoolChip({ contact, isViewer, onOpenContact }: { contact: Contact; isViewer?: boolean; onOpenContact: (c: Contact) => void }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: contact.id, disabled: isViewer });
+  const style: React.CSSProperties = transform ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, opacity: isDragging ? 0.4 : 1 } : {};
+  return (
+    <div ref={setNodeRef} {...(!isViewer ? { ...listeners, ...attributes } : {})} style={style} className="orgchart-pool-chip" onClick={() => onOpenContact(contact)}>
+      <div className="orgchart-pool-chip-name">{contact.name || "(tanpa nama)"}</div>
+      {contact.title && <div className="orgchart-pool-chip-title">{contact.title}</div>}
+    </div>
+  );
+}
+
+function PoolDropZone({ children }: { children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: `${LEVEL_PREFIX}${UNASSIGNED}` });
+  return <div ref={setNodeRef} className={`orgchart-pool${isOver ? " orgchart-pool-over" : ""}`}>{children}</div>;
 }
 
 export default function OrgChart({ client, contacts, isViewer, onSaveClient, onSaveContact, onOpenContact }: Props) {
@@ -221,11 +214,9 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
 
   const byId = useMemo(() => new Map(contacts.map(c => [c.id, c])), [contacts]);
   const layout = useMemo(() => layoutTree(contacts, levels), [contacts, levels]);
-  const { paths: connectorPaths, joints: connectorJoints } = useMemo(
-    () => buildElbowPaths(layout.childrenMap, layout.positions),
-    [layout]
-  );
-  const totalHeight = (levels.length + 1) * ROW_H; // +1 row for the unassigned pool
+  const connectorPaths = useMemo(() => buildElbowPaths(layout.childrenMap, layout.positions), [layout]);
+  const totalHeight = levels.length * ROW_H;
+  const unassigned = contacts.filter(c => !levels.includes(c.org_level || "")).sort((a, b) => (a.org_order || 0) - (b.org_order || 0));
 
   async function addLevel() {
     const name = prompt("Nama level baru:");
@@ -317,13 +308,10 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
     }
   }
 
-  const rows = [...levels, "Belum Dipetakan"];
-  const rowIds = [...levels, UNASSIGNED];
-
   const levelToolbar = (
     <div className="orgchart-levels-toolbar">
       {levels.map((lvl, i) => (
-        <span key={lvl} className="orgchart-level-tag" style={{ background: levelColor(i).bg, color: levelColor(i).fg, borderColor: "transparent" }}>
+        <span key={lvl} className="orgchart-level-tag" style={{ borderLeftColor: levelColor(i) }}>
           {lvl}
           {!isViewer && (
             <>
@@ -391,29 +379,35 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
                 </div>
               ) : (
                 <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                  <div style={{ width: layout.width * zoom, height: totalHeight * zoom }}>
-                    <div className="orgchart-canvas" style={{ width: layout.width, height: totalHeight, transform: `scale(${zoom})` }}>
-                      {rows.map((label, i) => <RowBand key={rowIds[i]} id={rowIds[i]} label={label} top={i * ROW_H} width={layout.width} color={levelColor(i)} />)}
-                      <svg className="orgchart-svg" width={layout.width} height={totalHeight}>
-                        {connectorPaths.map(p => <path key={p.key} d={p.d} className="orgchart-line" />)}
-                        {connectorJoints.map(j => <circle key={j.key} cx={j.x} cy={j.y} r={3.5} className="orgchart-joint" />)}
-                      </svg>
-                      {contacts.map(ct => {
-                        const pos = layout.positions.get(ct.id);
-                        if (!pos) return null;
-                        const rowIdx = levels.includes(ct.org_level || "") ? levels.indexOf(ct.org_level || "") : -1;
-                        return <TreeNode key={ct.id} contact={ct} x={pos.x} y={pos.y} color={levelColor(rowIdx)} isViewer={isViewer} onOpenContact={onOpenContact} />;
-                      })}
+                  <div className="orgchart-scroll-area">
+                    <div style={{ width: layout.width * zoom, height: totalHeight * zoom }}>
+                      <div className="orgchart-canvas" style={{ width: layout.width, height: totalHeight, transform: `scale(${zoom})` }}>
+                        {levels.map((label, i) => <RowBand key={label} id={label} label={label} top={i * ROW_H} width={layout.width} color={levelColor(i)} />)}
+                        <svg className="orgchart-svg" width={layout.width} height={totalHeight}>
+                          {connectorPaths.map(p => <path key={p.key} d={p.d} className="orgchart-line" />)}
+                        </svg>
+                        {contacts.map(ct => {
+                          const pos = layout.positions.get(ct.id);
+                          if (!pos) return null;
+                          const rowIdx = levels.indexOf(ct.org_level || "");
+                          return <TreeNode key={ct.id} contact={ct} x={pos.x} y={pos.y} color={levelColor(rowIdx)} isViewer={isViewer} onOpenContact={onOpenContact} />;
+                        })}
+                      </div>
                     </div>
+                  </div>
+                  <div className="orgchart-pool-section">
+                    <div className="orgchart-pool-title">Belum Dipetakan <span className="orgchart-pool-hint">— seret ke atas untuk memetakan</span></div>
+                    <PoolDropZone>
+                      {unassigned.length === 0
+                        ? <div className="orgchart-pool-empty">Semua kontak sudah dipetakan.</div>
+                        : unassigned.map(ct => <PoolChip key={ct.id} contact={ct} isViewer={isViewer} onOpenContact={onOpenContact} />)}
+                    </PoolDropZone>
                   </div>
                   <DragOverlay>
                     {activeContact ? (
-                      <div className="orgchart-chip orgchart-chip-overlay" style={{ width: NODE_W }}>
-                        <div className="orgchart-chip-avatar" style={{ background: "var(--brand)" }}>{initials(activeContact.name || "?")}</div>
-                        <div className="orgchart-chip-body">
-                          <div className="orgchart-chip-name">{activeContact.name || "(tanpa nama)"}</div>
-                          {activeContact.title && <div className="orgchart-chip-title">{activeContact.title}</div>}
-                        </div>
+                      <div className="orgchart-chip orgchart-chip-overlay" style={{ width: NODE_W, background: levels.includes(activeContact.org_level || "") ? levelColor(levels.indexOf(activeContact.org_level || "")) : "#64748B" }}>
+                        <div className="orgchart-chip-name">{activeContact.name || "(tanpa nama)"}</div>
+                        {activeContact.title && <div className="orgchart-chip-title">{activeContact.title}</div>}
                       </div>
                     ) : null}
                   </DragOverlay>
