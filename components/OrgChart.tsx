@@ -18,21 +18,13 @@ const CHIP_PREFIX = "chip:";
 const LEVEL_PREFIX = "level:";
 const UNASSIGNED = "__unassigned__";
 
-const NODE_W = 180;
-const NODE_H = 76;
-const NODE_GAP = 18;
-const ROW_H = 116;
-const LABEL_H = 12;
-const BUS_GAP = 22; // vertical drop from a parent's bottom edge down to the horizontal "bus" line its children branch off of
-
-// Solid tier color, top (Komisaris) to bottom — cycles if there are more
-// levels than colors. Boxes use the solid color as fill (white text), like a
-// classic printed org-chart poster rather than a pastel "card" look.
-const LEVEL_COLORS = ["#0E7490", "#CA8A04", "#155E75", "#EA580C", "#16A34A", "#7C3AED"];
-
-function levelColor(levelIdx: number): string {
-  return levelIdx < 0 ? "#64748B" : LEVEL_COLORS[levelIdx % LEVEL_COLORS.length];
-}
+const NODE_W = 170;
+const NODE_H = 50;
+const H_GAP = 20;       // horizontal gap between sibling subtrees in row mode
+const ROW_STEP = 90;    // vertical distance from a parent's row to its children's row (row mode)
+const BUS_GAP = 20;     // vertical drop from a parent's bottom edge to the row-mode "bus" line
+const LIST_GAP = 30;    // horizontal gap between a node and its compact child list
+const LIST_ROW_GAP = 8; // vertical gap between stacked items in a compact list
 
 // True if assigning child.reports_to_id = newParentId would create a cycle —
 // i.e. newParentId already (directly or transitively) reports to child.
@@ -50,13 +42,14 @@ function wouldCreateCycle(contacts: Contact[], childId: string, newParentId: str
   return false;
 }
 
-// Classic "children centered under parent" tree layout, computed as a forest
-// (multiple roots allowed — e.g. two Komisaris with no shared superior).
-// Only contacts already assigned to one of `levels` participate — contacts
-// with no level render separately in the "belum dipetakan" tray below, so
-// they never eat into the tree's x-coordinate space or drag its width out
-// for no reason. Row (y) comes straight from org_level's index; only x is
-// computed by the algorithm.
+// Hybrid org-chart layout: a node whose children are all leaves (no
+// grandchildren) stacks them as a compact vertical list beside itself —
+// exactly how a "director with plain staff" branch reads in a real chart —
+// while a node whose children have their own subordinates spreads them out
+// as a centered horizontal row (since those branches need the extra width
+// for their own descendants anyway). Only contacts already assigned to one
+// of `levels` participate — unassigned contacts render separately in the
+// "belum dipetakan" tray so they never distort the tree's coordinate space.
 function layoutTree(contacts: Contact[], levels: string[]) {
   const assigned = contacts.filter(c => levels.includes(c.org_level || ""));
   const assignedIds = new Set(assigned.map(c => c.id));
@@ -72,37 +65,72 @@ function layoutTree(contacts: Contact[], levels: string[]) {
     }
   }
   for (const kids of childrenMap.values()) kids.sort((a, b) => (a.org_order || 0) - (b.org_order || 0));
-  roots.sort((a, b) => (a.org_order || 0) - (b.org_order || 0));
+  roots.sort((a, b) => (levels.indexOf(a.org_level || "") - levels.indexOf(b.org_level || "")) || ((a.org_order || 0) - (b.org_order || 0)));
+
+  const isLeaf = (id: string) => !childrenMap.has(id);
+  const listMode = new Set<string>(); // parent ids whose children render as a compact vertical list
+  for (const [parentId, kids] of childrenMap.entries()) {
+    if (kids.every(k => isLeaf(k.id))) listMode.add(parentId);
+  }
 
   const positions = new Map<string, { x: number; y: number }>();
   const visiting = new Set<string>();
   let cursor = 0;
 
-  function place(node: Contact): number {
-    if (visiting.has(node.id)) { const x = cursor; cursor += NODE_W + NODE_GAP; return x; }
+  // Places `node` and its whole subtree; returns { x, width } — x is this
+  // node's own left edge, width is the total horizontal footprint an
+  // ancestor must reserve for this subtree (wider than NODE_W for a node
+  // that itself renders a compact list, since that list sticks out to the side).
+  function place(node: Contact, y: number): { x: number; width: number } {
+    if (visiting.has(node.id)) { const x = cursor; cursor += NODE_W + H_GAP; return { x, width: NODE_W }; }
     visiting.add(node.id);
     const kids = childrenMap.get(node.id) || [];
-    let x: number;
+
+    let result: { x: number; width: number };
     if (kids.length === 0) {
-      x = cursor;
-      cursor += NODE_W + NODE_GAP;
+      const x = cursor;
+      cursor += NODE_W + H_GAP;
+      positions.set(node.id, { x, y });
+      result = { x, width: NODE_W };
+    } else if (listMode.has(node.id)) {
+      const width = NODE_W + LIST_GAP + NODE_W;
+      const x = cursor;
+      cursor += width + H_GAP;
+      positions.set(node.id, { x, y });
+      const listX = x + NODE_W + LIST_GAP;
+      kids.forEach((k, i) => positions.set(k.id, { x: listX, y: y + i * (NODE_H + LIST_ROW_GAP) }));
+      result = { x, width };
     } else {
-      const xs = kids.map(place);
-      x = (Math.min(...xs) + Math.max(...xs)) / 2;
+      let leftMost = Infinity, rightMost = -Infinity;
+      for (const k of kids) {
+        const { x: kx, width: kw } = place(k, y + ROW_STEP);
+        leftMost = Math.min(leftMost, kx);
+        rightMost = Math.max(rightMost, kx + kw);
+      }
+      const span = Math.max(rightMost - leftMost, NODE_W);
+      const x = leftMost + (rightMost - leftMost) / 2 - NODE_W / 2;
+      positions.set(node.id, { x, y });
+      result = { x, width: span };
     }
-    positions.set(node.id, { x, y: levels.indexOf(node.org_level || "") * ROW_H });
     visiting.delete(node.id);
-    return x;
+    return result;
   }
 
-  for (const r of roots) place(r);
-  return { positions, childrenMap, width: Math.max(cursor - NODE_GAP, NODE_W) };
+  for (const r of roots) place(r, 0);
+
+  let maxX = NODE_W, maxY = NODE_H;
+  for (const pos of positions.values()) {
+    maxX = Math.max(maxX, pos.x + NODE_W);
+    maxY = Math.max(maxY, pos.y + NODE_H);
+  }
+  return { positions, childrenMap, listMode, width: maxX, height: maxY };
 }
 
-// Right-angle "elbow" connectors (trunk down from parent → horizontal bus →
-// drop into each child) — the standard look of org-chart / family-tree
-// diagrams, as opposed to one curve per child.
-function buildElbowPaths(childrenMap: Map<string, Contact[]>, positions: Map<string, { x: number; y: number }>) {
+// Row-mode branches get the classic elbow (trunk down → horizontal bus →
+// drop into each child). List-mode branches get a bracket: a line out of the
+// parent's right edge into a vertical spine, with a short tick into each
+// stacked child.
+function buildConnectors(childrenMap: Map<string, Contact[]>, listMode: Set<string>, positions: Map<string, { x: number; y: number }>) {
   const paths: { key: string; d: string }[] = [];
   for (const [parentId, kids] of childrenMap.entries()) {
     const parentPos = positions.get(parentId);
@@ -110,20 +138,31 @@ function buildElbowPaths(childrenMap: Map<string, Contact[]>, positions: Map<str
     const validKids = kids.filter(k => positions.has(k.id));
     if (!validKids.length) continue;
 
-    const trunkX = parentPos.x + NODE_W / 2;
-    const trunkY1 = parentPos.y + LABEL_H + NODE_H;
-    const busY = trunkY1 + BUS_GAP;
-    paths.push({ key: `${parentId}-trunk`, d: `M ${trunkX} ${trunkY1} L ${trunkX} ${busY}` });
-
-    const childXs = validKids.map(k => positions.get(k.id)!.x + NODE_W / 2);
-    const minX = Math.min(...childXs, trunkX);
-    const maxX = Math.max(...childXs, trunkX);
-    if (minX !== maxX) paths.push({ key: `${parentId}-bus`, d: `M ${minX} ${busY} L ${maxX} ${busY}` });
-
-    for (const k of validKids) {
-      const kPos = positions.get(k.id)!;
-      const kx = kPos.x + NODE_W / 2, ky = kPos.y + LABEL_H;
-      paths.push({ key: `${parentId}-${k.id}-drop`, d: `M ${kx} ${busY} L ${kx} ${ky}` });
+    if (listMode.has(parentId)) {
+      const spineX = parentPos.x + NODE_W + LIST_GAP / 2;
+      const outY = parentPos.y + NODE_H / 2;
+      paths.push({ key: `${parentId}-out`, d: `M ${parentPos.x + NODE_W} ${outY} L ${spineX} ${outY}` });
+      const kYs = validKids.map(k => positions.get(k.id)!.y + NODE_H / 2);
+      const spineTop = Math.min(outY, ...kYs), spineBottom = Math.max(outY, ...kYs);
+      paths.push({ key: `${parentId}-spine`, d: `M ${spineX} ${spineTop} L ${spineX} ${spineBottom}` });
+      for (const k of validKids) {
+        const ky = positions.get(k.id)!.y + NODE_H / 2;
+        const kx = positions.get(k.id)!.x;
+        paths.push({ key: `${parentId}-${k.id}-tick`, d: `M ${spineX} ${ky} L ${kx} ${ky}` });
+      }
+    } else {
+      const trunkX = parentPos.x + NODE_W / 2;
+      const trunkY1 = parentPos.y + NODE_H;
+      const busY = trunkY1 + BUS_GAP;
+      paths.push({ key: `${parentId}-trunk`, d: `M ${trunkX} ${trunkY1} L ${trunkX} ${busY}` });
+      const childXs = validKids.map(k => positions.get(k.id)!.x + NODE_W / 2);
+      const minX = Math.min(...childXs, trunkX), maxX = Math.max(...childXs, trunkX);
+      if (minX !== maxX) paths.push({ key: `${parentId}-bus`, d: `M ${minX} ${busY} L ${maxX} ${busY}` });
+      for (const k of validKids) {
+        const kPos = positions.get(k.id)!;
+        const kx = kPos.x + NODE_W / 2, ky = kPos.y;
+        paths.push({ key: `${parentId}-${k.id}-drop`, d: `M ${kx} ${busY} L ${kx} ${ky}` });
+      }
     }
   }
   return paths;
@@ -142,8 +181,8 @@ function depthOf(contact: Contact, byId: Map<string, Contact>): number {
   return d;
 }
 
-function TreeNode({ contact, x, y, color, isViewer, onOpenContact }: {
-  contact: Contact; x: number; y: number; color: string; isViewer?: boolean; onOpenContact: (c: Contact) => void;
+function TreeNode({ contact, x, y, isViewer, onOpenContact }: {
+  contact: Contact; x: number; y: number; isViewer?: boolean; onOpenContact: (c: Contact) => void;
 }) {
   const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({ id: contact.id, disabled: isViewer });
   const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `${CHIP_PREFIX}${contact.id}` });
@@ -156,21 +195,12 @@ function TreeNode({ contact, x, y, color, isViewer, onOpenContact }: {
     <div
       ref={node => { setDragRef(node); setDropRef(node); }}
       {...(!isViewer ? { ...listeners, ...attributes } : {})}
-      style={{ position: "absolute", left: x, top: y + LABEL_H, width: NODE_W, background: color, ...dragStyle }}
+      style={{ position: "absolute", left: x, top: y, width: NODE_W, height: NODE_H, ...dragStyle }}
       className={`orgchart-chip${isOver ? " orgchart-chip-over" : ""}`}
       onClick={() => onOpenContact(contact)}
     >
       <div className="orgchart-chip-name">{contact.name || "(tanpa nama)"}</div>
       {contact.title && <div className="orgchart-chip-title">{contact.title}</div>}
-    </div>
-  );
-}
-
-function RowBand({ id, label, top, width, color }: { id: string; label: string; top: number; width: number; color: string }) {
-  const { setNodeRef, isOver } = useDroppable({ id: `${LEVEL_PREFIX}${id}` });
-  return (
-    <div ref={setNodeRef} className={`orgchart-row-band${isOver ? " orgchart-row-band-over" : ""}`} style={{ position: "absolute", left: 0, top, width, height: ROW_H }}>
-      <div className="orgchart-row-label" style={{ borderLeftColor: color }}>{label}</div>
     </div>
   );
 }
@@ -189,6 +219,25 @@ function PoolChip({ contact, isViewer, onOpenContact }: { contact: Contact; isVi
 function PoolDropZone({ children }: { children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id: `${LEVEL_PREFIX}${UNASSIGNED}` });
   return <div ref={setNodeRef} className={`orgchart-pool${isOver ? " orgchart-pool-over" : ""}`}>{children}</div>;
+}
+
+function LevelTag({ name, isViewer, onRename, onRemove, onMoveUp, onMoveDown, disableUp, disableDown }: {
+  name: string; isViewer?: boolean; onRename: () => void; onRemove: () => void; onMoveUp: () => void; onMoveDown: () => void; disableUp: boolean; disableDown: boolean;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: `${LEVEL_PREFIX}${name}` });
+  return (
+    <span ref={setNodeRef} className={`orgchart-level-tag${isOver ? " orgchart-level-tag-over" : ""}`}>
+      {name}
+      {!isViewer && (
+        <>
+          <button onClick={onMoveUp} disabled={disableUp} title="Naikkan level">↑</button>
+          <button onClick={onMoveDown} disabled={disableDown} title="Turunkan level">↓</button>
+          <button onClick={onRename} title="Ganti nama level">✏</button>
+          <button onClick={onRemove} title="Hapus level">×</button>
+        </>
+      )}
+    </span>
+  );
 }
 
 export default function OrgChart({ client, contacts, isViewer, onSaveClient, onSaveContact, onOpenContact }: Props) {
@@ -214,8 +263,7 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
 
   const byId = useMemo(() => new Map(contacts.map(c => [c.id, c])), [contacts]);
   const layout = useMemo(() => layoutTree(contacts, levels), [contacts, levels]);
-  const connectorPaths = useMemo(() => buildElbowPaths(layout.childrenMap, layout.positions), [layout]);
-  const totalHeight = levels.length * ROW_H;
+  const connectorPaths = useMemo(() => buildConnectors(layout.childrenMap, layout.listMode, layout.positions), [layout]);
   const unassigned = contacts.filter(c => !levels.includes(c.org_level || "")).sort((a, b) => (a.org_order || 0) - (b.org_order || 0));
 
   async function addLevel() {
@@ -311,19 +359,13 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
   const levelToolbar = (
     <div className="orgchart-levels-toolbar">
       {levels.map((lvl, i) => (
-        <span key={lvl} className="orgchart-level-tag" style={{ borderLeftColor: levelColor(i) }}>
-          {lvl}
-          {!isViewer && (
-            <>
-              <button onClick={() => moveLevel(lvl, -1)} disabled={i === 0} title="Naikkan level">↑</button>
-              <button onClick={() => moveLevel(lvl, 1)} disabled={i === levels.length - 1} title="Turunkan level">↓</button>
-              <button onClick={() => renameLevel(lvl)} title="Ganti nama level">✏</button>
-              <button onClick={() => removeLevel(lvl)} title="Hapus level">×</button>
-            </>
-          )}
-        </span>
+        <LevelTag key={lvl} name={lvl} isViewer={isViewer}
+          onMoveUp={() => moveLevel(lvl, -1)} onMoveDown={() => moveLevel(lvl, 1)}
+          onRename={() => renameLevel(lvl)} onRemove={() => removeLevel(lvl)}
+          disableUp={i === 0} disableDown={i === levels.length - 1} />
       ))}
       {!isViewer && <button className="btn btn-ghost btn-sm" onClick={addLevel}>+ Tambah Level</button>}
+      <span className="orgchart-toolbar-hint">seret kontak ke sini untuk memetakan levelnya</span>
       {!isMobile && (
         <span className="orgchart-zoom-controls">
           <button onClick={() => setZoom(z => Math.max(0.5, +(z - 0.1).toFixed(2)))} title="Perkecil">−</button>
@@ -357,8 +399,8 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
                     .map(ct => (
                       <div key={ct.id} className="orgchart-mobile-row" style={{ marginLeft: depthOf(ct, byId) * 16 }}>
                         <div onClick={() => onOpenContact(ct)}>
-                          <div className="orgchart-chip-name">{ct.name || "(tanpa nama)"}</div>
-                          {ct.title && <div className="orgchart-chip-title">{ct.title}</div>}
+                          <div className="orgchart-mobile-name">{ct.name || "(tanpa nama)"}</div>
+                          {ct.title && <div className="orgchart-mobile-title">{ct.title}</div>}
                         </div>
                         {!isViewer && (
                           <>
@@ -380,17 +422,15 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
               ) : (
                 <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
                   <div className="orgchart-scroll-area">
-                    <div style={{ width: layout.width * zoom, height: totalHeight * zoom }}>
-                      <div className="orgchart-canvas" style={{ width: layout.width, height: totalHeight, transform: `scale(${zoom})` }}>
-                        {levels.map((label, i) => <RowBand key={label} id={label} label={label} top={i * ROW_H} width={layout.width} color={levelColor(i)} />)}
-                        <svg className="orgchart-svg" width={layout.width} height={totalHeight}>
+                    <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
+                      <div className="orgchart-canvas" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
+                        <svg className="orgchart-svg" width={layout.width} height={layout.height}>
                           {connectorPaths.map(p => <path key={p.key} d={p.d} className="orgchart-line" />)}
                         </svg>
                         {contacts.map(ct => {
                           const pos = layout.positions.get(ct.id);
                           if (!pos) return null;
-                          const rowIdx = levels.indexOf(ct.org_level || "");
-                          return <TreeNode key={ct.id} contact={ct} x={pos.x} y={pos.y} color={levelColor(rowIdx)} isViewer={isViewer} onOpenContact={onOpenContact} />;
+                          return <TreeNode key={ct.id} contact={ct} x={pos.x} y={pos.y} isViewer={isViewer} onOpenContact={onOpenContact} />;
                         })}
                       </div>
                     </div>
@@ -405,7 +445,7 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
                   </div>
                   <DragOverlay>
                     {activeContact ? (
-                      <div className="orgchart-chip orgchart-chip-overlay" style={{ width: NODE_W, background: levels.includes(activeContact.org_level || "") ? levelColor(levels.indexOf(activeContact.org_level || "")) : "#64748B" }}>
+                      <div className="orgchart-chip orgchart-chip-overlay" style={{ width: NODE_W, height: NODE_H }}>
                         <div className="orgchart-chip-name">{activeContact.name || "(tanpa nama)"}</div>
                         {activeContact.title && <div className="orgchart-chip-title">{activeContact.title}</div>}
                       </div>
