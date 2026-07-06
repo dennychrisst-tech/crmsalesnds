@@ -371,12 +371,24 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
     col?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
   }
 
+  // Dropped's column only exists in the DOM once the archive toggle reveals
+  // it — jumping straight to scrollToStage("Dropped") silently found nothing.
+  // Reveal it first, then scroll on the next frame once it's actually rendered.
+  function goToStage(stage: string) {
+    if (stage === "Dropped" && !showArchived) {
+      setShowArchived(true);
+      requestAnimationFrame(() => scrollToStage(stage));
+    } else {
+      scrollToStage(stage);
+    }
+  }
+
   // Deep-link from Dashboard's "Pipeline per Stage" rows — jump straight to
   // that stage instead of just landing on the board's default scroll position.
   useEffect(() => {
     if (!openStage) return;
     setMobileStage(openStage);
-    scrollToStage(openStage);
+    goToStage(openStage);
     onOpenStageHandled?.();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openStage]);
@@ -619,7 +631,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
         </div>
       )}
 
-      {!isMobile && <PipelineFunnel deals={visibleDeals} onStageClick={scrollToStage} />}
+      {!isMobile && <PipelineFunnel deals={visibleDeals} onStageClick={goToStage} />}
 
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         {showPanel && !isViewer && (
