@@ -31,6 +31,8 @@ interface Props {
 // closed yet (won or lost), so "which ones are already a Project" (the
 // Project tab) vs "which ones are still just an opportunity" is a single
 // glance instead of scanning the Pipeline kanban's stage columns.
+// Talent-product deals are excluded here — they live under the Talent tab
+// instead (see components/Talent.tsx), so they aren't listed twice.
 export default function Opty({
   data, currentUserName, isViewer, onSaveDeal, onDeleteDeal,
   onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment,
@@ -38,7 +40,7 @@ export default function Opty({
 }: Props) {
   const { clients, products, documents, attachments, activities, profiles } = data;
   const { isPending, requestDelete } = useUndoableDelete(onDeleteDeal);
-  const deals = data.deals.filter(d => !isPending(d.id) && !isClosedStage(d.stage));
+  const deals = data.deals.filter(d => !isPending(d.id) && !isClosedStage(d.stage) && d.product !== "Talent");
   async function handleDeleteDeal(id: string) {
     const d = data.deals.find(x => x.id === id);
     requestDelete(id, d ? `Deal "${d.name}"` : "Deal");

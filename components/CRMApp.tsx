@@ -349,8 +349,13 @@ export default function CRMApp() {
                     onOpenClient={openClient} />
                 )}
                 {view === "talent" && (
-                  <Talent data={data} isViewer={isViewer} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)}
+                  <Talent data={data} currentUserName={currentUserName} isViewer={isViewer}
+                    onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)}
                     onSaveTalentRole={ro(upsertTalentRole)} onDeleteTalentRole={ro(deleteTalentRole)}
+                    onSaveDeal={ro(upsertDeal)} onDeleteDeal={ro(deleteDeal)}
+                    onAddDocument={ro(upsertDocument)} onDeleteDocument={ro(deleteDocument)}
+                    onUploadAttachment={ro(uploadAttachment)} onDeleteAttachment={ro(deleteAttachment)}
+                    onAddActivity={ro(upsertActivity)} onDeleteActivity={ro(deleteActivity)}
                     onOpenClient={openClient} />
                 )}
                 {view === "opty" && (

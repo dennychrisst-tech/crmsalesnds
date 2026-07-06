@@ -2,9 +2,10 @@
 import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
-import { Project, TalentRole, PIC } from "@/types";
-import { fmtIDR, fmtDate } from "@/lib/utils";
+import { Project, TalentRole, Deal, CRMDocument, Activity, PIC } from "@/types";
+import { fmtIDR, fmtDate, STAGE_COLOR, isClosedStage } from "@/lib/utils";
 import ProjectModal from "./ProjectModal";
+import DealModal from "./DealModal";
 import TalentManageModal from "./TalentManageModal";
 import EmptyState from "./ui/EmptyState";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
@@ -40,30 +41,59 @@ function TalentSummary({ roles }: { roles: TalentRole[] }) {
 
 interface Props {
   data: AppData;
+  currentUserName: string;
   isViewer?: boolean;
   onSaveProject: (p: Project) => Promise<void>;
   onDeleteProject: (id: string) => Promise<void>;
   onSaveTalentRole: (r: TalentRole) => Promise<void>;
   onDeleteTalentRole: (id: string) => Promise<void>;
+  onSaveDeal: (d: Deal) => Promise<void>;
+  onDeleteDeal: (id: string) => Promise<void>;
+  onAddDocument: (d: CRMDocument) => Promise<void>;
+  onDeleteDocument: (id: string) => Promise<void>;
+  onUploadAttachment: (file: File, dealId: string) => Promise<void>;
+  onDeleteAttachment: (id: string) => Promise<void>;
+  onAddActivity: (a: Activity) => Promise<void>;
+  onDeleteActivity: (id: string) => Promise<void>;
   onOpenClient: (clientId: string) => void;
 }
 
-// Talent projects live here instead of the Project tab — same underlying
-// `projects` records (product === "Talent"), just kept off the general
-// Project list since staffing/requisition work has its own rhythm (CV
-// pipeline, PO issuance) that doesn't belong mixed in with delivery projects.
+// Talent (product === "Talent") lives here in full instead of split across
+// Oppty/Project — deals still being pursued (Opportunity Talent, below) and
+// projects already won (Project Talent) are both staffing work with the same
+// CV-pipeline/PO rhythm, so keeping them together avoids showing Talent twice
+// in both Oppty and Project.
 export default function Talent({
-  data, isViewer, onSaveProject, onDeleteProject,
-  onSaveTalentRole, onDeleteTalentRole, onOpenClient,
+  data, currentUserName, isViewer, onSaveProject, onDeleteProject,
+  onSaveTalentRole, onDeleteTalentRole, onSaveDeal, onDeleteDeal,
+  onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment,
+  onAddActivity, onDeleteActivity, onOpenClient,
 }: Props) {
-  const { clients, profiles, talent_roles } = data;
+  const { clients, products, documents, attachments, activities, profiles, talent_roles } = data;
+  const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
+  const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
+
+  // --- Opportunity Talent (Deal, product === "Talent", not yet closed) ---
+  const { isPending: isDealPending, requestDelete: requestDeleteDeal } = useUndoableDelete(onDeleteDeal);
+  const talentDeals = data.deals.filter(d => !isDealPending(d.id) && d.product === "Talent" && !isClosedStage(d.stage));
+  async function handleDeleteDeal(id: string) {
+    const d = data.deals.find(x => x.id === id);
+    requestDeleteDeal(id, d ? `Deal "${d.name}"` : "Deal");
+  }
+  const [dealModalOpen, setDealModalOpen] = useState(false);
+  const [editDeal, setEditDeal] = useState<Deal | null>(null);
+  function openEditDeal(d: Deal) { setEditDeal(d); setDealModalOpen(true); }
+  const dealDocuments = editDeal ? documents.filter(d => d.deal_id === editDeal.id) : [];
+  const dealAttachments = editDeal ? attachments.filter(a => a.deal_id === editDeal.id) : [];
+  const dealActivities = editDeal ? activities.filter(a => a.deal_id === editDeal.id) : [];
+
+  // --- Project Talent (Project, product === "Talent") ---
   const { isPending, requestDelete } = useUndoableDelete(onDeleteProject);
   const projects = data.projects.filter(p => !isPending(p.id) && p.product === "Talent");
   async function handleDeleteProject(id: string) {
     const p = data.projects.find(x => x.id === id);
     requestDelete(id, p ? `Project "${p.name}"` : "Project");
   }
-  const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [search, setSearch] = useState("");
   const [salesFilter, setSalesFilter] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
@@ -73,7 +103,6 @@ export default function Talent({
   const [sortKey, setSortKey] = useState<TalentSortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
   const filtered = projects.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || clientName(p.client_id).toLowerCase().includes(search.toLowerCase());
     const client = clients.find(c => c.id === p.client_id);
@@ -102,6 +131,56 @@ export default function Talent({
   return (
     <section>
       <div className="toolbar">
+        <div style={{ fontWeight: 700, fontSize: 14 }}>Opportunity Talent <span style={{ color: "var(--ink-soft)", fontWeight: 500 }}>({talentDeals.length})</span></div>
+        {!isViewer && <button className="btn btn-ghost btn-sm" onClick={() => { setEditDeal(null); setDealModalOpen(true); }}>+ Opportunity Talent Baru</button>}
+      </div>
+      <div className="panel" style={{ marginBottom: 24 }}>
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Opportunity</th><th>Client</th><th>Stage</th><th>Owner</th><th>Nilai</th><th>Target Closing</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {talentDeals.length ? talentDeals.map(d => (
+              <tr key={d.id} onClick={() => openEditDeal(d)} style={{ cursor: "pointer" }}>
+                <td><b>{d.name}</b></td>
+                <td>{clientName(d.client_id)}</td>
+                <td>
+                  <span className="badge" style={{ background: `${STAGE_COLOR[d.stage] || "var(--brand)"}22`, color: STAGE_COLOR[d.stage] || "var(--brand)" }}>
+                    {d.stage}
+                  </span>
+                </td>
+                <td>{d.owner || "—"}</td>
+                <td>{fmtIDR(d.value)}</td>
+                <td>{fmtDate(d.close_date)}</td>
+                <td>
+                  {!isViewer && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openEditDeal(d); }}>Edit</button>}
+                </td>
+              </tr>
+            )) : <tr><td colSpan={7}><EmptyState icon="🎯" label="Belum ada opportunity talent" sub="Belum ada permintaan staffing yang masih dalam tahap opportunity" /></td></tr>}
+          </tbody>
+        </table>
+
+        {talentDeals.length > 0 && (
+          <div className="mobile-cards">
+            {talentDeals.map(d => (
+              <div key={d.id} className="mcard" onClick={() => openEditDeal(d)}>
+                <div className="mcard-head">
+                  <div className="mcard-title">{d.name}</div>
+                  <span className="chip" style={{ background: `${STAGE_COLOR[d.stage] || "var(--brand)"}22`, color: STAGE_COLOR[d.stage] || "var(--brand)" }}>{d.stage}</span>
+                </div>
+                <div className="mcard-row"><span>Client</span><b>{clientName(d.client_id)}</b></div>
+                <div className="mcard-row"><span>Owner</span><b>{d.owner || "—"}</b></div>
+                <div className="mcard-row"><span>Nilai</span><b>{fmtIDR(d.value)}</b></div>
+                <div className="mcard-row"><span>Target Closing</span><b>{fmtDate(d.close_date)}</b></div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="toolbar">
         <input className="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari project talent / client…" />
         <span className="filter-inline">
           <select
@@ -122,7 +201,7 @@ export default function Talent({
           </FilterField>
         </FilterSheet>
         <button className="btn btn-ghost btn-sm" onClick={() => exportProjects(projects, clientName)}><Download size={13} /> Export Excel</button>
-        {!isViewer && <button className="btn add-btn-desktop" onClick={() => { setEditProject(null); setModalOpen(true); }}>+ Talent Baru</button>}
+        {!isViewer && <button className="btn add-btn-desktop" onClick={() => { setEditProject(null); setModalOpen(true); }}>+ Project Talent Baru</button>}
       </div>
 
       {!isViewer && <button className="fab" onClick={() => { setEditProject(null); setModalOpen(true); }} aria-label="Tambah Talent">+</button>}
@@ -234,6 +313,17 @@ export default function Talent({
         team={team}
         onSaveRole={onSaveTalentRole} onDeleteRole={onDeleteTalentRole}
         onClose={() => setTalentModalOpen(false)}
+      />
+
+      <DealModal
+        open={dealModalOpen} deal={editDeal} clients={clients} products={products} team={team}
+        defaultOwner={currentUserName} defaultProduct="Talent"
+        documents={dealDocuments} attachments={dealAttachments} activities={dealActivities}
+        onSave={onSaveDeal} onDelete={handleDeleteDeal}
+        onAddDocument={onAddDocument} onDeleteDocument={onDeleteDocument}
+        onUploadAttachment={onUploadAttachment} onDeleteAttachment={onDeleteAttachment}
+        onAddActivity={onAddActivity} onDeleteActivity={onDeleteActivity}
+        onClose={() => setDealModalOpen(false)}
       />
     </section>
   );

@@ -19,6 +19,7 @@ interface Props {
   activities: Activity[];
   team: string[];
   defaultOwner?: string;
+  defaultProduct?: string;
   onSave: (d: Deal) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onAddDocument: (d: CRMDocument) => Promise<void>;
@@ -30,9 +31,9 @@ interface Props {
   onClose: () => void;
 }
 
-const emptyDeal = (clientId: string, defaultOwner = ""): Deal => ({
+const emptyDeal = (clientId: string, defaultOwner = "", defaultProduct = ""): Deal => ({
   id: uuid(), name: "", client_id: clientId, value: 0,
-  stage: "Approching", deal_type: "", product: "", close_date: "", notes: "",
+  stage: "Approching", deal_type: "", product: defaultProduct, close_date: "", notes: "",
   owner: defaultOwner, win_loss_reason: "", competitor: "", stage_updated_at: new Date().toISOString(),
 });
 
@@ -41,14 +42,14 @@ const emptyActivity = (dealId: string): Omit<Activity, "id" | "created_at"> => (
 });
 
 export default function DealModal({
-  open, deal, clients, products, documents, attachments, activities, team, defaultOwner = "",
+  open, deal, clients, products, documents, attachments, activities, team, defaultOwner = "", defaultProduct = "",
   onSave, onDelete, onAddDocument, onDeleteDocument,
   onUploadAttachment, onDeleteAttachment,
   onAddActivity, onDeleteActivity,
   onClose,
 }: Props) {
   const isEdit = !!deal;
-  const [form, setForm] = useState<Deal>(emptyDeal("", defaultOwner));
+  const [form, setForm] = useState<Deal>(emptyDeal("", defaultOwner, defaultProduct));
   const [tab, setTab] = useState<"detail" | "info" | "activity" | "docs" | "files">("info");
   const [actForm, setActForm] = useState(emptyActivity(deal?.id || ""));
   const [saving, setSaving] = useState(false);
@@ -58,7 +59,7 @@ export default function DealModal({
   // background polling replaces the data arrays, which would wipe in-progress
   // edits and kick the user back to the detail tab mid-typing.
   useEffect(() => {
-    const d = deal || emptyDeal("", defaultOwner);
+    const d = deal || emptyDeal("", defaultOwner, defaultProduct);
     setForm(d);
     setActForm(emptyActivity(d.id));
     setTab(deal ? "detail" : "info");
