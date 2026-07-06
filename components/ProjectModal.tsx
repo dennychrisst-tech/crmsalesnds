@@ -11,6 +11,7 @@ interface Props {
   open: boolean;
   project: Project | null;
   clients: Client[];
+  defaultProduct?: string;
   onSave: (p: Project) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onClose: () => void;
@@ -31,13 +32,13 @@ function fmtIDR(num: number): string {
   return num.toLocaleString("id-ID");
 }
 
-function emptyProject(): Project {
-  return { id: uuid(), name: "", client_id: "", product: "", status: "Initiation", value: 0, golive: "", notes: "", partner: "" };
+function emptyProject(defaultProduct = ""): Project {
+  return { id: uuid(), name: "", client_id: "", product: defaultProduct, status: "Initiation", value: 0, golive: "", notes: "", partner: "" };
 }
 
-export default function ProjectModal({ open, project, clients, onSave, onDelete, onClose }: Props) {
+export default function ProjectModal({ open, project, clients, defaultProduct = "", onSave, onDelete, onClose }: Props) {
   const isEdit = !!project;
-  const [form, setForm] = useState<Project>(emptyProject());
+  const [form, setForm] = useState<Project>(emptyProject(defaultProduct));
   const [valueDisplay, setValueDisplay] = useState("");
   const [productCat, setProductCat] = useState("");
   const [ibmSub, setIbmSub] = useState("");
@@ -45,7 +46,7 @@ export default function ProjectModal({ open, project, clients, onSave, onDelete,
   const [tab, setTab] = useState<"detail" | "edit">("edit");
 
   useEffect(() => {
-    const base = project || emptyProject();
+    const base = project || emptyProject(defaultProduct);
     setForm(base);
     setValueDisplay(fmtIDR(base.value || 0));
     const { category, sub } = parseProduct(base.product || "");
