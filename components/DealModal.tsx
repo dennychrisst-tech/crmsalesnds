@@ -52,6 +52,7 @@ export default function DealModal({
   const [form, setForm] = useState<Deal>(emptyDeal("", defaultOwner, defaultProduct));
   const [tab, setTab] = useState<"detail" | "info" | "activity" | "docs" | "files">("info");
   const [actForm, setActForm] = useState(emptyActivity(deal?.id || ""));
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [savingMain, setSavingMain] = useState(false);
 
@@ -62,6 +63,7 @@ export default function DealModal({
     const d = deal || emptyDeal("", defaultOwner, defaultProduct);
     setForm(d);
     setActForm(emptyActivity(d.id));
+    setEditingActivityId(null);
     setTab(deal ? "detail" : "info");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deal?.id, open]);
@@ -89,18 +91,32 @@ export default function DealModal({
     onClose();
   }
 
-  async function handleAddActivity() {
+  async function handleSaveActivity() {
     if (!actForm.description.trim()) { toast("Deskripsi aktivitas wajib diisi.", { type: "error" }); return; }
     if (!actForm.created_by) { toast("Oleh wajib diisi.", { type: "error" }); return; }
     setSaving(true);
     try {
-      await onAddActivity({ ...actForm, id: uuid(), deal_id: form.id });
+      await onAddActivity({ ...actForm, id: editingActivityId || uuid(), deal_id: form.id });
       setActForm(emptyActivity(form.id));
+      setEditingActivityId(null);
     } catch {
       // useData's mutation helpers already surface the failure via error toast.
     } finally {
       setSaving(false);
     }
+  }
+
+  function startEditActivity(a: Activity) {
+    setActForm({
+      deal_id: a.deal_id, project_id: a.project_id, client_id: a.client_id,
+      type: a.type, description: a.description, date: a.date, created_by: a.created_by,
+    });
+    setEditingActivityId(a.id);
+  }
+
+  function cancelEditActivity() {
+    setActForm(emptyActivity(form.id));
+    setEditingActivityId(null);
   }
 
   const tabCls = (t: string) => `modal-tab${tab === t ? " modal-tab-active" : ""}`;
@@ -267,9 +283,14 @@ export default function DealModal({
                 placeholder="Catat aktivitas, hasil call, meeting, dll…"
               />
             </div>
-            <button className="btn btn-sm" onClick={handleAddActivity} disabled={saving}>
-              {saving ? "Menyimpan…" : "+ Tambah Aktivitas"}
-            </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="btn btn-sm" onClick={handleSaveActivity} disabled={saving}>
+                {saving ? "Menyimpan…" : editingActivityId ? "Simpan Perubahan" : "+ Tambah Aktivitas"}
+              </button>
+              {editingActivityId && (
+                <button className="btn btn-ghost btn-sm" onClick={cancelEditActivity} disabled={saving}>Batal Edit</button>
+              )}
+            </div>
           </div>
 
           <div className="activity-timeline">
@@ -277,11 +298,12 @@ export default function DealModal({
               <div className="empty-state" style={{ padding: "16px 0" }}>Belum ada aktivitas.</div>
             )}
             {[...activities].sort((a, b) => (b.date || b.created_at || "").localeCompare(a.date || a.created_at || "")).map(a => (
-              <div key={a.id} className="activity-item">
+              <div key={a.id} className={`activity-item${editingActivityId === a.id ? " activity-item-editing" : ""}`}>
                 <div className="activity-header">
                   <span className="activity-type">{a.type}</span>
                   {a.created_by && <span className="activity-by">👤 {a.created_by}</span>}
                   <span className="activity-date">{fmtDate((a.date || a.created_at || "").slice(0, 10))}</span>
+                  <button className="activity-edit" onClick={() => startEditActivity(a)} title="Edit">✎</button>
                   <button className="activity-del" onClick={() => onDeleteActivity(a.id)} title="Hapus">×</button>
                 </div>
                 <div className="activity-desc">{a.description}</div>

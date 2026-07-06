@@ -54,6 +54,7 @@ export default function ProjectModal({ open, project, clients, activities, team,
   const [savingActivity, setSavingActivity] = useState(false);
   const [tab, setTab] = useState<"detail" | "edit" | "activity">("edit");
   const [actForm, setActForm] = useState(emptyActivity(project?.id || ""));
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
 
   useEffect(() => {
     const base = project || emptyProject(defaultProduct);
@@ -63,6 +64,7 @@ export default function ProjectModal({ open, project, clients, activities, team,
     setProductCat(category);
     setIbmSub(sub);
     setActForm(emptyActivity(base.id));
+    setEditingActivityId(null);
     setTab(project ? "detail" : "edit");
   // Re-init only when the modal opens or a different project is opened — the
   // clients array is replaced by background polling and must not wipe edits.
@@ -71,18 +73,32 @@ export default function ProjectModal({ open, project, clients, activities, team,
 
   const set = (k: keyof Project, v: string | number) => setForm(f => ({ ...f, [k]: v }));
 
-  async function handleAddActivity() {
+  async function handleSaveActivity() {
     if (!actForm.description.trim()) { toast("Deskripsi aktivitas wajib diisi.", { type: "error" }); return; }
     if (!actForm.created_by) { toast("Oleh wajib diisi.", { type: "error" }); return; }
     setSavingActivity(true);
     try {
-      await onAddActivity({ ...actForm, id: uuid(), project_id: form.id });
+      await onAddActivity({ ...actForm, id: editingActivityId || uuid(), project_id: form.id });
       setActForm(emptyActivity(form.id));
+      setEditingActivityId(null);
     } catch {
       // useData's mutation helpers already surface the failure via error toast.
     } finally {
       setSavingActivity(false);
     }
+  }
+
+  function startEditActivity(a: Activity) {
+    setActForm({
+      deal_id: a.deal_id, project_id: a.project_id, client_id: a.client_id,
+      type: a.type, description: a.description, date: a.date, created_by: a.created_by,
+    });
+    setEditingActivityId(a.id);
+  }
+
+  function cancelEditActivity() {
+    setActForm(emptyActivity(form.id));
+    setEditingActivityId(null);
   }
 
   function handleProductCatChange(cat: string) {
@@ -261,9 +277,14 @@ export default function ProjectModal({ open, project, clients, activities, team,
                 placeholder="Catat aktivitas, hasil update, dll…"
               />
             </div>
-            <button className="btn btn-sm" onClick={handleAddActivity} disabled={savingActivity}>
-              {savingActivity ? "Menyimpan…" : "+ Tambah Aktivitas"}
-            </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="btn btn-sm" onClick={handleSaveActivity} disabled={savingActivity}>
+                {savingActivity ? "Menyimpan…" : editingActivityId ? "Simpan Perubahan" : "+ Tambah Aktivitas"}
+              </button>
+              {editingActivityId && (
+                <button className="btn btn-ghost btn-sm" onClick={cancelEditActivity} disabled={savingActivity}>Batal Edit</button>
+              )}
+            </div>
           </div>
 
           <div className="activity-timeline">
@@ -271,11 +292,12 @@ export default function ProjectModal({ open, project, clients, activities, team,
               <div className="empty-state" style={{ padding: "16px 0" }}>Belum ada aktivitas.</div>
             )}
             {[...activities].sort((a, b) => (b.date || b.created_at || "").localeCompare(a.date || a.created_at || "")).map(a => (
-              <div key={a.id} className="activity-item">
+              <div key={a.id} className={`activity-item${editingActivityId === a.id ? " activity-item-editing" : ""}`}>
                 <div className="activity-header">
                   <span className="activity-type">{a.type}</span>
                   {a.created_by && <span className="activity-by">👤 {a.created_by}</span>}
                   <span className="activity-date">{fmtDate((a.date || a.created_at || "").slice(0, 10))}</span>
+                  <button className="activity-edit" onClick={() => startEditActivity(a)} title="Edit">✎</button>
                   <button className="activity-del" onClick={() => onDeleteActivity(a.id)} title="Hapus">×</button>
                 </div>
                 <div className="activity-desc">{a.description}</div>

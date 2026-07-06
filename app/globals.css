@@ -826,6 +826,9 @@ tr.task-soon td { background: #fffbeb; }
 .activity-date { font-size: 11px; color: var(--ink-soft); margin-left: auto; }
 .activity-del { background: none; border: none; color: var(--ink-soft); cursor: pointer; font-size: 16px; padding: 0 2px; line-height: 1; flex-shrink: 0; }
 .activity-del:hover { color: var(--danger); }
+.activity-edit { background: none; border: none; color: var(--ink-soft); cursor: pointer; font-size: 13px; padding: 0 2px; line-height: 1; flex-shrink: 0; }
+.activity-edit:hover { color: var(--brand); }
+.activity-item-editing { border-left-color: var(--gold); background: var(--brand-soft); }
 .activity-desc { font-size: 13px; line-height: 1.45; white-space: pre-wrap; }
 
 /* PIC side-by-side layout */
