@@ -10,10 +10,11 @@ import TalentManageModal from "./TalentManageModal";
 import EmptyState from "./ui/EmptyState";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
 import SortableTh, { SortDir } from "./ui/SortableTh";
-import { exportProjects } from "@/lib/export";
+import { exportProjects, exportDeals } from "@/lib/export";
 import { Download } from "lucide-react";
 
 type TalentSortKey = "name" | "client" | "status" | "value" | "golive";
+type TalentDealSortKey = "name" | "client" | "stage" | "value" | "close_date";
 
 // Compact "at a glance" summary for a Talent row — aggregates each role's own
 // count fields (matching the team's Excel tracker columns) across the project.
@@ -87,6 +88,32 @@ export default function Talent({
   const dealAttachments = editDeal ? attachments.filter(a => a.deal_id === editDeal.id) : [];
   const dealActivities = editDeal ? activities.filter(a => a.deal_id === editDeal.id) : [];
 
+  const [dealSearch, setDealSearch] = useState("");
+  const [dealOwnerFilter, setDealOwnerFilter] = useState("all");
+  const [dealSortKey, setDealSortKey] = useState<TalentDealSortKey | null>(null);
+  const [dealSortDir, setDealSortDir] = useState<SortDir>("asc");
+
+  const filteredTalentDeals = talentDeals.filter(d => {
+    const matchSearch = d.name.toLowerCase().includes(dealSearch.toLowerCase()) || clientName(d.client_id).toLowerCase().includes(dealSearch.toLowerCase());
+    const matchOwner = dealOwnerFilter === "all" || d.owner === dealOwnerFilter;
+    return matchSearch && matchOwner;
+  });
+  function toggleDealSort(key: TalentDealSortKey) {
+    if (key === dealSortKey) setDealSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setDealSortKey(key); setDealSortDir("asc"); }
+  }
+  const sortedTalentDeals = dealSortKey ? [...filteredTalentDeals].sort((a, b) => {
+    let cmp = 0;
+    switch (dealSortKey) {
+      case "name": cmp = a.name.localeCompare(b.name); break;
+      case "client": cmp = clientName(a.client_id).localeCompare(clientName(b.client_id)); break;
+      case "stage": cmp = a.stage.localeCompare(b.stage); break;
+      case "value": cmp = a.value - b.value; break;
+      case "close_date": cmp = (a.close_date || "").localeCompare(b.close_date || ""); break;
+    }
+    return dealSortDir === "asc" ? cmp : -cmp;
+  }) : filteredTalentDeals;
+
   // --- Project Talent (Project, product === "Talent") ---
   const { isPending, requestDelete } = useUndoableDelete(onDeleteProject);
   const projects = data.projects.filter(p => !isPending(p.id) && p.product === "Talent");
@@ -131,18 +158,43 @@ export default function Talent({
   return (
     <section>
       <div className="toolbar">
-        <div style={{ fontWeight: 700, fontSize: 14 }}>Opportunity Talent <span style={{ color: "var(--ink-soft)", fontWeight: 500 }}>({talentDeals.length})</span></div>
+        <input className="search" value={dealSearch} onChange={e => setDealSearch(e.target.value)} placeholder="Cari opportunity talent / client…" />
+        <span className="filter-inline">
+          <select
+            value={dealOwnerFilter}
+            onChange={e => setDealOwnerFilter(e.target.value)}
+            style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)", cursor: "pointer" }}
+          >
+            <option value="all">Semua Sales</option>
+            {team.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </span>
+        <FilterSheet>
+          <FilterField label="Sales">
+            <select value={dealOwnerFilter} onChange={e => setDealOwnerFilter(e.target.value)}>
+              <option value="all">Semua Sales</option>
+              {team.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </FilterField>
+        </FilterSheet>
+        <button className="btn btn-ghost btn-sm" onClick={() => exportDeals(talentDeals, clientName)}><Download size={13} /> Export Excel</button>
         {!isViewer && <button className="btn btn-ghost btn-sm" onClick={() => { setEditDeal(null); setDealModalOpen(true); }}>+ Opportunity Talent Baru</button>}
       </div>
       <div className="panel" style={{ marginBottom: 24 }}>
         <table className="data-table">
           <thead>
             <tr>
-              <th>Opportunity</th><th>Client</th><th>Stage</th><th>Owner</th><th>Nilai</th><th>Target Closing</th><th></th>
+              <SortableTh active={dealSortKey === "name"} dir={dealSortDir} onClick={() => toggleDealSort("name")}>Opportunity</SortableTh>
+              <SortableTh active={dealSortKey === "client"} dir={dealSortDir} onClick={() => toggleDealSort("client")}>Client</SortableTh>
+              <SortableTh active={dealSortKey === "stage"} dir={dealSortDir} onClick={() => toggleDealSort("stage")}>Stage</SortableTh>
+              <th>Owner</th>
+              <SortableTh active={dealSortKey === "value"} dir={dealSortDir} onClick={() => toggleDealSort("value")}>Nilai</SortableTh>
+              <SortableTh active={dealSortKey === "close_date"} dir={dealSortDir} onClick={() => toggleDealSort("close_date")}>Target Closing</SortableTh>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            {talentDeals.length ? talentDeals.map(d => (
+            {sortedTalentDeals.length ? sortedTalentDeals.map(d => (
               <tr key={d.id} onClick={() => openEditDeal(d)} style={{ cursor: "pointer" }}>
                 <td><b>{d.name}</b></td>
                 <td>{clientName(d.client_id)}</td>
@@ -162,9 +214,9 @@ export default function Talent({
           </tbody>
         </table>
 
-        {talentDeals.length > 0 && (
+        {sortedTalentDeals.length > 0 && (
           <div className="mobile-cards">
-            {talentDeals.map(d => (
+            {sortedTalentDeals.map(d => (
               <div key={d.id} className="mcard" onClick={() => openEditDeal(d)}>
                 <div className="mcard-head">
                   <div className="mcard-title">{d.name}</div>

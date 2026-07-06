@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
 import { ActiveView, Client, Deal, Visit, Project, Task, Contact, CRMDocument, Activity } from "@/types";
-import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches, fmtDateStr, isWonStage, isClosedStage, isDealAtRisk } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches, picList, fmtDateStr, isWonStage, isClosedStage, isDealAtRisk } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import EmptyState from "./ui/EmptyState";
 import ClientModal from "./ClientModal";
@@ -266,9 +266,19 @@ export default function Dashboard({
     .sort((a, b) => b[1] - a[1]).slice(0, 5)
     .map(([id, val]) => ({ id, name: clients.find(c => c.id === id)?.name || "—", value: val }));
 
-  // Team activity for period
+  // Team activity for period — rostered from salesList plus anyone who
+  // actually shows up in this period's visits/tasks/activities, so an admin
+  // account doing real sales work isn't silently excluded (salesList itself
+  // stays admin-free since it also feeds the sales-filter dropdown and the
+  // "assign to" pickers in the peek modals below).
   const teamActivity: Record<string, { visits: number; tasks: number; activities: number }> = {};
-  salesList.forEach(name => {
+  const teamActivityNames = Array.from(new Set([
+    ...salesList,
+    ...filteredVisits.flatMap(v => picList(v.pic)),
+    ...activities.map(a => a.created_by),
+    ...tasks.map(t => t.assigned_to),
+  ].filter(Boolean)));
+  teamActivityNames.forEach(name => {
     teamActivity[name] = {
       visits: filteredVisits.filter(v => picMatches(v.pic, name) && v.date && inPeriod(v.date)).length,
       tasks: tasks.filter(t => t.assigned_to === name && t.status === "Open").length,
@@ -529,11 +539,11 @@ export default function Dashboard({
       </div>
 
       {/* ── Row 5: Team Activity ── */}
-      {salesList.length > 0 && (
+      {teamActivityNames.length > 0 && (
         <div className="panel" style={panelStyle(PANEL_ACCENTS.team)}>
           <SectionHeader title={`Aktivitas Tim — ${periodLabel}`} icon="👥" accent={PANEL_ACCENTS.team} />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 12 }}>
-            {(salesFilter === "all" ? salesList : [salesFilter]).map((name, i) => {
+            {(salesFilter === "all" ? teamActivityNames : [salesFilter]).map((name, i) => {
               const stat = teamActivity[name] || { visits: 0, tasks: 0, activities: 0 };
               const avatarColors = ["#2563EB", "#7C3AED", "#DB2777", "#0F766E", "#D97706", "#0891B2"];
               const avatarColor = avatarColors[i % avatarColors.length];

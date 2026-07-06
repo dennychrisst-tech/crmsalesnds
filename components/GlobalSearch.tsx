@@ -12,11 +12,11 @@ interface Props {
   onOpenTask: (id: string) => void;
 }
 
-const RESULT_VIEW: Record<Result["type"], ActiveView> = { Client: "clients", Project: "pipeline", Task: "tasks", Contact: "clients" };
-const RESULT_LABEL: Record<Result["type"], string> = { Client: "client", Project: "project", Task: "task", Contact: "kontak" };
+const RESULT_VIEW: Record<Result["type"], ActiveView> = { Client: "clients", Project: "pipeline", Talent: "talent", Task: "tasks", Contact: "clients" };
+const RESULT_LABEL: Record<Result["type"], string> = { Client: "client", Project: "project", Talent: "opportunity talent", Task: "task", Contact: "kontak" };
 
 interface Result {
-  type: "Client" | "Project" | "Task" | "Contact";
+  type: "Client" | "Project" | "Talent" | "Task" | "Contact";
   label: string;
   sub: string;
   go: () => void;
@@ -54,7 +54,7 @@ export default function GlobalSearch({ data, onNavigate, onOpenClient, onOpenDea
   const results: Result[] = [];
   // How many matches exist beyond what's shown per category — surfaced as a
   // "+N lainnya" line so a truncated list doesn't read as "no more results".
-  const moreCounts: Record<Result["type"], number> = { Client: 0, Project: 0, Task: 0, Contact: 0 };
+  const moreCounts: Record<Result["type"], number> = { Client: 0, Project: 0, Talent: 0, Task: 0, Contact: 0 };
 
   if (term.length >= 2) {
     const clientMatches = data.clients.filter(c => c.name.toLowerCase().includes(term) || c.sector.toLowerCase().includes(term));
@@ -64,15 +64,29 @@ export default function GlobalSearch({ data, onNavigate, onOpenClient, onOpenDea
     }));
     moreCounts.Client = Math.max(0, clientMatches.length - 4);
 
+    // Talent-flavored deals split out from the rest — their "lainnya" link
+    // needs to land on the Talent tab, not Pipeline, now that Talent has its
+    // own home (see components/Talent.tsx).
     const dealMatches = data.deals.filter(d => d.name.toLowerCase().includes(term) || (d.product || "").toLowerCase().includes(term));
-    dealMatches.slice(0, 4).forEach(d => {
+    const talentDealMatches = dealMatches.filter(d => d.product === "Talent");
+    const otherDealMatches = dealMatches.filter(d => d.product !== "Talent");
+    otherDealMatches.slice(0, 4).forEach(d => {
       const cn = data.clients.find(c => c.id === d.client_id)?.name || "—";
       results.push({
         type: "Project", label: d.name, sub: `${cn} · ${d.stage}`,
         go: () => onOpenDeal(d.id),
       });
     });
-    moreCounts.Project = Math.max(0, dealMatches.length - 4);
+    moreCounts.Project = Math.max(0, otherDealMatches.length - 4);
+
+    talentDealMatches.slice(0, 4).forEach(d => {
+      const cn = data.clients.find(c => c.id === d.client_id)?.name || "—";
+      results.push({
+        type: "Talent", label: d.name, sub: `${cn} · ${d.stage}`,
+        go: () => onOpenDeal(d.id),
+      });
+    });
+    moreCounts.Talent = Math.max(0, talentDealMatches.length - 4);
 
     const taskMatches = data.tasks.filter(t => t.title.toLowerCase().includes(term));
     taskMatches.slice(0, 3).forEach(t => results.push({
@@ -122,7 +136,7 @@ export default function GlobalSearch({ data, onNavigate, onOpenClient, onOpenDea
     }
   }
 
-  const typeCls: Record<string, string> = { Client: "gs-type-client", Project: "gs-type-deal", Task: "gs-type-task", Contact: "gs-type-contact" };
+  const typeCls: Record<string, string> = { Client: "gs-type-client", Project: "gs-type-deal", Talent: "gs-type-deal", Task: "gs-type-task", Contact: "gs-type-contact" };
   const totalMatches = results.length + Object.values(moreCounts).reduce((a, b) => a + b, 0);
 
   return (
