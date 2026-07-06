@@ -713,7 +713,7 @@ tr.task-soon td { background: #fffbeb; }
 .wr-card { background: var(--paper); border: 1px solid var(--line); border-left: 3px solid var(--brand); border-radius: 10px; padding: 12px 14px; }
 .wr-card-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
 .wr-date { font-size: 11px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .04em; }
-.wr-client { font-size: 14px; font-weight: 700; color: var(--ink); }
+.wr-client { font-size: 16px; font-weight: 800; color: var(--brand); }
 .wr-approach { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); margin-left: auto; }
 .wr-summary { font-size: 13px; color: var(--ink); line-height: 1.5; white-space: pre-wrap; }
 .wr-updates { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
