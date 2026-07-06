@@ -375,7 +375,7 @@ export default function CRMApp() {
                 )}
                 {view === "summary" && <SummaryView data={data} onOpenVisit={openVisit} />}
                 {view === "visit-report" && <VisitReport data={data} />}
-                {view === "weekly-report" && <WeeklyReport data={data} onOpenDeal={openDeal} />}
+                {view === "weekly-report" && <WeeklyReport data={data} onOpenDeal={openDeal} onNavigate={setView} onOpenStage={openStage} />}
                 {view === "revenue-forecast" && (
                   <RevenueForecastView data={data} isViewer={isViewer}
                     onSaveTarget={ro(upsertRevenueTarget)}

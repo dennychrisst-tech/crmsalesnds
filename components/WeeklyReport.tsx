@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Share2, Download, User, Briefcase, FolderKanban } from "lucide-react";
 import { AppData } from "@/hooks/useData";
-import { Project } from "@/types";
+import { Project, ActiveView } from "@/types";
 import { fmtIDR, fmtDate, fmtDateStr, picMatches, STAGE_COLOR, isWonStage } from "@/lib/utils";
 import { exportWeeklyReport } from "@/lib/export";
 import { shareToWhatsApp } from "@/lib/share";
@@ -23,9 +23,14 @@ function inRange(dateStr: string | null | undefined, start: string, end: string)
   return d >= start && d <= end;
 }
 
-interface Props { data: AppData; onOpenDeal: (dealId: string) => void; }
+interface Props {
+  data: AppData;
+  onOpenDeal: (dealId: string) => void;
+  onNavigate: (view: ActiveView) => void;
+  onOpenStage: (stage: string) => void;
+}
 
-export default function WeeklyReport({ data, onOpenDeal }: Props) {
+export default function WeeklyReport({ data, onOpenDeal, onNavigate, onOpenStage }: Props) {
   const { clients, visits, deals, projects, profiles, activities } = data;
   const team = profiles.filter(p => !["super_admin", "admin", "viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [offset, setOffset] = useState(0);
@@ -119,17 +124,17 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
       </div>
 
       <div className="kpis" style={{ marginBottom: 20 }}>
-        <div className="kpi">
+        <div className="kpi kpi-v2" style={{ cursor: "pointer" }} onClick={() => onNavigate("calendar")} title="Buka Calendar Visit">
           <div className="kpi-label">Visit Selesai</div>
           <div className="kpi-num">{weekVisits.length}</div>
           <div className="kpi-sub">{new Set(weekVisits.map(v => v.client_id)).size} client dikunjungi</div>
         </div>
-        <div className="kpi">
+        <div className="kpi kpi-v2" style={{ cursor: "pointer" }} onClick={() => onNavigate("pipeline")} title="Buka Pipeline">
           <div className="kpi-label">Update Pipeline</div>
           <div className="kpi-num">{weekDealUpdates.length}</div>
           <div className="kpi-sub">deal berpindah stage</div>
         </div>
-        <div className="kpi" style={{ borderColor: weekWon.length ? "var(--brand)" : "" }}>
+        <div className="kpi kpi-v2" style={{ borderColor: weekWon.length ? "var(--brand)" : "", cursor: "pointer" }} onClick={() => onOpenStage("Dealed")} title="Buka Pipeline · stage Dealed">
           <div className="kpi-label">Closed Won</div>
           <div className="kpi-num" style={{ color: weekWon.length ? "var(--brand)" : "" }}>{weekWon.length}</div>
           <div className="kpi-sub">{fmtIDR(weekWon.reduce((s, d) => s + d.value, 0))}</div>
