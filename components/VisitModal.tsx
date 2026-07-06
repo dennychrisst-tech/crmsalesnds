@@ -5,7 +5,7 @@ import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./
 import SearchableSelect from "./ui/SearchableSelect";
 import { VisitBadge } from "./ui/Badge";
 import { toast } from "./ui/Toast";
-import { Visit, Client, Contact, Deal, Task } from "@/types";
+import { Visit, Client, Contact, Deal, Project, Task } from "@/types";
 import { VISIT_STATUS, STAGE_COLOR, todayStr, picList, fmtDate } from "@/lib/utils";
 
 interface Props {
@@ -16,6 +16,7 @@ interface Props {
   clients: Client[];
   contacts: Contact[];
   deals: Deal[];
+  projects: Project[];
   visits: Visit[];
   team: string[];
   defaultPic?: string;
@@ -37,14 +38,14 @@ interface TaskDraft {
 
 function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit {
   return {
-    id: uuid(), client_id: clientId, deal_id: null, date,
+    id: uuid(), client_id: clientId, deal_id: null, project_id: null, date,
     purpose: "", approach: "", status: "Planned",
     pic: defaultPic, pic_client: "", jabatan: "",
     followup_date: null, summary: "", rescheduled_to_id: null, rescheduled_from_id: null,
   };
 }
 
-export default function VisitModal({ open, visit, preClientId, preDate, clients, contacts, deals, visits, team, defaultPic = "", onSave, onDelete, onCreateTask, onCreateDeal, onSaveContact, onClose }: Props) {
+export default function VisitModal({ open, visit, preClientId, preDate, clients, contacts, deals, projects, visits, team, defaultPic = "", onSave, onDelete, onCreateTask, onCreateDeal, onSaveContact, onClose }: Props) {
   const isEdit = !!visit;
   const [form, setForm] = useState<Visit>(emptyVisit("", defaultPic));
   const [tab, setTab] = useState<"detail" | "edit">("edit");
@@ -57,6 +58,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "";
   const deal = (id: string | null | undefined) => id ? deals.find(d => d.id === id) || null : null;
   const dealName = (id: string | null | undefined) => deal(id)?.name || "";
+  const project = (id: string | null | undefined) => id ? projects.find(p => p.id === id) || null : null;
 
   function buildDefaultTask(f: Visit): TaskDraft {
     return {
@@ -76,6 +78,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         // Old visits without a jabatan fall back to the contact's title from the Client menu
         jabatan: visit.jabatan || matchingContact?.title || "",
         deal_id: visit.deal_id ?? null,
+        project_id: visit.project_id ?? null,
         followup_date: visit.followup_date ?? null,
         rescheduled_to_id: visit.rescheduled_to_id ?? null,
         rescheduled_from_id: visit.rescheduled_from_id ?? null,
@@ -110,11 +113,12 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
 
   const clientContacts = contacts.filter(c => c.client_id === form.client_id);
   const clientDeals = deals.filter(d => d.client_id === form.client_id);
+  const clientProjects = projects.filter(p => p.client_id === form.client_id);
   const isDone = form.status === "Done";
   const isReschedule = form.status === "Reschedule";
 
   function handleClientChange(clientId: string) {
-    setForm(f => ({ ...f, client_id: clientId, pic_client: "", jabatan: "", deal_id: null }));
+    setForm(f => ({ ...f, client_id: clientId, pic_client: "", jabatan: "", deal_id: null, project_id: null }));
     setManualPic(false);
   }
 
@@ -223,6 +227,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
 
   const tabCls = (t: string) => `modal-tab${tab === t ? " modal-tab-active" : ""}`;
   const visitDeal = deal(form.deal_id);
+  const visitProject = project(form.project_id);
 
   return (
     <Modal open={open} onClose={onClose} title={isEdit ? (tab === "detail" ? "Detail Visit" : "Edit Visit") : "Jadwalkan Visit"}>
@@ -248,13 +253,14 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
             </div>
           )}
           <div className="dd-grid">
-            <div className="dd-item"><div className="dd-label">Project</div><div className="dd-value">{visitDeal?.name || "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Oppty</div><div className="dd-value">{visitDeal?.name || "—"}</div></div>
             <div className="dd-item">
               <div className="dd-label">Stage</div>
               <div className="dd-value">
                 {visitDeal ? <span className="stage-text" style={{ color: STAGE_COLOR[visitDeal.stage] || "var(--brand)" }}>{visitDeal.stage}</span> : "—"}
               </div>
             </div>
+            <div className="dd-item"><div className="dd-label">Project</div><div className="dd-value">{visitProject?.name || "—"}</div></div>
             <div className="dd-item"><div className="dd-label">PIC Client</div><div className="dd-value">{form.pic_client || "—"}</div></div>
             <div className="dd-item"><div className="dd-label">Jabatan</div><div className="dd-value">{form.jabatan || "—"}</div></div>
             <div className="dd-item"><div className="dd-label">PIC NDS Sales</div><div className="dd-value">{picList(form.pic).join(" & ") || "—"}</div></div>
@@ -293,17 +299,28 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         />
       </Field>
 
-      <Field label="Project">
-        <SearchableSelect
-          options={clientDeals.map(d => ({ value: d.id, label: d.name }))}
-          value={form.deal_id || ""}
-          onChange={v => set("deal_id", v || null)}
-          placeholder="Cari atau buat project…"
-          clearLabel="— Tidak terkait project —"
-          onCreate={onCreateDeal && form.client_id ? handleCreateDeal : undefined}
-          createLabel={q => `+ Buat project baru: "${q}"`}
-        />
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Oppty">
+          <SearchableSelect
+            options={clientDeals.map(d => ({ value: d.id, label: d.name }))}
+            value={form.deal_id || ""}
+            onChange={v => set("deal_id", v || null)}
+            placeholder="Cari atau buat oppty…"
+            clearLabel="— Tidak terkait oppty —"
+            onCreate={onCreateDeal && form.client_id ? handleCreateDeal : undefined}
+            createLabel={q => `+ Buat oppty baru: "${q}"`}
+          />
+        </Field>
+        <Field label="Project">
+          <SearchableSelect
+            options={clientProjects.map(p => ({ value: p.id, label: p.name }))}
+            value={form.project_id || ""}
+            onChange={v => set("project_id", v || null)}
+            placeholder="Cari project…"
+            clearLabel="— Tidak terkait project —"
+          />
+        </Field>
+      </div>
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Tanggal approach">

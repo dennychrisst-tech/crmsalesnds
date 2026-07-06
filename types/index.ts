@@ -52,6 +52,7 @@ export interface Visit {
   id: string;
   client_id: string;
   deal_id?: string | null;
+  project_id?: string | null;
   date: string;
   purpose: string;
   approach: string;

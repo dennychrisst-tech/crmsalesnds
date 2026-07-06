@@ -96,6 +96,7 @@ model Visit {
   id            String    @id @default(uuid()) @db.Uuid
   client_id     String    @db.Uuid
   deal_id       String?   @db.Uuid
+  project_id    String?   @db.Uuid
   date          DateTime  @db.Date
   purpose       String    @default("")
   approach      String    @default("")
@@ -115,11 +116,13 @@ model Visit {
   created_by_id String?   @db.Uuid
   created_at    DateTime  @default(now())
 
-  client Client @relation(fields: [client_id], references: [id], onDelete: Cascade)
-  deal   Deal?  @relation(fields: [deal_id], references: [id], onDelete: SetNull)
+  client  Client   @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  deal    Deal?    @relation(fields: [deal_id], references: [id], onDelete: SetNull)
+  project Project? @relation(fields: [project_id], references: [id], onDelete: SetNull)
 
   @@index([client_id])
   @@index([deal_id])
+  @@index([project_id])
   @@index([status])
   @@index([date])
   @@map("visits")
@@ -187,6 +190,7 @@ model Project {
 
   client      Client       @relation(fields: [client_id], references: [id], onDelete: Cascade)
   talentRoles TalentRole[]
+  visits      Visit[]
 
   @@index([client_id])
   @@map("projects")

@@ -239,7 +239,7 @@ function DayCell({
 }
 
 export default function CalendarView({ data, currentUserName, isViewer, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask, onCreateDeal, onSaveContact, openVisitId, onOpenVisitHandled }: Props) {
-  const { clients, contacts, visits, events, deals, profiles } = data;
+  const { clients, contacts, visits, events, deals, projects, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const salesLegend = Array.from(new Set([...team, ...visits.flatMap(v => picList(v.pic))])).sort((a, b) => a.localeCompare(b));
 
@@ -525,7 +525,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
         </table>
       </div>
 
-      <VisitModal open={visitModal} visit={editVisit} preClientId={preClientId} preDate={preDate} clients={clients} contacts={contacts} deals={deals} visits={visits} team={team} defaultPic={currentUserName}
+      <VisitModal open={visitModal} visit={editVisit} preClientId={preClientId} preDate={preDate} clients={clients} contacts={contacts} deals={deals} projects={projects} visits={visits} team={team} defaultPic={currentUserName}
         onSave={handleSaveVisit} onDelete={onDeleteVisit} onCreateTask={onCreateTask} onCreateDeal={onCreateDeal} onSaveContact={onSaveContact} onClose={() => setVisitModal(false)} />
       <EventModal open={eventModal} event={editEvent} preDate={preDate} team={team} clients={clients} defaultMember={currentUserName}
         onSave={onSaveEvent} onDelete={onDeleteEvent} onClose={() => setEventModal(false)} />

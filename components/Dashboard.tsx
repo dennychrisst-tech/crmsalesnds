@@ -582,7 +582,7 @@ export default function Dashboard({
         onUploadAttachment={onUploadAttachment} onDeleteAttachment={onDeleteAttachment}
         onAddActivity={onAddActivity} onDeleteActivity={onDeleteActivity}
         onClose={() => setPeekDealId(null)} />
-      <VisitModal open={!!peekVisitId} visit={peekVisit} clients={clients} contacts={contacts} deals={deals} visits={visits} team={salesList}
+      <VisitModal open={!!peekVisitId} visit={peekVisit} clients={clients} contacts={contacts} deals={deals} projects={projects} visits={visits} team={salesList}
         onSave={onSaveVisit} onDelete={onDeleteVisit} onCreateTask={onCreateTask} onCreateDeal={onCreateDeal} onSaveContact={onSaveContact}
         onClose={() => setPeekVisitId(null)} />
       <ProjectModal open={!!peekProjectId} project={peekProject} clients={clients}
