@@ -148,6 +148,7 @@ function AgendaDayCard({
           const isWfo = ev.type === "WFO";
           const isLeave = ev.type === "Cuti";
           const isSpecial = isWfo || isLeave;
+          const isPending = ev.id.startsWith("pending-");
           const isCancel = !isSpecial && ev.status === "Cancel";
           const isReschedule = !isSpecial && ev.status === "Reschedule";
           const isDone = !isSpecial && ev.status === "Done";
@@ -156,12 +157,12 @@ function AgendaDayCard({
             : isDone ? " · Selesai" : "";
           return (
             <button key={ev.id} type="button" className="agenda-item"
-              style={{ background: isWfo ? "var(--brand-soft)" : isLeave ? "#FEE2E2" : "var(--paper)", color: isLeave ? "#991B1B" : undefined, cursor: "pointer", opacity: (isCancel || isDone) ? 0.6 : 1 }}
-              onClick={() => { if (!isViewer) onEditEvent(ev); }}>
+              style={{ background: isWfo ? "var(--brand-soft)" : isLeave ? "#FEE2E2" : "var(--paper)", color: isLeave ? "#991B1B" : undefined, cursor: isPending ? "default" : "pointer", opacity: isPending ? 0.55 : (isCancel || isDone) ? 0.6 : 1 }}
+              onClick={isPending ? undefined : () => { if (!isViewer) onEditEvent(ev); }}>
               <span className="agenda-item-dot" style={{ background: isWfo ? "var(--brand)" : isLeave ? "#991B1B" : "var(--gold)" }} />
               <span>
                 <div className="agenda-item-title" style={{ textDecoration: isCancel ? "line-through" : "none" }}>
-                  {isWfo ? `🏢 WFO — ${ev.created_by || "—"}` : isLeave ? `✈️ Cuti — ${ev.created_by || "—"}` : ev.title}
+                  {isWfo ? `🏢 WFO — ${ev.created_by || "—"}` : isLeave ? `✈️ Cuti — ${ev.created_by || "—"}` : ev.title}{isPending ? "…" : ""}
                 </div>
                 {!isSpecial && <div className="agenda-item-sub">{ev.type}{ev.created_by ? ` · ${ev.created_by}` : ""}{statusNote}</div>}
               </span>
@@ -215,6 +216,7 @@ function DayCell({
         const isWfo = ev.type === "WFO";
         const isLeave = ev.type === "Cuti";
         const isSpecial = isWfo || isLeave;
+        const isPending = ev.id.startsWith("pending-");
         const isCancel = !isSpecial && ev.status === "Cancel";
         const isReschedule = !isSpecial && ev.status === "Reschedule";
         const isDone = !isSpecial && ev.status === "Done";
@@ -224,13 +226,13 @@ function DayCell({
         return (
           <div key={ev.id} className={`vpill ${isWfo ? "vpill-wfo" : isLeave ? "vpill-leave" : "vpill-event"}`}
             style={{
-              cursor: "pointer",
-              opacity: (isCancel || isDone) ? 0.55 : 1,
+              cursor: isPending ? "default" : "pointer",
+              opacity: isPending ? 0.5 : (isCancel || isDone) ? 0.55 : 1,
               textDecoration: isCancel ? "line-through" : "none",
             }}
-            onClick={e => { e.stopPropagation(); if (!isViewer) onEditEvent(ev); }}
-            title={isWfo ? `WFO: ${ev.created_by || "—"}` : isLeave ? `Cuti: ${ev.created_by || "—"}` : `${ev.title}${statusNote}`}>
-            {isWfo ? `🏢 ${ev.created_by || "WFO"}` : isLeave ? `✈️ ${ev.created_by || "Cuti"}` : `${isReschedule ? "↻ " : ""}${ev.title}`}
+            onClick={isPending ? undefined : e => { e.stopPropagation(); if (!isViewer) onEditEvent(ev); }}
+            title={isPending ? "Menyimpan…" : isWfo ? `WFO: ${ev.created_by || "—"}` : isLeave ? `Cuti: ${ev.created_by || "—"}` : `${ev.title}${statusNote}`}>
+            {isWfo ? `🏢 ${ev.created_by || "WFO"}` : isLeave ? `✈️ ${ev.created_by || "Cuti"}` : `${isReschedule ? "↻ " : ""}${ev.title}`}{isPending ? "…" : ""}
           </div>
         );
       })}
@@ -343,11 +345,32 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
   const sortedVisits = [...filteredVisits].sort((a, b) => b.date.localeCompare(a.date));
   const sortedEvents = [...events].sort((a, b) => b.date.localeCompare(a.date));
 
+  // Drag-drop feels like it "snaps back" because the marker only appears once
+  // the server round-trip resolves — the drag overlay/source chip resets the
+  // instant you drop, leaving a gap before the real pill shows up. Render a
+  // dimmed placeholder in the target cell right away (while pendingWfo/Leave
+  // still holds the key) so something lands immediately; it's swapped out for
+  // the real event pill the moment the save commits (see markWfo/markLeave).
+  function pendingEventsFor(pending: Set<string>, type: "WFO" | "Cuti"): CalendarEvent[] {
+    return Array.from(pending).map(key => {
+      const idx = key.indexOf("::");
+      const name = key.slice(0, idx), ds = key.slice(idx + 2);
+      return { id: `pending-${type}-${key}`, title: type === "WFO" ? "Work From Office" : "Cuti", date: ds, type, description: "", created_by: name, client_id: null, status: "Planned" as const };
+    }).filter(pe => !events.some(ev => ev.type === type && ev.date === pe.date && ev.created_by === pe.created_by));
+  }
+  const pendingWfoEvents = pendingEventsFor(pendingWfo, "WFO");
+  const pendingLeaveEvents = pendingEventsFor(pendingLeave, "Cuti");
+
   const monthDays = Array.from({ length: daysInMonth }, (_, i) => {
     const day = i + 1;
     const ds = `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const dow = new Date(y, m, day).getDay();
-    return { ds, day, isWeekend: dow === 0 || dow === 6, dayVisits: filteredVisits.filter(v => v.date === ds), dayEvents: events.filter(e => e.date === ds) };
+    const dayEvents = [
+      ...events.filter(e => e.date === ds),
+      ...pendingWfoEvents.filter(e => e.date === ds),
+      ...pendingLeaveEvents.filter(e => e.date === ds),
+    ];
+    return { ds, day, isWeekend: dow === 0 || dow === 6, dayVisits: filteredVisits.filter(v => v.date === ds), dayEvents };
   });
   // Agenda mode only lists days with something scheduled, Google-Calendar-mobile style.
   const agendaDays = monthDays.filter(d => d.dayVisits.length || d.dayEvents.length);
