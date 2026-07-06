@@ -156,8 +156,8 @@ function AgendaDayCard({
             : isDone ? " · Selesai" : "";
           return (
             <button key={ev.id} type="button" className="agenda-item"
-              style={{ background: isWfo ? "var(--brand-soft)" : isLeave ? "#FEE2E2" : "var(--paper)", color: isLeave ? "#991B1B" : undefined, cursor: isSpecial ? "default" : "pointer", opacity: (isCancel || isDone) ? 0.6 : 1 }}
-              onClick={() => { if (!isSpecial && !isViewer) onEditEvent(ev); }}>
+              style={{ background: isWfo ? "var(--brand-soft)" : isLeave ? "#FEE2E2" : "var(--paper)", color: isLeave ? "#991B1B" : undefined, cursor: "pointer", opacity: (isCancel || isDone) ? 0.6 : 1 }}
+              onClick={() => { if (!isViewer) onEditEvent(ev); }}>
               <span className="agenda-item-dot" style={{ background: isWfo ? "var(--brand)" : isLeave ? "#991B1B" : "var(--gold)" }} />
               <span>
                 <div className="agenda-item-title" style={{ textDecoration: isCancel ? "line-through" : "none" }}>
@@ -224,11 +224,11 @@ function DayCell({
         return (
           <div key={ev.id} className={`vpill ${isWfo ? "vpill-wfo" : isLeave ? "vpill-leave" : "vpill-event"}`}
             style={{
-              cursor: isSpecial ? "default" : "pointer",
+              cursor: "pointer",
               opacity: (isCancel || isDone) ? 0.55 : 1,
               textDecoration: isCancel ? "line-through" : "none",
             }}
-            onClick={isSpecial ? undefined : e => { e.stopPropagation(); if (!isViewer) onEditEvent(ev); }}
+            onClick={e => { e.stopPropagation(); if (!isViewer) onEditEvent(ev); }}
             title={isWfo ? `WFO: ${ev.created_by || "—"}` : isLeave ? `Cuti: ${ev.created_by || "—"}` : `${ev.title}${statusNote}`}>
             {isWfo ? `🏢 ${ev.created_by || "WFO"}` : isLeave ? `✈️ ${ev.created_by || "Cuti"}` : `${isReschedule ? "↻ " : ""}${ev.title}`}
           </div>
