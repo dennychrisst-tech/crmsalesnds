@@ -346,6 +346,14 @@ nav.tabs button.active::after {
 .cell.today .dnum { color: var(--brand); }
 .cell-week-focus { background: var(--brand-soft); }
 .cell-week-focus .dnum { color: var(--brand); }
+/* .cell.cell-holiday (not just .cell-holiday) so this outranks .cell.weekend's
+   equal-specificity rule above when a holiday falls on a weekend. */
+.cell.cell-holiday { background: #FEE2E2; }
+.cell.cell-holiday .dnum { color: #DC2626; }
+.dnum-holiday {
+  font-size: 9.5px; font-weight: 700; color: #991B1B; margin-top: 1px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2;
+}
 .cal-week-focus-banner { display: flex; align-items: center; gap: 8px; justify-content: space-between; background: var(--brand-soft); color: var(--brand); border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 14px; }
 .vpill { background: var(--brand-soft); color: var(--brand); border-radius: 6px; padding: 3px 5px; margin-top: 4px; cursor: pointer; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vpill.done { background: #E7E4DB; color: var(--ink-soft); }
@@ -359,6 +367,7 @@ nav.tabs button.active::after {
 .cal-dot-event { background: #EDE9FE; border: 1px solid #6D28D9; }
 .cal-dot-wfo { background: #FFEDD5; border: 1px solid #9A3412; }
 .cal-dot-leave { background: #FEE2E2; border: 1px solid #991B1B; }
+.cal-dot-holiday { background: #DC2626; border: 1px solid #991B1B; }
 .wfo-drop-target { background: #FFF7ED; border-color: #F97316 !important; }
 .leave-drop-target { background: #FEF2F2; border-color: #DC2626 !important; }
 /* These highlight states hardcode a light tint with no color override, which
@@ -366,6 +375,7 @@ nav.tabs button.active::after {
    solid light fill for a translucent tint of the same hue instead, so the
    existing --ink text keeps working against it. */
 [data-theme="dark"] .cell.weekend { background: rgba(227,172,85,.10); }
+[data-theme="dark"] .cell.cell-holiday { background: rgba(220,38,38,.16); }
 [data-theme="dark"] .wfo-drop-target { background: rgba(249,115,22,.16); }
 [data-theme="dark"] .leave-drop-target { background: rgba(220,38,38,.16); }
 
@@ -1147,6 +1157,12 @@ tr.task-soon td { background: #fffbeb; }
   }
   .agenda-date.is-today { color: var(--brand); }
   .agenda-date.agenda-date-weekend:not(.is-today) { color: var(--gold); }
+  .agenda-date.agenda-date-holiday:not(.is-today) { color: #DC2626; }
+  .agenda-holiday-badge {
+    font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+    background: #FEE2E2; color: #991B1B; white-space: nowrap;
+  }
+  [data-theme="dark"] .agenda-holiday-badge { background: rgba(220,38,38,.18); }
   .agenda-items { display: flex; flex-direction: column; gap: 6px; }
   .agenda-item {
     display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 9px;

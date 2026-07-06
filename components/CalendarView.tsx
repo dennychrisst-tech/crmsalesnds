@@ -4,7 +4,7 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, u
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { Visit, CalendarEvent, Task, Deal, Contact, DateRange } from "@/types";
-import { fmtDate, todayStr, picList, picMatches, colorForSales } from "@/lib/utils";
+import { fmtDate, todayStr, picList, picMatches, colorForSales, holidayName } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import EmptyState from "./ui/EmptyState";
 import VisitModal from "./VisitModal";
@@ -115,17 +115,18 @@ function LeaveQuickForm({ team, onMark }: { team: string[]; onMark: (name: strin
 }
 
 function AgendaDayCard({
-  ds, day, y, m, today, isWeekend, dayVisits, dayEvents, clientName, isViewer, onEditVisit, onEditEvent,
+  ds, day, y, m, today, isWeekend, holiday, dayVisits, dayEvents, clientName, isViewer, onEditVisit, onEditEvent,
 }: {
-  ds: string; day: number; y: number; m: number; today: string; isWeekend: boolean; dayVisits: Visit[]; dayEvents: CalendarEvent[];
+  ds: string; day: number; y: number; m: number; today: string; isWeekend: boolean; holiday?: string; dayVisits: Visit[]; dayEvents: CalendarEvent[];
   clientName: (id: string) => string; isViewer?: boolean;
   onEditVisit: (v: Visit) => void; onEditEvent: (e: CalendarEvent) => void;
 }) {
   const label = new Date(y, m, day).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" });
   return (
     <div className="agenda-day">
-      <div className={`agenda-date${ds === today ? " is-today" : ""}${isWeekend ? " agenda-date-weekend" : ""}`}>
+      <div className={`agenda-date${ds === today ? " is-today" : ""}${isWeekend ? " agenda-date-weekend" : ""}${holiday ? " agenda-date-holiday" : ""}`}>
         <span>{label}</span>
+        {holiday && <span className="agenda-holiday-badge">🔴 {holiday}</span>}
       </div>
       <div className="agenda-items">
         {dayVisits.map(v => {
@@ -181,19 +182,20 @@ function AgendaDayCard({
 }
 
 function DayCell({
-  ds, day, isToday, isWeekend, isWeekFocus, dayVisits, dayEvents, clientName, isViewer, activeDragKind, onOpenNewVisit, onEditVisit, onEditEvent,
+  ds, day, isToday, isWeekend, isWeekFocus, holiday, dayVisits, dayEvents, clientName, isViewer, activeDragKind, onOpenNewVisit, onEditVisit, onEditEvent,
 }: {
-  ds: string; day: number; isToday: boolean; isWeekend: boolean; isWeekFocus?: boolean; dayVisits: Visit[]; dayEvents: CalendarEvent[];
+  ds: string; day: number; isToday: boolean; isWeekend: boolean; isWeekFocus?: boolean; holiday?: string; dayVisits: Visit[]; dayEvents: CalendarEvent[];
   clientName: (id: string) => string; isViewer?: boolean; activeDragKind: "wfo" | "leave" | null;
   onOpenNewVisit: (ds: string) => void; onEditVisit: (v: Visit) => void; onEditEvent: (e: CalendarEvent) => void;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: ds });
   const dropClass = isOver ? (activeDragKind === "leave" ? " leave-drop-target" : " wfo-drop-target") : "";
   return (
-    <div ref={setNodeRef} className={`cell${isToday ? " today" : ""}${isWeekend ? " weekend" : ""}${isWeekFocus ? " cell-week-focus" : ""}${dropClass}`}
+    <div ref={setNodeRef} className={`cell${isToday ? " today" : ""}${isWeekend ? " weekend" : ""}${holiday ? " cell-holiday" : ""}${isWeekFocus ? " cell-week-focus" : ""}${dropClass}`}
       onDoubleClick={() => { if (!isViewer) onOpenNewVisit(ds); }}
-      title={isViewer ? "" : "Double-klik untuk tambah visit, atau seret WFO/Cuti ke sini"}>
+      title={holiday ? holiday : isViewer ? "" : "Double-klik untuk tambah visit, atau seret WFO/Cuti ke sini"}>
       <div className="dnum">{day}</div>
+      {holiday && <div className="dnum-holiday" title={holiday}>{holiday}</div>}
       {dayVisits.map(v => {
         const names = picList(v.pic);
         const colors = (names.length ? names : ["—"]).map(colorForSales);
@@ -386,12 +388,13 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
       ...pendingWfoEvents.filter(e => e.date === ds),
       ...pendingLeaveEvents.filter(e => e.date === ds),
     ];
-    return { ds, day, isWeekend: dow === 0 || dow === 6, isWeekFocus: inWeekFocus(ds), dayVisits: filteredVisits.filter(v => v.date === ds), dayEvents };
+    return { ds, day, isWeekend: dow === 0 || dow === 6, isWeekFocus: inWeekFocus(ds), holiday: holidayName(ds), dayVisits: filteredVisits.filter(v => v.date === ds), dayEvents };
   });
   // Agenda mode only lists days with something scheduled, Google-Calendar-mobile style —
-  // narrowed further to just the focused week when one's been deep-linked in.
+  // holidays surface even with nothing scheduled so a day off isn't mistaken for
+  // an empty one — narrowed further to just the focused week when deep-linked in.
   const agendaDays = monthDays
-    .filter(d => d.dayVisits.length || d.dayEvents.length)
+    .filter(d => d.dayVisits.length || d.dayEvents.length || d.holiday)
     .filter(d => !localWeekFocus || inWeekFocus(d.ds));
 
   return (
@@ -460,6 +463,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
         <span className="cal-legend-item"><span className="cal-dot cal-dot-event" />Event / Kegiatan</span>
         <span className="cal-legend-item"><span className="cal-dot cal-dot-wfo" />WFO (tidak visit)</span>
         <span className="cal-legend-item"><span className="cal-dot cal-dot-leave" />Cuti</span>
+        <span className="cal-legend-item"><span className="cal-dot cal-dot-holiday" />Libur Nasional / Cuti Bersama</span>
       </div>
 
       {/* Mobile-only WFO/Cuti forms — plain date + name picker, no drag needed */}
@@ -497,8 +501,8 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
             <div className="calendar">
               {dows.map((d, i) => <div key={d} className={`dow${i === 0 || i === 6 ? " dow-weekend" : ""}`}>{d}</div>)}
               {Array.from({ length: firstDay }, (_, i) => <div key={`e${i}`} className="cell empty" />)}
-              {monthDays.map(({ ds, day, isWeekend, isWeekFocus, dayVisits, dayEvents }) => (
-                <DayCell key={ds} ds={ds} day={day} isToday={ds === today} isWeekend={isWeekend} isWeekFocus={isWeekFocus} dayVisits={dayVisits} dayEvents={dayEvents}
+              {monthDays.map(({ ds, day, isWeekend, isWeekFocus, holiday, dayVisits, dayEvents }) => (
+                <DayCell key={ds} ds={ds} day={day} isToday={ds === today} isWeekend={isWeekend} isWeekFocus={isWeekFocus} holiday={holiday} dayVisits={dayVisits} dayEvents={dayEvents}
                   clientName={clientName} isViewer={isViewer} activeDragKind={activeWfoName ? "wfo" : activeLeaveName ? "leave" : null}
                   onOpenNewVisit={openNewVisit} onEditVisit={openEditVisit} onEditEvent={openEditEvent} />
               ))}
@@ -520,8 +524,8 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
       <div className="cal-agenda">
         {agendaDays.length === 0 ? (
           <EmptyState icon="🗓️" label="Tidak ada jadwal" sub="Belum ada visit atau event bulan ini" />
-        ) : agendaDays.map(({ ds, day, isWeekend, dayVisits, dayEvents }) => (
-          <AgendaDayCard key={ds} ds={ds} day={day} y={y} m={m} today={today} isWeekend={isWeekend} dayVisits={dayVisits} dayEvents={dayEvents}
+        ) : agendaDays.map(({ ds, day, isWeekend, holiday, dayVisits, dayEvents }) => (
+          <AgendaDayCard key={ds} ds={ds} day={day} y={y} m={m} today={today} isWeekend={isWeekend} holiday={holiday} dayVisits={dayVisits} dayEvents={dayEvents}
             clientName={clientName} isViewer={isViewer}
             onEditVisit={openEditVisit} onEditEvent={openEditEvent} />
         ))}

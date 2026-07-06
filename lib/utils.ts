@@ -141,6 +141,44 @@ export function todayStr(): string {
   return fmtDateStr(new Date());
 }
 
+// Source: SKB 3 Menteri — Hari Libur Nasional dan Cuti Bersama Tahun 2026
+// (Kemenko PMK, https://www.kemenkopmk.go.id/pemerintah-tetapkan-17-hari-libur-nasional-dan-8-hari-cuti-bersama-tahun-2026).
+// Update this list each year — there's no calendar-computation for movable
+// religious holidays (Idulfitri, Iduladha, Nyepi, Imlek, Waisak, Easter, etc.).
+export const NATIONAL_HOLIDAYS_2026: { date: string; name: string }[] = [
+  { date: "2026-01-01", name: "Tahun Baru Masehi" },
+  { date: "2026-01-16", name: "Isra Mikraj" },
+  { date: "2026-02-16", name: "Cuti Bersama Imlek" },
+  { date: "2026-02-17", name: "Tahun Baru Imlek" },
+  { date: "2026-03-18", name: "Cuti Bersama Nyepi" },
+  { date: "2026-03-19", name: "Hari Suci Nyepi" },
+  { date: "2026-03-20", name: "Cuti Bersama Idulfitri" },
+  { date: "2026-03-21", name: "Idulfitri" },
+  { date: "2026-03-22", name: "Idulfitri" },
+  { date: "2026-03-23", name: "Cuti Bersama Idulfitri" },
+  { date: "2026-03-24", name: "Cuti Bersama Idulfitri" },
+  { date: "2026-04-03", name: "Wafat Yesus Kristus" },
+  { date: "2026-04-05", name: "Paskah" },
+  { date: "2026-05-01", name: "Hari Buruh Internasional" },
+  { date: "2026-05-14", name: "Kenaikan Yesus Kristus" },
+  { date: "2026-05-15", name: "Cuti Bersama Kenaikan Yesus Kristus" },
+  { date: "2026-05-27", name: "Iduladha" },
+  { date: "2026-05-28", name: "Cuti Bersama Iduladha" },
+  { date: "2026-05-31", name: "Hari Raya Waisak" },
+  { date: "2026-06-01", name: "Hari Lahir Pancasila" },
+  { date: "2026-06-16", name: "Tahun Baru Islam" },
+  { date: "2026-08-17", name: "Proklamasi Kemerdekaan RI" },
+  { date: "2026-08-25", name: "Maulid Nabi Muhammad" },
+  { date: "2026-12-24", name: "Cuti Bersama Natal" },
+  { date: "2026-12-25", name: "Hari Raya Natal" },
+];
+
+const HOLIDAY_MAP_2026 = new Map(NATIONAL_HOLIDAYS_2026.map(h => [h.date, h.name]));
+
+export function holidayName(ds: string): string | undefined {
+  return HOLIDAY_MAP_2026.get(ds);
+}
+
 export function isoWeekLabel(dateStr: string): { key: string; label: string } {
   const d = new Date(dateStr + "T00:00:00");
   const t = new Date(d);
