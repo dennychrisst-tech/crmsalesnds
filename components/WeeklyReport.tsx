@@ -225,7 +225,7 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
             {s.standaloneActivities.length > 0 && (
               <div className="wr-card-list" style={{ marginTop: s.visits.length ? 10 : 0 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 2 }}>
-                  Update Aktivitas (tanpa visit)
+                  Update Aktivitas (di Luar Visit)
                 </div>
                 {s.standaloneActivities.map(a => {
                   const ref = activityRef(a);
