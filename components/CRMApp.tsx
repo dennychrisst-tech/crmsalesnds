@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  LayoutDashboard, Building2, CalendarDays, FolderKanban, Briefcase,
+  LayoutDashboard, Building2, CalendarDays, FolderKanban, Briefcase, Target,
   ListChecks, TrendingUp, ClipboardList, CalendarRange, Wallet, Users, MoreHorizontal, Calculator,
   BarChart3, ChevronDown, Sun, Moon,
   type LucideIcon,
@@ -16,6 +16,7 @@ import CalendarView from "./CalendarView";
 import Clients from "./Clients";
 import Pipeline from "./Pipeline";
 import Projects from "./Projects";
+import Opty from "./Opty";
 import TasksView from "./TasksView";
 import ProductsView from "./ProductsView";
 import GlobalSearch from "./GlobalSearch";
@@ -35,6 +36,7 @@ const TABS: { id: ActiveView; label: string; icon: LucideIcon }[] = [
   { id: "clients",     label: "Client",             icon: Building2 },
   { id: "calendar",    label: "Calendar Visit",     icon: CalendarDays },
   { id: "projects",    label: "Project",            icon: FolderKanban },
+  { id: "opty",        label: "Oppty",              icon: Target },
   { id: "pipeline",    label: "Pipeline",           icon: Briefcase },
   { id: "tasks",       label: "Tasks",              icon: ListChecks },
   { id: "summary",     label: "Summary Activity",   icon: TrendingUp },
@@ -53,7 +55,7 @@ const MORE_TABS = TABS.filter(t => !PRIMARY_VIEWS.includes(t.id));
 // to scan on mobile. Anything not listed here falls into "Lainnya" so new
 // tabs never silently disappear from the sheet.
 const MORE_GROUPS: { label: string; ids: ActiveView[] }[] = [
-  { label: "Kerja", ids: ["projects", "tasks"] },
+  { label: "Kerja", ids: ["projects", "opty", "tasks"] },
   { label: "Laporan", ids: ["summary", "visit-report", "weekly-report"] },
   { label: "Analitik", ids: ["revenue-forecast", "talent-fill-rate", "mandays-rate"] },
 ];
@@ -61,7 +63,7 @@ const MORE_GROUPS: { label: string; ids: ActiveView[] }[] = [
 // Desktop tab row: keeps the 6 most-used views inline, and groups the rest
 // under two dropdowns instead of letting the row wrap to a ragged second
 // line once it doesn't fit (it was already right at the edge at 12 tabs).
-const DESKTOP_PRIMARY_IDS: ActiveView[] = ["dashboard", "clients", "calendar", "projects", "pipeline", "tasks"];
+const DESKTOP_PRIMARY_IDS: ActiveView[] = ["dashboard", "clients", "calendar", "projects", "opty", "pipeline", "tasks"];
 const DESKTOP_DROPDOWN_GROUPS: { label: string; icon: LucideIcon; ids: ActiveView[] }[] = [
   { label: "Laporan", icon: ClipboardList, ids: ["summary", "visit-report", "weekly-report"] },
   { label: "Analitik", icon: BarChart3, ids: ["revenue-forecast", "talent-fill-rate", "mandays-rate"] },
@@ -72,7 +74,7 @@ const DESKTOP_DROPDOWN_GROUPS: { label: string; icon: LucideIcon; ids: ActiveVie
 // so an unknown/typo'd value falls back to the default view instead of
 // rendering nothing.
 const ALL_VIEW_IDS: ActiveView[] = [
-  "dashboard", "calendar", "clients", "pipeline", "projects", "tasks", "catalog",
+  "dashboard", "calendar", "clients", "pipeline", "projects", "opty", "tasks", "catalog",
   "summary", "visit-report", "weekly-report", "revenue-forecast", "talent-fill-rate", "mandays-rate",
 ];
 
@@ -344,6 +346,13 @@ export default function CRMApp() {
                   <Projects data={data} isViewer={isViewer} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)}
                     onSaveTalentRole={ro(upsertTalentRole)} onDeleteTalentRole={ro(deleteTalentRole)}
                     onOpenClient={openClient} />
+                )}
+                {view === "opty" && (
+                  <Opty data={data} currentUserName={currentUserName} isViewer={isViewer}
+                    onSaveDeal={ro(upsertDeal)} onDeleteDeal={ro(deleteDeal)}
+                    onAddDocument={ro(upsertDocument)} onDeleteDocument={ro(deleteDocument)}
+                    onUploadAttachment={ro(uploadAttachment)} onDeleteAttachment={ro(deleteAttachment)}
+                    onAddActivity={ro(upsertActivity)} onDeleteActivity={ro(deleteActivity)} />
                 )}
                 {view === "tasks" && (
                   <TasksView data={data} currentUserName={currentUserName} isViewer={isViewer} onSaveTask={ro(upsertTask)} onDeleteTask={ro(deleteTask)} onCreateDeal={ro(upsertDeal)}

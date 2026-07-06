@@ -207,7 +207,7 @@ export interface CalendarEvent {
   created_at?: string;
 }
 
-export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects" | "tasks" | "catalog" | "summary" | "visit-report" | "weekly-report" | "revenue-forecast" | "talent-fill-rate" | "mandays-rate";
+export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects" | "opty" | "tasks" | "catalog" | "summary" | "visit-report" | "weekly-report" | "revenue-forecast" | "talent-fill-rate" | "mandays-rate";
 
 // Revenue Forecast — annual target vs. contracted revenue vs. opportunity
 // pipeline (mirrors the team's yearly forecast workbook).
