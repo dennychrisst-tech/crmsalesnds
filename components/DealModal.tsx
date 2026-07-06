@@ -91,6 +91,7 @@ export default function DealModal({
 
   async function handleAddActivity() {
     if (!actForm.description.trim()) { toast("Deskripsi aktivitas wajib diisi.", { type: "error" }); return; }
+    if (!actForm.created_by) { toast("Oleh wajib diisi.", { type: "error" }); return; }
     setSaving(true);
     try {
       await onAddActivity({ ...actForm, id: uuid(), deal_id: form.id });

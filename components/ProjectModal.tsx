@@ -73,6 +73,7 @@ export default function ProjectModal({ open, project, clients, activities, team,
 
   async function handleAddActivity() {
     if (!actForm.description.trim()) { toast("Deskripsi aktivitas wajib diisi.", { type: "error" }); return; }
+    if (!actForm.created_by) { toast("Oleh wajib diisi.", { type: "error" }); return; }
     setSavingActivity(true);
     try {
       await onAddActivity({ ...actForm, id: uuid(), project_id: form.id });
