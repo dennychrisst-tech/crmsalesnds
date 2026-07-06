@@ -5,8 +5,8 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, u
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
-import { Deal, CRMDocument, Attachment, Activity, Project } from "@/types";
-import { STAGES, STAGE_COLOR, fmtIDR, isClosedStage, colorForSales, dealAgingDays, isDealAtRisk } from "@/lib/utils";
+import { Deal, CRMDocument, Attachment, Activity, Project, DateRange } from "@/types";
+import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, isClosedStage, colorForSales, dealAgingDays, isDealAtRisk } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 import { toast } from "./ui/Toast";
 import Modal, { Field, ModalActions, inputCls, textareaCls } from "./ui/Modal";
@@ -45,6 +45,10 @@ interface Props {
   onOpenDealHandled?: () => void;
   openStage?: string | null;
   onOpenStageHandled?: () => void;
+  // Deep-link: jump to and filter this week (e.g. from Weekly Report's KPI
+  // cards) — consumed once on mount, then held as local state until dismissed.
+  weekFocus?: DateRange | null;
+  onWeekFocusHandled?: () => void;
 }
 
 // draggable=false on mobile's plain vertical list — dnd-kit's pointer listeners
@@ -255,7 +259,7 @@ function Column({ stage, deals, clientName, onDealClick, onMoveStage, isViewer, 
   );
 }
 
-export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity, openDealId, onOpenDealHandled, openStage, onOpenStageHandled }: Props) {
+export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity, openDealId, onOpenDealHandled, openStage, onOpenStageHandled, weekFocus, onWeekFocusHandled }: Props) {
   const { clients, products, documents, attachments, activities, profiles, projects } = data;
   // Soft-delete: a deal "Hapus" (from DealModal) hides it immediately, real
   // delete happens after the Undo window passes — see useUndoableDelete.
@@ -282,6 +286,14 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [showArchived, setShowArchived] = useState(false);
   const [atRiskOnly, setAtRiskOnly] = useState(false);
+  const [localWeekFocus, setLocalWeekFocus] = useState<DateRange | null>(null);
+
+  useEffect(() => {
+    if (!weekFocus) return;
+    setLocalWeekFocus(weekFocus);
+    onWeekFocusHandled?.();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekFocus]);
   // Deal being dropped into Won/Lost — prompts for win/loss reason before saving
   const [closing, setClosing] = useState<{ deal: Deal; stage: string } | null>(null);
   const [closeReason, setCloseReason] = useState("");
@@ -340,6 +352,14 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   const atRiskCount = ownedDeals.filter(isDealAtRisk).length;
   let visibleDeals = showArchived ? ownedDeals : ownedDeals.filter(d => !isArchived(d));
   if (atRiskOnly) visibleDeals = visibleDeals.filter(isDealAtRisk);
+  // Deep-linked from Weekly Report's KPI cards — narrow to deals that actually
+  // changed stage within that week (matches the KPI's own count exactly).
+  if (localWeekFocus) {
+    visibleDeals = visibleDeals.filter(d => {
+      const updated = d.stage_updated_at?.slice(0, 10);
+      return !!updated && updated >= localWeekFocus.start && updated <= localWeekFocus.end;
+    });
+  }
 
   // On Hold always gets a column (deals parked there aren't "closed", so they're
   // never archived); Dropped only appears once the archive toggle reveals it.
@@ -563,6 +583,13 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
       </div>
 
       {!isViewer && <button className="fab" onClick={() => setShowPanel(s => !s)} aria-label="Tambah dari Proyek">+</button>}
+
+      {localWeekFocus && (
+        <div className="cal-week-focus-banner">
+          <span>📅 Fokus minggu {fmtDate(localWeekFocus.start)} – {fmtDate(localWeekFocus.end)} · {visibleDeals.length} deal update</span>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setLocalWeekFocus(null)}>Tampilkan Semua</button>
+        </div>
+      )}
 
       {team.length > 0 && (
         <div className="cal-legend">

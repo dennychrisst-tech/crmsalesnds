@@ -211,6 +211,13 @@ export interface CalendarEvent {
 
 export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects" | "opty" | "talent" | "tasks" | "catalog" | "summary" | "visit-report" | "weekly-report" | "revenue-forecast" | "talent-fill-rate" | "mandays-rate";
 
+// Deep-link a specific week (e.g. from Weekly Report's KPI cards) into
+// Calendar/Pipeline so they can jump to and filter that exact range.
+export interface DateRange {
+  start: string;
+  end: string;
+}
+
 // Revenue Forecast — annual target vs. contracted revenue vs. opportunity
 // pipeline (mirrors the team's yearly forecast workbook).
 export interface RevenueMilestone {

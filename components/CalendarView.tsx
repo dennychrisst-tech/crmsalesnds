@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
-import { Visit, CalendarEvent, Task, Deal, Contact } from "@/types";
+import { Visit, CalendarEvent, Task, Deal, Contact, DateRange } from "@/types";
 import { fmtDate, todayStr, picList, picMatches, colorForSales } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import EmptyState from "./ui/EmptyState";
@@ -32,6 +32,11 @@ interface Props {
   // Deep-link: open this visit's detail modal on mount (e.g. from Summary Activity)
   openVisitId?: string | null;
   onOpenVisitHandled?: () => void;
+  // Deep-link: jump to and filter this week (e.g. from Weekly Report's KPI
+  // cards) — consumed once on mount, then held as local state (see weekFocus
+  // below) until the user dismisses it.
+  weekFocus?: DateRange | null;
+  onWeekFocusHandled?: () => void;
 }
 
 function WfoChip({ name }: { name: string }) {
@@ -176,16 +181,16 @@ function AgendaDayCard({
 }
 
 function DayCell({
-  ds, day, isToday, isWeekend, dayVisits, dayEvents, clientName, isViewer, activeDragKind, onOpenNewVisit, onEditVisit, onEditEvent,
+  ds, day, isToday, isWeekend, isWeekFocus, dayVisits, dayEvents, clientName, isViewer, activeDragKind, onOpenNewVisit, onEditVisit, onEditEvent,
 }: {
-  ds: string; day: number; isToday: boolean; isWeekend: boolean; dayVisits: Visit[]; dayEvents: CalendarEvent[];
+  ds: string; day: number; isToday: boolean; isWeekend: boolean; isWeekFocus?: boolean; dayVisits: Visit[]; dayEvents: CalendarEvent[];
   clientName: (id: string) => string; isViewer?: boolean; activeDragKind: "wfo" | "leave" | null;
   onOpenNewVisit: (ds: string) => void; onEditVisit: (v: Visit) => void; onEditEvent: (e: CalendarEvent) => void;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: ds });
   const dropClass = isOver ? (activeDragKind === "leave" ? " leave-drop-target" : " wfo-drop-target") : "";
   return (
-    <div ref={setNodeRef} className={`cell${isToday ? " today" : ""}${isWeekend ? " weekend" : ""}${dropClass}`}
+    <div ref={setNodeRef} className={`cell${isToday ? " today" : ""}${isWeekend ? " weekend" : ""}${isWeekFocus ? " cell-week-focus" : ""}${dropClass}`}
       onDoubleClick={() => { if (!isViewer) onOpenNewVisit(ds); }}
       title={isViewer ? "" : "Double-klik untuk tambah visit, atau seret WFO/Cuti ke sini"}>
       <div className="dnum">{day}</div>
@@ -240,7 +245,7 @@ function DayCell({
   );
 }
 
-export default function CalendarView({ data, currentUserName, isViewer, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask, onCreateDeal, onSaveContact, openVisitId, onOpenVisitHandled }: Props) {
+export default function CalendarView({ data, currentUserName, isViewer, onSaveVisit, onDeleteVisit, onSaveEvent, onDeleteEvent, onCreateTask, onCreateDeal, onSaveContact, openVisitId, onOpenVisitHandled, weekFocus, onWeekFocusHandled }: Props) {
   const { clients, contacts, visits, events, deals, projects, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const salesLegend = Array.from(new Set([...team, ...visits.flatMap(v => picList(v.pic))])).sort((a, b) => a.localeCompare(b));
@@ -262,6 +267,15 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
   const [showLeavePanel, setShowLeavePanel] = useState(false);
   const [activeLeaveName, setActiveLeaveName] = useState<string | null>(null);
   const [pendingLeave, setPendingLeave] = useState<Set<string>>(new Set());
+  const [localWeekFocus, setLocalWeekFocus] = useState<DateRange | null>(null);
+
+  useEffect(() => {
+    if (!weekFocus) return;
+    setLocalWeekFocus(weekFocus);
+    setCursor(new Date(weekFocus.start + "T00:00:00"));
+    onWeekFocusHandled?.();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekFocus]);
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
   const y = cursor.getFullYear(), m = cursor.getMonth();
@@ -361,6 +375,8 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
   const pendingWfoEvents = pendingEventsFor(pendingWfo, "WFO");
   const pendingLeaveEvents = pendingEventsFor(pendingLeave, "Cuti");
 
+  const inWeekFocus = (ds: string) => !!localWeekFocus && ds >= localWeekFocus.start && ds <= localWeekFocus.end;
+
   const monthDays = Array.from({ length: daysInMonth }, (_, i) => {
     const day = i + 1;
     const ds = `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -370,10 +386,13 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
       ...pendingWfoEvents.filter(e => e.date === ds),
       ...pendingLeaveEvents.filter(e => e.date === ds),
     ];
-    return { ds, day, isWeekend: dow === 0 || dow === 6, dayVisits: filteredVisits.filter(v => v.date === ds), dayEvents };
+    return { ds, day, isWeekend: dow === 0 || dow === 6, isWeekFocus: inWeekFocus(ds), dayVisits: filteredVisits.filter(v => v.date === ds), dayEvents };
   });
-  // Agenda mode only lists days with something scheduled, Google-Calendar-mobile style.
-  const agendaDays = monthDays.filter(d => d.dayVisits.length || d.dayEvents.length);
+  // Agenda mode only lists days with something scheduled, Google-Calendar-mobile style —
+  // narrowed further to just the focused week when one's been deep-linked in.
+  const agendaDays = monthDays
+    .filter(d => d.dayVisits.length || d.dayEvents.length)
+    .filter(d => !localWeekFocus || inWeekFocus(d.ds));
 
   return (
     <section>
@@ -419,6 +438,13 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
       </div>
 
       {!isViewer && <button className="fab" onClick={() => openNewVisit()} aria-label="Jadwalkan Visit">+</button>}
+
+      {localWeekFocus && (
+        <div className="cal-week-focus-banner">
+          <span>📅 Fokus minggu {fmtDate(localWeekFocus.start)} – {fmtDate(localWeekFocus.end)}</span>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setLocalWeekFocus(null)}>Tampilkan Semua</button>
+        </div>
+      )}
 
       {/* Legend */}
       <div className="cal-legend">
@@ -471,8 +497,8 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
             <div className="calendar">
               {dows.map((d, i) => <div key={d} className={`dow${i === 0 || i === 6 ? " dow-weekend" : ""}`}>{d}</div>)}
               {Array.from({ length: firstDay }, (_, i) => <div key={`e${i}`} className="cell empty" />)}
-              {monthDays.map(({ ds, day, isWeekend, dayVisits, dayEvents }) => (
-                <DayCell key={ds} ds={ds} day={day} isToday={ds === today} isWeekend={isWeekend} dayVisits={dayVisits} dayEvents={dayEvents}
+              {monthDays.map(({ ds, day, isWeekend, isWeekFocus, dayVisits, dayEvents }) => (
+                <DayCell key={ds} ds={ds} day={day} isToday={ds === today} isWeekend={isWeekend} isWeekFocus={isWeekFocus} dayVisits={dayVisits} dayEvents={dayEvents}
                   clientName={clientName} isViewer={isViewer} activeDragKind={activeWfoName ? "wfo" : activeLeaveName ? "leave" : null}
                   onOpenNewVisit={openNewVisit} onEditVisit={openEditVisit} onEditEvent={openEditEvent} />
               ))}

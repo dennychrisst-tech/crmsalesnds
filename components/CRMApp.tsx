@@ -10,7 +10,7 @@ import {
 import { useData } from "@/hooks/useData";
 import { useTheme } from "@/hooks/useTheme";
 
-import { ActiveView } from "@/types";
+import { ActiveView, DateRange } from "@/types";
 import Dashboard from "./Dashboard";
 import CalendarView from "./CalendarView";
 import Clients from "./Clients";
@@ -132,6 +132,7 @@ export default function CRMApp() {
   const [pendingVisitId, setPendingVisitId] = useState<string | null>(null);
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
   const [pendingStage, setPendingStage] = useState<string | null>(null);
+  const [pendingWeekFocus, setPendingWeekFocus] = useState<DateRange | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [openNavDropdown, setOpenNavDropdown] = useState<string | null>(null);
 
@@ -165,6 +166,20 @@ export default function CRMApp() {
 
   function openStage(stage: string) {
     setPendingStage(stage);
+    setView("pipeline");
+  }
+
+  // Deep-link a specific week (e.g. from Weekly Report's KPI cards) — Calendar
+  // and Pipeline each pick this up once, jump to it, and hold their own local
+  // filter from then on (see their own onWeekFocusHandled).
+  function openCalendarWeek(range: DateRange) {
+    setPendingWeekFocus(range);
+    setView("calendar");
+  }
+
+  function openPipelineWeek(range: DateRange, stage?: string) {
+    setPendingWeekFocus(range);
+    if (stage) setPendingStage(stage);
     setView("pipeline");
   }
 
@@ -325,7 +340,8 @@ export default function CRMApp() {
                     onSaveVisit={ro(upsertVisit)} onDeleteVisit={ro(deleteVisit)}
                     onSaveEvent={ro(upsertEvent)} onDeleteEvent={ro(deleteEvent)}
                     onCreateTask={ro(upsertTask)} onCreateDeal={ro(upsertDeal)} onSaveContact={ro(upsertContact)}
-                    openVisitId={pendingVisitId} onOpenVisitHandled={() => setPendingVisitId(null)} />
+                    openVisitId={pendingVisitId} onOpenVisitHandled={() => setPendingVisitId(null)}
+                    weekFocus={pendingWeekFocus} onWeekFocusHandled={() => setPendingWeekFocus(null)} />
                 )}
                 {view === "clients" && (
                   <Clients data={data} currentUserName={currentUserName} isViewer={isViewer} onNavigate={setView}
@@ -342,7 +358,8 @@ export default function CRMApp() {
                     onUploadAttachment={ro(uploadAttachment)} onDeleteAttachment={ro(deleteAttachment)}
                     onAddActivity={ro(upsertActivity)} onDeleteActivity={ro(deleteActivity)}
                     openDealId={pendingDealId} onOpenDealHandled={() => setPendingDealId(null)}
-                    openStage={pendingStage} onOpenStageHandled={() => setPendingStage(null)} />
+                    openStage={pendingStage} onOpenStageHandled={() => setPendingStage(null)}
+                    weekFocus={pendingWeekFocus} onWeekFocusHandled={() => setPendingWeekFocus(null)} />
                 )}
                 {view === "projects" && (
                   <Projects data={data} isViewer={isViewer} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)}
@@ -375,7 +392,10 @@ export default function CRMApp() {
                 )}
                 {view === "summary" && <SummaryView data={data} onOpenVisit={openVisit} />}
                 {view === "visit-report" && <VisitReport data={data} />}
-                {view === "weekly-report" && <WeeklyReport data={data} onOpenDeal={openDeal} onNavigate={setView} onOpenStage={openStage} />}
+                {view === "weekly-report" && (
+                  <WeeklyReport data={data} onOpenDeal={openDeal}
+                    onOpenCalendarWeek={openCalendarWeek} onOpenPipelineWeek={openPipelineWeek} />
+                )}
                 {view === "revenue-forecast" && (
                   <RevenueForecastView data={data} isViewer={isViewer}
                     onSaveTarget={ro(upsertRevenueTarget)}

@@ -344,6 +344,9 @@ nav.tabs button.active::after {
 .cell.weekend .dnum { color: var(--gold); }
 .cell.today { border-color: var(--brand); border-width: 2px; }
 .cell.today .dnum { color: var(--brand); }
+.cell-week-focus { background: var(--brand-soft); }
+.cell-week-focus .dnum { color: var(--brand); }
+.cal-week-focus-banner { display: flex; align-items: center; gap: 8px; justify-content: space-between; background: var(--brand-soft); color: var(--brand); border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 14px; }
 .vpill { background: var(--brand-soft); color: var(--brand); border-radius: 6px; padding: 3px 5px; margin-top: 4px; cursor: pointer; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vpill.done { background: #E7E4DB; color: var(--ink-soft); }
 .vpill-event { background: #EDE9FE; color: #6D28D9; }
