@@ -320,7 +320,7 @@ export default function Talent({
 
       <DealModal
         open={dealModalOpen} deal={editDeal} clients={clients} products={products} team={team}
-        defaultOwner={currentUserName} defaultProduct="Talent"
+        defaultOwner={currentUserName} defaultProduct="Talent" entityLabel="Oppty Talent"
         documents={dealDocuments} attachments={dealAttachments} activities={dealActivities}
         onSave={onSaveDeal} onDelete={handleDeleteDeal}
         onAddDocument={onAddDocument} onDeleteDocument={onDeleteDocument}

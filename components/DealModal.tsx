@@ -20,6 +20,9 @@ interface Props {
   team: string[];
   defaultOwner?: string;
   defaultProduct?: string;
+  // Lets callers with a narrower context (e.g. Talent's "Opportunity Talent")
+  // show that in the modal title instead of the generic "Oppty".
+  entityLabel?: string;
   onSave: (d: Deal) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onAddDocument: (d: CRMDocument) => Promise<void>;
@@ -43,6 +46,7 @@ const emptyActivity = (dealId: string): Omit<Activity, "id" | "created_at"> => (
 
 export default function DealModal({
   open, deal, clients, products, documents, attachments, activities, team, defaultOwner = "", defaultProduct = "",
+  entityLabel = "Oppty",
   onSave, onDelete, onAddDocument, onDeleteDocument,
   onUploadAttachment, onDeleteAttachment,
   onAddActivity, onDeleteActivity,
@@ -127,7 +131,7 @@ export default function DealModal({
   const winLossLabel = form.stage === "Dropped" ? "Dropped" : "Dealed";
 
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? (tab === "detail" ? "Detail Oppty" : "Edit Oppty") : "Tambah Oppty"}>
+    <Modal open={open} onClose={onClose} title={isEdit ? (tab === "detail" ? `Detail ${entityLabel}` : `Edit ${entityLabel}`) : `Tambah ${entityLabel} Baru`}>
       {isEdit && (
         <div className="modal-tabs">
           <button className={tabCls("detail")} onClick={() => setTab("detail")}>Detail</button>
