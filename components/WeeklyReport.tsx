@@ -36,14 +36,14 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
 
   const weekVisits = visits.filter(v => v.status === "Done" && inRange(v.date, start, end));
   const weekDealUpdates = deals.filter(d => d.stage_updated_at && inRange(d.stage_updated_at, start, end));
+  const weekActivityLog = activities.filter(a => inRange(a.date, start, end));
   const weekWon = weekDealUpdates.filter(d => isWonStage(d.stage));
-  const activeSales = new Set(weekVisits.flatMap(v => v.pic ? v.pic.split(",").map(s => s.trim()) : []));
-
-  const salesData = team.map(name => {
-    const salesVisits = weekVisits.filter(v => picMatches(v.pic, name)).sort((a, b) => b.date.localeCompare(a.date));
-    const salesDealUpdates = weekDealUpdates.filter(d => d.owner === name);
-    return { name, visits: salesVisits, dealUpdates: salesDealUpdates };
-  });
+  // Counts as "active" whether the update came from a visit or just a logged
+  // activity (WA/phone follow-up with no visit) — both are real sales work.
+  const activeSales = new Set([
+    ...weekVisits.flatMap(v => v.pic ? v.pic.split(",").map(s => s.trim()) : []),
+    ...weekActivityLog.map(a => a.created_by).filter(Boolean),
+  ]);
 
   function relatedDeal(v: (typeof weekVisits)[number]) {
     return v.deal_id ? deals.find(d => d.id === v.deal_id) || null : null;
@@ -54,14 +54,34 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
   }
 
   // Activity updates (Oppty & Project) logged this week, attached to whichever
-  // visit card references the same deal/project — a visit is the anchor for
-  // each card, so an activity with no linked deal/project just won't surface here.
+  // visit card references the same deal/project.
   function relatedActivities(v: (typeof weekVisits)[number]) {
-    return activities.filter(a =>
-      inRange(a.date, start, end) &&
-      ((v.deal_id && a.deal_id === v.deal_id) || (v.project_id && a.project_id === v.project_id))
+    return weekActivityLog.filter(a =>
+      (v.deal_id && a.deal_id === v.deal_id) || (v.project_id && a.project_id === v.project_id)
     ).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   }
+
+  // Client name for an activity not tied to any visit — resolved via its Deal
+  // or Project (whichever it's linked to), same as the deal/project themselves.
+  function activityRef(a: (typeof weekActivityLog)[number]) {
+    const deal = a.deal_id ? deals.find(d => d.id === a.deal_id) || null : null;
+    if (deal) return { kind: "deal" as const, clientId: deal.client_id, label: deal.name, deal };
+    const project = a.project_id ? projects.find(p => p.id === a.project_id) || null : null;
+    if (project) return { kind: "project" as const, clientId: project.client_id, label: project.name, project };
+    return null;
+  }
+
+  const salesData = team.map(name => {
+    const salesVisits = weekVisits.filter(v => picMatches(v.pic, name)).sort((a, b) => b.date.localeCompare(a.date));
+    const salesDealUpdates = weekDealUpdates.filter(d => d.owner === name);
+    // Activities already shown on one of this week's visit cards don't repeat
+    // here — this section is only for updates that had no visit at all.
+    const attachedIds = new Set(weekVisits.flatMap(v => relatedActivities(v).map(a => a.id)));
+    const standaloneActivities = weekActivityLog
+      .filter(a => a.created_by === name && !attachedIds.has(a.id))
+      .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    return { name, visits: salesVisits, dealUpdates: salesDealUpdates, standaloneActivities };
+  });
 
   function buildShareText() {
     const lines: string[] = [
@@ -117,7 +137,7 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
         <div className="kpi">
           <div className="kpi-label">Sales Aktif</div>
           <div className="kpi-num">{activeSales.size}<span className="muted">/{team.length}</span></div>
-          <div className="kpi-sub">melakukan visit minggu ini</div>
+          <div className="kpi-sub">visit atau update aktivitas minggu ini</div>
         </div>
       </div>
 
@@ -138,9 +158,13 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
             </div>
           </div>
 
-          {s.visits.length === 0 ? (
-            <div className="empty-state" style={{ padding: "14px 0" }}>Belum ada visit selesai minggu ini.</div>
+          {s.visits.length === 0 && s.standaloneActivities.length === 0 ? (
+            <div className="empty-state" style={{ padding: "14px 0" }}>Belum ada visit atau update aktivitas minggu ini.</div>
           ) : (
+            <>
+            {s.visits.length === 0 ? (
+              <div className="empty-state" style={{ padding: "14px 0" }}>Belum ada visit selesai minggu ini.</div>
+            ) : (
             <div className="wr-card-list">
               {s.visits.map(v => {
                 const deal = relatedDeal(v);
@@ -196,6 +220,53 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
                 );
               })}
             </div>
+            )}
+
+            {s.standaloneActivities.length > 0 && (
+              <div className="wr-card-list" style={{ marginTop: s.visits.length ? 10 : 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 2 }}>
+                  Update Aktivitas (tanpa visit)
+                </div>
+                {s.standaloneActivities.map(a => {
+                  const ref = activityRef(a);
+                  return (
+                    <div key={a.id} className="wr-card">
+                      <div className="wr-card-top">
+                        <span className="wr-date">{a.date ? fmtDate(a.date) : "—"}</span>
+                        <span className="wr-client">{ref ? clientName(ref.clientId) : "—"}</span>
+                        <span className="wr-approach">{a.type}</span>
+                      </div>
+                      <div className="wr-summary">
+                        {a.description || <em className="muted">Tidak ada catatan.</em>}
+                      </div>
+                      {ref && (
+                        <div className="wr-updates">
+                          {ref.kind === "deal" ? (
+                            <span
+                              className="wr-update-chip wr-update-chip-clickable stage-text"
+                              style={{ borderColor: STAGE_COLOR[ref.deal.stage] || "var(--brand)", color: STAGE_COLOR[ref.deal.stage] || "var(--brand)" }}
+                              onClick={() => onOpenDeal(ref.deal.id)}
+                              title="Buka detail pipeline"
+                            >
+                              <Briefcase size={12} /> {ref.deal.name} → {ref.deal.stage}
+                            </span>
+                          ) : (
+                            <span
+                              className="wr-update-chip wr-update-chip-clickable"
+                              onClick={() => setDetailProject(ref.project)}
+                              title="Lihat detail project"
+                            >
+                              <FolderKanban size={12} /> {ref.project.name} · {ref.project.status}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            </>
           )}
         </div>
       ))}
