@@ -26,7 +26,7 @@ function inRange(dateStr: string | null | undefined, start: string, end: string)
 interface Props { data: AppData; onOpenDeal: (dealId: string) => void; }
 
 export default function WeeklyReport({ data, onOpenDeal }: Props) {
-  const { clients, visits, deals, projects, profiles } = data;
+  const { clients, visits, deals, projects, profiles, activities } = data;
   const team = profiles.filter(p => !["super_admin", "admin", "viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [offset, setOffset] = useState(0);
   const [detailProject, setDetailProject] = useState<Project | null>(null);
@@ -51,6 +51,16 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
 
   function relatedProjects(clientId: string) {
     return projects.filter(p => p.client_id === clientId);
+  }
+
+  // Activity updates (Oppty & Project) logged this week, attached to whichever
+  // visit card references the same deal/project — a visit is the anchor for
+  // each card, so an activity with no linked deal/project just won't surface here.
+  function relatedActivities(v: (typeof weekVisits)[number]) {
+    return activities.filter(a =>
+      inRange(a.date, start, end) &&
+      ((v.deal_id && a.deal_id === v.deal_id) || (v.project_id && a.project_id === v.project_id))
+    ).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   }
 
   function buildShareText() {
@@ -136,6 +146,7 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
                 const deal = relatedDeal(v);
                 const dealUpdatedThisWeek = deal?.stage_updated_at ? inRange(deal.stage_updated_at, start, end) : false;
                 const clientProjects = relatedProjects(v.client_id);
+                const weekActivities = relatedActivities(v);
                 return (
                   <div key={v.id} className="wr-card">
                     <div className="wr-card-top">
@@ -168,6 +179,16 @@ export default function WeeklyReport({ data, onOpenDeal }: Props) {
                           >
                             <FolderKanban size={12} /> {p.name} · {p.status}
                           </span>
+                        ))}
+                      </div>
+                    )}
+                    {weekActivities.length > 0 && (
+                      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+                        {weekActivities.map(a => (
+                          <div key={a.id} style={{ fontSize: 11.5, color: "var(--ink-soft)", borderLeft: "2px solid var(--line)", paddingLeft: 8 }}>
+                            <b>{a.type}</b>{a.date ? ` · ${fmtDate(a.date)}` : ""}{a.created_by ? ` · ${a.created_by}` : ""}
+                            {a.description ? ` — ${a.description}` : ""}
+                          </div>
                         ))}
                       </div>
                     )}

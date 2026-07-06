@@ -3,17 +3,21 @@ import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
 import SearchableSelect from "./ui/SearchableSelect";
-import { Project, Client } from "@/types";
-import { PROJ_STATUS, fmtIDR as fmtIDRFull, fmtDate } from "@/lib/utils";
+import { Project, Client, Activity } from "@/types";
+import { PROJ_STATUS, ACTIVITY_TYPES, fmtIDR as fmtIDRFull, fmtDate, todayStr } from "@/lib/utils";
 import { toast } from "./ui/Toast";
 
 interface Props {
   open: boolean;
   project: Project | null;
   clients: Client[];
+  activities: Activity[];
+  team: string[];
   defaultProduct?: string;
   onSave: (p: Project) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onAddActivity: (a: Activity) => Promise<void>;
+  onDeleteActivity: (id: string) => Promise<void>;
   onClose: () => void;
 }
 
@@ -36,14 +40,20 @@ function emptyProject(defaultProduct = ""): Project {
   return { id: uuid(), name: "", client_id: "", product: defaultProduct, status: "Initiation", value: 0, golive: "", notes: "", partner: "" };
 }
 
-export default function ProjectModal({ open, project, clients, defaultProduct = "", onSave, onDelete, onClose }: Props) {
+const emptyActivity = (projectId: string): Omit<Activity, "id" | "created_at"> => ({
+  deal_id: null, project_id: projectId, client_id: null, type: "Note", description: "", date: todayStr(), created_by: "",
+});
+
+export default function ProjectModal({ open, project, clients, activities, team, defaultProduct = "", onSave, onDelete, onAddActivity, onDeleteActivity, onClose }: Props) {
   const isEdit = !!project;
   const [form, setForm] = useState<Project>(emptyProject(defaultProduct));
   const [valueDisplay, setValueDisplay] = useState("");
   const [productCat, setProductCat] = useState("");
   const [ibmSub, setIbmSub] = useState("");
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<"detail" | "edit">("edit");
+  const [savingActivity, setSavingActivity] = useState(false);
+  const [tab, setTab] = useState<"detail" | "edit" | "activity">("edit");
+  const [actForm, setActForm] = useState(emptyActivity(project?.id || ""));
 
   useEffect(() => {
     const base = project || emptyProject(defaultProduct);
@@ -52,6 +62,7 @@ export default function ProjectModal({ open, project, clients, defaultProduct = 
     const { category, sub } = parseProduct(base.product || "");
     setProductCat(category);
     setIbmSub(sub);
+    setActForm(emptyActivity(base.id));
     setTab(project ? "detail" : "edit");
   // Re-init only when the modal opens or a different project is opened — the
   // clients array is replaced by background polling and must not wipe edits.
@@ -59,6 +70,19 @@ export default function ProjectModal({ open, project, clients, defaultProduct = 
   }, [project?.id, open]);
 
   const set = (k: keyof Project, v: string | number) => setForm(f => ({ ...f, [k]: v }));
+
+  async function handleAddActivity() {
+    if (!actForm.description.trim()) { toast("Deskripsi aktivitas wajib diisi.", { type: "error" }); return; }
+    setSavingActivity(true);
+    try {
+      await onAddActivity({ ...actForm, id: uuid(), project_id: form.id });
+      setActForm(emptyActivity(form.id));
+    } catch {
+      // useData's mutation helpers already surface the failure via error toast.
+    } finally {
+      setSavingActivity(false);
+    }
+  }
 
   function handleProductCatChange(cat: string) {
     setProductCat(cat);
@@ -99,6 +123,9 @@ export default function ProjectModal({ open, project, clients, defaultProduct = 
         <div className="modal-tabs">
           <button className={tabCls("detail")} onClick={() => setTab("detail")}>Detail</button>
           <button className={tabCls("edit")} onClick={() => setTab("edit")}>Edit</button>
+          <button className={tabCls("activity")} onClick={() => setTab("activity")}>
+            Aktivitas {activities.length > 0 && <span className="tab-badge">{activities.length}</span>}
+          </button>
         </div>
       )}
 
@@ -201,6 +228,62 @@ export default function ProjectModal({ open, project, clients, defaultProduct = 
         <button className="btn btn-ghost" onClick={onClose}>Batal</button>
         <button className="btn" onClick={handleSave} disabled={saving}>{saving && <span className="btn-spinner" />}{saving ? "Menyimpan…" : "Simpan"}</button>
       </ModalActions>
+        </>
+      )}
+
+      {tab === "activity" && isEdit && (
+        <>
+          <div className="activity-form">
+            <div className="grid grid-cols-2 gap-2" style={{ marginBottom: 8 }}>
+              <select className={selectCls} value={actForm.type} onChange={e => setActForm(f => ({ ...f, type: e.target.value }))}>
+                {ACTIVITY_TYPES.map(t => <option key={t}>{t}</option>)}
+              </select>
+              <select className={selectCls} value={actForm.created_by} onChange={e => setActForm(f => ({ ...f, created_by: e.target.value }))}>
+                <option value="">— Oleh —</option>
+                {team.map(t => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+              <input
+                type="date"
+                className={inputCls}
+                style={{ flex: "0 0 160px" }}
+                value={actForm.date || ""}
+                onChange={e => setActForm(f => ({ ...f, date: e.target.value || null }))}
+              />
+              <textarea
+                className={textareaCls}
+                style={{ flex: 1, margin: 0 }}
+                rows={2}
+                value={actForm.description}
+                onChange={e => setActForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="Catat aktivitas, hasil update, dll…"
+              />
+            </div>
+            <button className="btn btn-sm" onClick={handleAddActivity} disabled={savingActivity}>
+              {savingActivity ? "Menyimpan…" : "+ Tambah Aktivitas"}
+            </button>
+          </div>
+
+          <div className="activity-timeline">
+            {activities.length === 0 && (
+              <div className="empty-state" style={{ padding: "16px 0" }}>Belum ada aktivitas.</div>
+            )}
+            {[...activities].sort((a, b) => (b.date || b.created_at || "").localeCompare(a.date || a.created_at || "")).map(a => (
+              <div key={a.id} className="activity-item">
+                <div className="activity-header">
+                  <span className="activity-type">{a.type}</span>
+                  {a.created_by && <span className="activity-by">👤 {a.created_by}</span>}
+                  <span className="activity-date">{fmtDate((a.date || a.created_at || "").slice(0, 10))}</span>
+                  <button className="activity-del" onClick={() => onDeleteActivity(a.id)} title="Hapus">×</button>
+                </div>
+                <div className="activity-desc">{a.description}</div>
+              </div>
+            ))}
+          </div>
+          <ModalActions>
+            <button className="btn btn-ghost" onClick={onClose}>Tutup</button>
+          </ModalActions>
         </>
       )}
     </Modal>

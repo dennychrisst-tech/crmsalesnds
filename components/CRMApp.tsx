@@ -346,6 +346,7 @@ export default function CRMApp() {
                 )}
                 {view === "projects" && (
                   <Projects data={data} isViewer={isViewer} onSaveProject={ro(upsertProject)} onDeleteProject={ro(deleteProject)}
+                    onAddActivity={ro(upsertActivity)} onDeleteActivity={ro(deleteActivity)}
                     onOpenClient={openClient} />
                 )}
                 {view === "talent" && (

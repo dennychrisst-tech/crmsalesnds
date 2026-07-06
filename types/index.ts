@@ -102,6 +102,7 @@ export interface Deal {
 export interface Activity {
   id: string;
   deal_id: string | null;
+  project_id: string | null;
   client_id: string | null;
   type: string;
   description: string;

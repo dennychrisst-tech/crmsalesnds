@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
-import { Project, PIC } from "@/types";
+import { Project, PIC, Activity } from "@/types";
 import { fmtIDR, fmtDate } from "@/lib/utils";
 import ProjectModal from "./ProjectModal";
 import EmptyState from "./ui/EmptyState";
@@ -18,6 +18,8 @@ interface Props {
   isViewer?: boolean;
   onSaveProject: (p: Project) => Promise<void>;
   onDeleteProject: (id: string) => Promise<void>;
+  onAddActivity: (a: Activity) => Promise<void>;
+  onDeleteActivity: (id: string) => Promise<void>;
   onOpenClient: (clientId: string) => void;
 }
 
@@ -25,9 +27,9 @@ interface Props {
 // components/Talent.tsx), not here — staffing/requisition work has a
 // different rhythm than delivery projects, so it's kept off this list.
 export default function Projects({
-  data, isViewer, onSaveProject, onDeleteProject, onOpenClient,
+  data, isViewer, onSaveProject, onDeleteProject, onAddActivity, onDeleteActivity, onOpenClient,
 }: Props) {
-  const { clients, profiles } = data;
+  const { clients, profiles, activities } = data;
   // Soft-delete: "Hapus" hides the project immediately, real delete happens
   // after the Undo window passes — see useUndoableDelete.
   const { isPending, requestDelete } = useUndoableDelete(onDeleteProject);
@@ -188,8 +190,11 @@ export default function Projects({
           </div>
         )}
       </div>
-      <ProjectModal open={modalOpen} project={editProject} clients={clients}
-        onSave={onSaveProject} onDelete={handleDeleteProject} onClose={() => setModalOpen(false)} />
+      <ProjectModal open={modalOpen} project={editProject} clients={clients} team={team}
+        activities={editProject ? activities.filter(a => a.project_id === editProject.id) : []}
+        onSave={onSaveProject} onDelete={handleDeleteProject}
+        onAddActivity={onAddActivity} onDeleteActivity={onDeleteActivity}
+        onClose={() => setModalOpen(false)} />
     </section>
   );
 }

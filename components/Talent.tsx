@@ -304,8 +304,11 @@ export default function Talent({
           </div>
         )}
       </div>
-      <ProjectModal open={modalOpen} project={editProject} clients={clients} defaultProduct="Talent"
-        onSave={onSaveProject} onDelete={handleDeleteProject} onClose={() => setModalOpen(false)} />
+      <ProjectModal open={modalOpen} project={editProject} clients={clients} team={team} defaultProduct="Talent"
+        activities={editProject ? activities.filter(a => a.project_id === editProject.id) : []}
+        onSave={onSaveProject} onDelete={handleDeleteProject}
+        onAddActivity={onAddActivity} onDeleteActivity={onDeleteActivity}
+        onClose={() => setModalOpen(false)} />
 
       <TalentManageModal
         open={talentModalOpen} project={talentProject}

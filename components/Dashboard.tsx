@@ -585,8 +585,11 @@ export default function Dashboard({
       <VisitModal open={!!peekVisitId} visit={peekVisit} clients={clients} contacts={contacts} deals={deals} projects={projects} visits={visits} team={salesList}
         onSave={onSaveVisit} onDelete={onDeleteVisit} onCreateTask={onCreateTask} onCreateDeal={onCreateDeal} onSaveContact={onSaveContact}
         onClose={() => setPeekVisitId(null)} />
-      <ProjectModal open={!!peekProjectId} project={peekProject} clients={clients}
-        onSave={onSaveProject} onDelete={onDeleteProject} onClose={() => setPeekProjectId(null)} />
+      <ProjectModal open={!!peekProjectId} project={peekProject} clients={clients} team={salesList}
+        activities={peekProject ? activities.filter(a => a.project_id === peekProject.id) : []}
+        onSave={onSaveProject} onDelete={onDeleteProject}
+        onAddActivity={onAddActivity} onDeleteActivity={onDeleteActivity}
+        onClose={() => setPeekProjectId(null)} />
       <TaskModal open={!!peekTaskId} task={peekTask} clients={clients} contacts={contacts} deals={deals} team={salesList}
         onSave={onSaveTask} onDelete={onDeleteTask} onCreateDeal={onCreateDeal} onClose={() => setPeekTaskId(null)} />
     </section>

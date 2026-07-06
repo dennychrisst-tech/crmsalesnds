@@ -38,7 +38,7 @@ const emptyDeal = (clientId: string, defaultOwner = "", defaultProduct = ""): De
 });
 
 const emptyActivity = (dealId: string): Omit<Activity, "id" | "created_at"> => ({
-  deal_id: dealId, client_id: null, type: "Note", description: "", date: todayStr(), created_by: "",
+  deal_id: dealId, project_id: null, client_id: null, type: "Note", description: "", date: todayStr(), created_by: "",
 });
 
 export default function DealModal({
