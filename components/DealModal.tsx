@@ -73,7 +73,7 @@ export default function DealModal({
   const set = <K extends keyof Deal>(k: K, v: Deal[K]) => setForm(f => ({ ...f, [k]: v }));
 
   async function handleSave() {
-    if (!form.name.trim()) { toast("Nama project wajib diisi.", { type: "error" }); return; }
+    if (!form.name.trim()) { toast("Nama oppty wajib diisi.", { type: "error" }); return; }
     if (!form.client_id) { toast("Client wajib dipilih.", { type: "error" }); return; }
     setSavingMain(true);
     try {
@@ -127,7 +127,7 @@ export default function DealModal({
   const winLossLabel = form.stage === "Dropped" ? "Dropped" : "Dealed";
 
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? (tab === "detail" ? "Detail Project" : "Edit Project") : "Tambah Project"}>
+    <Modal open={open} onClose={onClose} title={isEdit ? (tab === "detail" ? "Detail Oppty" : "Edit Oppty") : "Tambah Oppty"}>
       {isEdit && (
         <div className="modal-tabs">
           <button className={tabCls("detail")} onClick={() => setTab("detail")}>Detail</button>
@@ -156,7 +156,7 @@ export default function DealModal({
             </span>
           </div>
           <div className="dd-grid">
-            <div className="dd-item"><div className="dd-label">Tipe Project</div><div className="dd-value">{form.deal_type || "—"}</div></div>
+            <div className="dd-item"><div className="dd-label">Tipe Oppty</div><div className="dd-value">{form.deal_type || "—"}</div></div>
             <div className="dd-item"><div className="dd-label">Owner (Sales)</div><div className="dd-value">{form.owner || "—"}</div></div>
             <div className="dd-item"><div className="dd-label">Target Closing</div><div className="dd-value">{form.close_date ? fmtDate(form.close_date) : "—"}</div></div>
             <div className="dd-item"><div className="dd-label">Nilai</div><div className="dd-value dd-value-brand">{fmtIDR(form.value)}</div></div>
@@ -181,7 +181,7 @@ export default function DealModal({
 
       {tab === "info" && (
         <>
-          <Field label="Nama project">
+          <Field label="Nama Oppty">
             <input className={inputCls} value={form.name} onChange={e => set("name", e.target.value)} />
           </Field>
           <Field label="Client">
@@ -200,7 +200,7 @@ export default function DealModal({
                 {[...STAGES, "On Hold", "Dropped"].map(s => <option key={s}>{s}</option>)}
               </select>
             </Field>
-            <Field label="Tipe Project">
+            <Field label="Tipe Oppty">
               <select className={selectCls} value={form.deal_type} onChange={e => set("deal_type", e.target.value)}>
                 <option value="">— Pilih —</option>
                 {DEAL_TYPES.map(t => <option key={t}>{t}</option>)}
@@ -240,7 +240,7 @@ export default function DealModal({
           </Field>
           {showWinLoss && (
             <Field label={`Alasan ${winLossLabel}`}>
-              <textarea className={textareaCls} value={form.win_loss_reason} onChange={e => set("win_loss_reason", e.target.value)} placeholder={`Kenapa project ini ${winLossLabel}?`} />
+              <textarea className={textareaCls} value={form.win_loss_reason} onChange={e => set("win_loss_reason", e.target.value)} placeholder={`Kenapa oppty ini ${winLossLabel}?`} />
             </Field>
           )}
           <Field label="Catatan">
