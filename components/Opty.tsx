@@ -50,6 +50,7 @@ export default function Opty({
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editDeal, setEditDeal] = useState<Deal | null>(null);
+  const [modalTab, setModalTab] = useState<"detail" | "info">("detail");
   const [sortKey, setSortKey] = useState<OptySortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
@@ -93,7 +94,7 @@ export default function Opty({
     return sortDir === "asc" ? cmp : -cmp;
   }) : filtered;
 
-  function openEdit(d: Deal) { setEditDeal(d); setModalOpen(true); }
+  function openEdit(d: Deal, tab: "detail" | "info" = "detail") { setEditDeal(d); setModalTab(tab); setModalOpen(true); }
 
   const dealDocuments = editDeal ? documents.filter(d => d.deal_id === editDeal.id) : [];
   const dealAttachments = editDeal ? attachments.filter(a => a.deal_id === editDeal.id) : [];
@@ -192,7 +193,8 @@ export default function Opty({
                 <td>{fmtDate(d.close_date)}</td>
                 <td>
                   <span style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                    {!isViewer && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openEdit(d); }}>Edit</button>}
+                    <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openEdit(d, "detail"); }}>Detail</button>
+                    {!isViewer && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openEdit(d, "info"); }}>Edit</button>}
                   </span>
                 </td>
               </tr>
@@ -218,11 +220,10 @@ export default function Opty({
                 <div className="mcard-row"><span>Owner</span><b>{d.owner || "—"}</b></div>
                 <div className="mcard-row"><span>Nilai</span><b>{fmtIDR(d.value)}</b></div>
                 <div className="mcard-row"><span>Target Closing</span><b>{fmtDate(d.close_date)}</b></div>
-                {!isViewer && (
-                  <div className="mcard-actions">
-                    <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openEdit(d); }}>Edit</button>
-                  </div>
-                )}
+                <div className="mcard-actions">
+                  <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openEdit(d, "detail"); }}>Detail</button>
+                  {!isViewer && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openEdit(d, "info"); }}>Edit</button>}
+                </div>
               </div>
             ))}
           </div>
@@ -231,6 +232,7 @@ export default function Opty({
 
       <DealModal
         open={modalOpen} deal={editDeal} clients={clients} products={products} team={team} defaultOwner={currentUserName}
+        initialTab={modalTab}
         documents={dealDocuments} attachments={dealAttachments} activities={dealActivities}
         onSave={onSaveDeal} onDelete={handleDeleteDeal}
         onAddDocument={onAddDocument} onDeleteDocument={onDeleteDocument}

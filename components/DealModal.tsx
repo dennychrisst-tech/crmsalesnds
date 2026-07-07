@@ -23,6 +23,10 @@ interface Props {
   // Lets callers with a narrower context (e.g. Talent's "Opportunity Talent")
   // show that in the modal title instead of the generic "Oppty".
   entityLabel?: string;
+  // Which tab an existing deal opens on — lets list rows offer separate
+  // "Detail" (view) and "Edit" (jump straight to the form) actions instead of
+  // always landing on Detail first.
+  initialTab?: "detail" | "info";
   onSave: (d: Deal) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onAddDocument: (d: CRMDocument) => Promise<void>;
@@ -46,7 +50,7 @@ const emptyActivity = (dealId: string): Omit<Activity, "id" | "created_at"> => (
 
 export default function DealModal({
   open, deal, clients, products, documents, attachments, activities, team, defaultOwner = "", defaultProduct = "",
-  entityLabel = "Oppty",
+  entityLabel = "Oppty", initialTab = "detail",
   onSave, onDelete, onAddDocument, onDeleteDocument,
   onUploadAttachment, onDeleteAttachment,
   onAddActivity, onDeleteActivity,
@@ -68,9 +72,9 @@ export default function DealModal({
     setForm(d);
     setActForm(emptyActivity(d.id));
     setEditingActivityId(null);
-    setTab(deal ? "detail" : "info");
+    setTab(deal ? initialTab : "info");
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deal?.id, open]);
+  }, [deal?.id, open, initialTab]);
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
