@@ -198,8 +198,13 @@ export default function Opty({
               const isOpen = expandedActivityClients.has(g.clientId);
               return (
                 <div key={g.clientId}>
-                  <button className="ccard-collapse-toggle" onClick={() => toggleActivityClient(g.clientId)}>
-                    {isOpen ? "▾" : "▸"} <b style={{ color: "var(--ink)" }}>{clientName(g.clientId)}</b> ({g.items.length} aktivitas)
+                  <button
+                    className="ccard-collapse-toggle"
+                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}
+                    onClick={() => toggleActivityClient(g.clientId)}
+                  >
+                    <span>{isOpen ? "▾" : "▸"} <b style={{ color: "var(--ink)" }}>{clientName(g.clientId)}</b> ({g.items.length} aktivitas)</span>
+                    <span className="muted">{fmtDate((g.items[0].date || g.items[0].created_at || "").slice(0, 10))}</span>
                   </button>
                   {isOpen && (
                     <table className="data-table">
