@@ -14,6 +14,10 @@ interface Props {
   activities: Activity[];
   team: string[];
   defaultProduct?: string;
+  // Which tab an existing project opens on — lets list rows offer separate
+  // "Detail" (view) and "Edit" (jump straight to the form) actions instead of
+  // always landing on Detail first.
+  initialTab?: "detail" | "edit";
   onSave: (p: Project) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onAddActivity: (a: Activity) => Promise<void>;
@@ -44,7 +48,7 @@ const emptyActivity = (projectId: string): Omit<Activity, "id" | "created_at"> =
   deal_id: null, project_id: projectId, client_id: null, type: "Note", description: "", date: todayStr(), created_by: "",
 });
 
-export default function ProjectModal({ open, project, clients, activities, team, defaultProduct = "", onSave, onDelete, onAddActivity, onDeleteActivity, onClose }: Props) {
+export default function ProjectModal({ open, project, clients, activities, team, defaultProduct = "", initialTab = "detail", onSave, onDelete, onAddActivity, onDeleteActivity, onClose }: Props) {
   const isEdit = !!project;
   const [form, setForm] = useState<Project>(emptyProject(defaultProduct));
   const [valueDisplay, setValueDisplay] = useState("");
@@ -65,11 +69,11 @@ export default function ProjectModal({ open, project, clients, activities, team,
     setIbmSub(sub);
     setActForm(emptyActivity(base.id));
     setEditingActivityId(null);
-    setTab(project ? "detail" : "edit");
+    setTab(project ? initialTab : "edit");
   // Re-init only when the modal opens or a different project is opened — the
   // clients array is replaced by background polling and must not wipe edits.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project?.id, open]);
+  }, [project?.id, open, initialTab]);
 
   const set = (k: keyof Project, v: string | number) => setForm(f => ({ ...f, [k]: v }));
 

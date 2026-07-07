@@ -47,6 +47,9 @@ export const CLIENT_STATUS_COLOR: Record<string, { bg: string; fg: string }> = {
 export const VISIT_STATUS = ["Planned", "Done", "Cancel", "Reschedule"] as const;
 export const EVENT_STATUS = VISIT_STATUS; // same vocabulary, reused for Event.status
 export const PROJ_STATUS = ["Initiation", "In Progress", "On Hold", "Delivered", "Closed"] as const;
+export const PROJECT_STATUS_COLOR: Record<string, string> = {
+  Initiation: "#94A3B8", "In Progress": "#3B82F6", "On Hold": "#F59E0B", Delivered: "#16A34A", Closed: "#6B7280",
+};
 export const TALENT_LEVELS = ["Junior", "Middle", "Senior", "Lead"] as const;
 export const TALENT_ROLE_STATUS = ["Open", "Close"] as const;
 export const REVENUE_LINE_CATEGORIES = ["Project", "Maintenance", "Other"] as const;
