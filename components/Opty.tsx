@@ -54,6 +54,7 @@ export default function Opty({
   const [sortKey, setSortKey] = useState<OptySortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [expandedActivityClients, setExpandedActivityClients] = useState<Set<string>>(new Set());
+  const [showClientProgress, setShowClientProgress] = useState(true);
 
   function toggleActivityClient(id: string) {
     setExpandedActivityClients(prev => {
@@ -143,39 +144,46 @@ export default function Opty({
     <section>
       {clientProgress.length > 0 && (
         <div className="panel" style={{ marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: showClientProgress ? 12 : 0 }}>
             <h3 style={{ margin: 0, fontSize: 15 }}>Progress per Client</h3>
-            <span className="muted" style={{ fontSize: 12 }}>{clientProgress.length} client aktif</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span className="muted" style={{ fontSize: 12 }}>{clientProgress.length} client aktif</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowClientProgress(v => !v)}>
+                {showClientProgress ? "Sembunyikan" : "Tampilkan"}
+              </button>
+            </span>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {clientProgress.map(c => {
-              const color = STAGE_COLOR[c.stage] || "var(--brand)";
-              return (
-                <div
-                  key={c.client_id}
-                  className="funnel-row"
-                  style={{ cursor: "pointer", flexWrap: "wrap" }}
-                  onClick={() => setSearch(clientName(c.client_id))}
-                  title="Klik untuk filter tabel ke client ini"
-                >
-                  <div style={{ width: 160, flexShrink: 0, fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {clientName(c.client_id)}
+          {showClientProgress && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {clientProgress.map(c => {
+                const color = STAGE_COLOR[c.stage] || "var(--brand)";
+                return (
+                  <div
+                    key={c.client_id}
+                    className="funnel-row"
+                    style={{ cursor: "pointer", flexWrap: "wrap" }}
+                    onClick={() => setSearch(clientName(c.client_id))}
+                    title="Klik untuk filter tabel ke client ini"
+                  >
+                    <div style={{ width: 160, flexShrink: 0, fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {clientName(c.client_id)}
+                    </div>
+                    <div className="funnel-track" style={{ flex: 1, minWidth: 80 }}>
+                      <div className="funnel-fill" style={{
+                        width: `${((stageIndex(c.stage) + 1) / STAGES.length) * 100}%`,
+                        background: color,
+                      }} />
+                    </div>
+                    <span className="badge" style={{ width: 170, flexShrink: 0, textAlign: "center", background: `${color}22`, color }}>
+                      {c.stage}
+                    </span>
+                    <div style={{ width: 110, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700 }}>{fmtIDR(c.value)}</div>
+                    <div style={{ width: 60, flexShrink: 0, textAlign: "right", fontSize: 12, color: "var(--ink-soft)" }}>{c.count} oppty</div>
                   </div>
-                  <div className="funnel-track" style={{ flex: 1, minWidth: 80 }}>
-                    <div className="funnel-fill" style={{
-                      width: `${((stageIndex(c.stage) + 1) / STAGES.length) * 100}%`,
-                      background: color,
-                    }} />
-                  </div>
-                  <span className="badge" style={{ width: 170, flexShrink: 0, textAlign: "center", background: `${color}22`, color }}>
-                    {c.stage}
-                  </span>
-                  <div style={{ width: 110, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700 }}>{fmtIDR(c.value)}</div>
-                  <div style={{ width: 60, flexShrink: 0, textAlign: "right", fontSize: 12, color: "var(--ink-soft)" }}>{c.count} oppty</div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
