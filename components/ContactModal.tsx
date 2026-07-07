@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, textareaCls, ModalActions } from "./ui/Modal";
 import { toast } from "./ui/Toast";
@@ -24,6 +24,49 @@ function formatPhone(value: string): string {
   }
   const parts = [digits.slice(0, 2), digits.slice(2, 6), digits.slice(6, 10)].filter(Boolean);
   return parts.join("-");
+}
+
+// Keeps the caret where the user is typing/deleting instead of always
+// snapping to the end — plain `value={formatPhone(...)}` resets the caret
+// on every keystroke because the dashes shift the string length.
+function PhoneInput({ value, onChange, className, placeholder }: {
+  value: string;
+  onChange: (digits: string) => void;
+  className?: string;
+  placeholder?: string;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.target;
+    const raw = input.value;
+    const cursor = input.selectionStart ?? raw.length;
+    const digitsBeforeCursor = raw.slice(0, cursor).replace(/\D/g, "").length;
+    const digits = raw.replace(/\D/g, "");
+    onChange(digits);
+
+    requestAnimationFrame(() => {
+      if (!ref.current) return;
+      const formatted = formatPhone(digits);
+      let pos = 0, seen = 0;
+      while (pos < formatted.length && seen < digitsBeforeCursor) {
+        if (/\d/.test(formatted[pos])) seen++;
+        pos++;
+      }
+      ref.current.setSelectionRange(pos, pos);
+    });
+  }
+
+  return (
+    <input
+      ref={ref}
+      className={className}
+      value={formatPhone(value)}
+      onChange={handleChange}
+      placeholder={placeholder}
+      inputMode="tel"
+    />
+  );
 }
 
 const emptyRow = (clientId: string): Contact => ({ id: uuid(), client_id: clientId, name: "", title: "", email: "", phone: "", notes: "" });
@@ -143,7 +186,7 @@ export default function ContactModal({ open, contact, clientId, onSave, onDelete
               <input type="email" className={inputCls} value={form.email} onChange={e => setField("email", e.target.value)} />
             </Field>
             <Field label="No. Telepon">
-              <input className={inputCls} value={formatPhone(form.phone)} onChange={e => setField("phone", e.target.value.replace(/\D/g, ""))} placeholder="08xx-xxxx-xxxx" inputMode="tel" />
+              <PhoneInput className={inputCls} value={form.phone} onChange={v => setField("phone", v)} placeholder="08xx-xxxx-xxxx" />
             </Field>
           </div>
           <Field label="Catatan">
@@ -182,7 +225,7 @@ export default function ContactModal({ open, contact, clientId, onSave, onDelete
                   <input type="email" className={inputCls} value={row.email} onChange={e => setRow(i, "email", e.target.value)} />
                 </Field>
                 <Field label="No. Telepon">
-                  <input className={inputCls} value={formatPhone(row.phone)} onChange={e => setRow(i, "phone", e.target.value.replace(/\D/g, ""))} placeholder="08xx-xxxx-xxxx" inputMode="tel" />
+                  <PhoneInput className={inputCls} value={row.phone} onChange={v => setRow(i, "phone", v)} placeholder="08xx-xxxx-xxxx" />
                 </Field>
               </div>
             </div>
