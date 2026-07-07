@@ -54,7 +54,7 @@ export default function Opty({
   const [sortKey, setSortKey] = useState<OptySortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [expandedActivityClients, setExpandedActivityClients] = useState<Set<string>>(new Set());
-  const [showClientProgress, setShowClientProgress] = useState(true);
+  const [showClientProgress, setShowClientProgress] = useState(false);
 
   function toggleActivityClient(id: string) {
     setExpandedActivityClients(prev => {
