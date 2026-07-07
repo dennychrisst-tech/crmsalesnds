@@ -53,6 +53,15 @@ export default function Opty({
   const [modalTab, setModalTab] = useState<"detail" | "info">("detail");
   const [sortKey, setSortKey] = useState<OptySortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [expandedActivityClients, setExpandedActivityClients] = useState<Set<string>>(new Set());
+
+  function toggleActivityClient(id: string) {
+    setExpandedActivityClients(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
   const stageIndex = (stage: string) => STAGES.indexOf(stage as typeof STAGES[number]);
@@ -166,35 +175,40 @@ export default function Opty({
             <h3 style={{ margin: 0, fontSize: 15 }}>Aktivitas Terakhir per Client</h3>
             <span className="muted" style={{ fontSize: 12 }}>maks. 10 aktivitas / client</span>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            {clientActivityGroups.map(g => (
-              <div key={g.clientId}>
-                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>
-                  {clientName(g.clientId)} <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>({g.items.length} aktivitas)</span>
-                </div>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Tanggal</th><th>PIC Handle</th><th>PIC Client</th><th>Oppty</th><th>Aktivitas</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {g.items.map(a => {
-                      const deal = dealById(a.deal_id);
-                      return (
-                        <tr key={a.id} style={{ cursor: deal ? "pointer" : "default" }} onClick={() => deal && openEdit(deal, "detail")}>
-                          <td>{fmtDate((a.date || a.created_at || "").slice(0, 10))}</td>
-                          <td>{a.created_by || "—"}</td>
-                          <td>{contactName(g.clientId)}</td>
-                          <td>{deal?.name || "—"}</td>
-                          <td>{a.description}</td>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {clientActivityGroups.map(g => {
+              const isOpen = expandedActivityClients.has(g.clientId);
+              return (
+                <div key={g.clientId}>
+                  <button className="ccard-collapse-toggle" onClick={() => toggleActivityClient(g.clientId)}>
+                    {isOpen ? "▾" : "▸"} <b style={{ color: "var(--ink)" }}>{clientName(g.clientId)}</b> ({g.items.length} aktivitas)
+                  </button>
+                  {isOpen && (
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Tanggal</th><th>PIC Handle</th><th>PIC Client</th><th>Oppty</th><th>Aktivitas</th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ))}
+                      </thead>
+                      <tbody>
+                        {g.items.map(a => {
+                          const deal = dealById(a.deal_id);
+                          return (
+                            <tr key={a.id} style={{ cursor: deal ? "pointer" : "default" }} onClick={() => deal && openEdit(deal, "detail")}>
+                              <td>{fmtDate((a.date || a.created_at || "").slice(0, 10))}</td>
+                              <td>{a.created_by || "—"}</td>
+                              <td>{contactName(g.clientId)}</td>
+                              <td>{deal?.name || "—"}</td>
+                              <td>{a.description}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
