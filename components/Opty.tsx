@@ -3,7 +3,7 @@ import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Deal, CRMDocument, Activity } from "@/types";
-import { STAGE_COLOR, fmtIDR, fmtDate, isClosedStage } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, isClosedStage } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 import DealModal from "./DealModal";
 import EmptyState from "./ui/EmptyState";
@@ -54,6 +54,22 @@ export default function Opty({
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
+  const stageIndex = (stage: string) => STAGES.indexOf(stage as typeof STAGES[number]);
+
+  // Per-client rollup: for clients with more than one open opportunity, show
+  // whichever one is furthest along the pipeline as "where they're at" —
+  // gives a one-glance read on client progress without opening every deal.
+  const clientProgress = Object.values(
+    deals.reduce((acc, d) => {
+      const key = d.client_id;
+      if (!acc[key] || stageIndex(d.stage) > stageIndex(acc[key].stage)) {
+        acc[key] = { client_id: key, stage: d.stage, count: (acc[key]?.count || 0) + 1, value: (acc[key]?.value || 0) + d.value };
+      } else {
+        acc[key] = { ...acc[key], count: acc[key].count + 1, value: acc[key].value + d.value };
+      }
+      return acc;
+    }, {} as Record<string, { client_id: string; stage: string; count: number; value: number }>)
+  ).sort((a, b) => stageIndex(b.stage) - stageIndex(a.stage));
 
   const filtered = deals.filter(d => {
     const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) || clientName(d.client_id).toLowerCase().includes(search.toLowerCase());
@@ -85,6 +101,44 @@ export default function Opty({
 
   return (
     <section>
+      {clientProgress.length > 0 && (
+        <div className="panel" style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <h3 style={{ margin: 0, fontSize: 15 }}>Progress per Client</h3>
+            <span className="muted" style={{ fontSize: 12 }}>{clientProgress.length} client aktif</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {clientProgress.map(c => {
+              const color = STAGE_COLOR[c.stage] || "var(--brand)";
+              return (
+                <div
+                  key={c.client_id}
+                  className="funnel-row"
+                  style={{ cursor: "pointer", flexWrap: "wrap" }}
+                  onClick={() => setSearch(clientName(c.client_id))}
+                  title="Klik untuk filter tabel ke client ini"
+                >
+                  <div style={{ width: 160, flexShrink: 0, fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {clientName(c.client_id)}
+                  </div>
+                  <div className="funnel-track" style={{ flex: 1, minWidth: 80 }}>
+                    <div className="funnel-fill" style={{
+                      width: `${((stageIndex(c.stage) + 1) / STAGES.length) * 100}%`,
+                      background: color,
+                    }} />
+                  </div>
+                  <span className="badge" style={{ width: 170, flexShrink: 0, textAlign: "center", background: `${color}22`, color }}>
+                    {c.stage}
+                  </span>
+                  <div style={{ width: 110, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700 }}>{fmtIDR(c.value)}</div>
+                  <div style={{ width: 60, flexShrink: 0, textAlign: "right", fontSize: 12, color: "var(--ink-soft)" }}>{c.count} oppty</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="toolbar">
         <input className="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari opportunity / client…" />
         <span className="filter-inline">
