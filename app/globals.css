@@ -417,6 +417,10 @@ th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacin
    nearest scroll container: viewport on desktop, modal body inside modals) */
 thead th { position: sticky; top: 0; background: var(--card); z-index: 2; box-shadow: 0 1px 0 var(--line); }
 td { transition: background .15s ease; }
+/* Zebra striping — opt-in per table (e.g. Oppty's per-client activity feed)
+   rather than global, since most tables here already rely on --card vs.
+   --paper contrast against the surrounding panel. */
+.table-zebra tbody tr:nth-child(even) td { background: var(--paper); }
 tr:hover td { background: var(--paper); }
 
 /* Sortable table column headers */
