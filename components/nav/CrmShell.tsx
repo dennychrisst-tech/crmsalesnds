@@ -75,7 +75,7 @@ export default function CrmShell({ children }: { children: ReactNode }) {
 
       <nav className="tabs">
         {TABS.filter(t => DESKTOP_PRIMARY_HREFS.includes(t.href)).map(t => (
-          <Link key={t.href} href={t.href} className={pathname === t.href ? "active" : ""}>
+          <Link key={t.href} href={t.href} prefetch={false} className={pathname === t.href ? "active" : ""}>
             <span className="tab-icon"><t.icon size={15} /></span>{t.label}
           </Link>
         ))}
@@ -90,7 +90,7 @@ export default function CrmShell({ children }: { children: ReactNode }) {
       {/* Bottom nav — mobile only (see globals.css). Desktop keeps the tab row above. */}
       <nav className="bottom-nav">
         {TABS.filter(t => PRIMARY_HREFS.includes(t.href)).map(t => (
-          <Link key={t.href} href={t.href} className={pathname === t.href && !moreOpen ? "active" : ""} onClick={() => setMoreOpen(false)}>
+          <Link key={t.href} href={t.href} prefetch={false} className={pathname === t.href && !moreOpen ? "active" : ""} onClick={() => setMoreOpen(false)}>
             <span className="bottom-nav-icon"><t.icon size={20} /></span>
             <span className="bottom-nav-label">{t.label}</span>
           </Link>
@@ -116,7 +116,7 @@ export default function CrmShell({ children }: { children: ReactNode }) {
                   <div key={group.label} className="more-sheet-group">
                     <div className="more-sheet-group-label">{group.label}</div>
                     {items.map(t => (
-                      <Link key={t.href} href={t.href} className={`more-sheet-item${pathname === t.href ? " active" : ""}`}
+                      <Link key={t.href} href={t.href} prefetch={false} className={`more-sheet-item${pathname === t.href ? " active" : ""}`}
                         onClick={() => setMoreOpen(false)}>
                         <span className="bottom-nav-icon"><t.icon size={18} /></span>{t.label}
                       </Link>
