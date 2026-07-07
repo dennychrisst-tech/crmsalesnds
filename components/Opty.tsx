@@ -75,13 +75,22 @@ export default function Opty({
   const dealById = (id: string | null) => deals.find(d => d.id === id) || null;
   const contactName = (clientId: string) => contacts.find(c => c.client_id === clientId)?.name || "—";
 
-  // Latest activity log entries across every open opportunity on this page —
-  // a quick "what happened lately" feed without opening each deal one by one.
+  // Latest activity log entries per client, across that client's open
+  // opportunities on this page — a quick "what happened lately" feed per
+  // client without opening each deal one by one.
   const dealIds = new Set(deals.map(d => d.id));
-  const recentActivities = [...activities]
+  const sortedActivities = [...activities]
     .filter(a => a.deal_id && dealIds.has(a.deal_id))
-    .sort((a, b) => (b.date || b.created_at || "").localeCompare(a.date || a.created_at || ""))
-    .slice(0, 10);
+    .sort((a, b) => (b.date || b.created_at || "").localeCompare(a.date || a.created_at || ""));
+  const activitiesByClient = new Map<string, Activity[]>();
+  for (const a of sortedActivities) {
+    const clientId = dealById(a.deal_id)!.client_id;
+    const list = activitiesByClient.get(clientId) || [];
+    if (list.length < 10) { list.push(a); activitiesByClient.set(clientId, list); }
+  }
+  const clientActivityGroups = [...activitiesByClient.entries()]
+    .map(([clientId, items]) => ({ clientId, items }))
+    .sort((a, b) => (b.items[0].date || b.items[0].created_at || "").localeCompare(a.items[0].date || a.items[0].created_at || ""));
 
   const filtered = deals.filter(d => {
     const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) || clientName(d.client_id).toLowerCase().includes(search.toLowerCase());
@@ -151,33 +160,42 @@ export default function Opty({
         </div>
       )}
 
-      {recentActivities.length > 0 && (
+      {clientActivityGroups.length > 0 && (
         <div className="panel" style={{ marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <h3 style={{ margin: 0, fontSize: 15 }}>10 Aktivitas Terakhir</h3>
+            <h3 style={{ margin: 0, fontSize: 15 }}>Aktivitas Terakhir per Client</h3>
+            <span className="muted" style={{ fontSize: 12 }}>maks. 10 aktivitas / client</span>
           </div>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Tanggal</th><th>Client</th><th>PIC Handle</th><th>PIC Client</th><th>Oppty</th><th>Aktivitas</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentActivities.map(a => {
-                const deal = dealById(a.deal_id);
-                return (
-                  <tr key={a.id} style={{ cursor: deal ? "pointer" : "default" }} onClick={() => deal && openEdit(deal, "detail")}>
-                    <td>{fmtDate((a.date || a.created_at || "").slice(0, 10))}</td>
-                    <td>{deal ? clientName(deal.client_id) : "—"}</td>
-                    <td>{a.created_by || "—"}</td>
-                    <td>{deal ? contactName(deal.client_id) : "—"}</td>
-                    <td>{deal?.name || "—"}</td>
-                    <td>{a.description}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {clientActivityGroups.map(g => (
+              <div key={g.clientId}>
+                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>
+                  {clientName(g.clientId)} <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>({g.items.length} aktivitas)</span>
+                </div>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Tanggal</th><th>PIC Handle</th><th>PIC Client</th><th>Oppty</th><th>Aktivitas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {g.items.map(a => {
+                      const deal = dealById(a.deal_id);
+                      return (
+                        <tr key={a.id} style={{ cursor: deal ? "pointer" : "default" }} onClick={() => deal && openEdit(deal, "detail")}>
+                          <td>{fmtDate((a.date || a.created_at || "").slice(0, 10))}</td>
+                          <td>{a.created_by || "—"}</td>
+                          <td>{contactName(g.clientId)}</td>
+                          <td>{deal?.name || "—"}</td>
+                          <td>{a.description}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
