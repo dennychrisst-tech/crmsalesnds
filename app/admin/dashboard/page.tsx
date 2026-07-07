@@ -68,7 +68,7 @@ export default function AdminDashboard() {
           <h1 style={{ fontSize: "20px", fontWeight: 800, color: "var(--ink)", margin: 0 }}>Dashboard Admin</h1>
           <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginTop: "4px" }}>Ringkasan data seluruh sistem — untuk performa per sales, lihat Summary Activity</p>
         </div>
-        <Link href="/?view=summary" style={{
+        <Link href="/summary" style={{
           display: "inline-flex", alignItems: "center", gap: "6px", padding: "9px 16px",
           borderRadius: "8px", background: "var(--surface-strong)", color: "#fff", fontWeight: 700,
           fontSize: "13px", textDecoration: "none", whiteSpace: "nowrap",

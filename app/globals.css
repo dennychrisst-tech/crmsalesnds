@@ -128,21 +128,22 @@ header.top {
 }
 .btn-theme-toggle:hover { background: var(--accent); border-color: var(--accent); }
 
-/* Nav */
+/* Nav — tab items are <Link>s (real routes) so they get Next.js's automatic
+   prefetch-on-hover; styled identically to the old <button>s they replaced. */
 nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 24px; }
-nav.tabs button {
+nav.tabs button, nav.tabs a {
   display: flex; align-items: center; gap: 5px;
   border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
   padding: 9px 16px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 600;
-  transition: all .15s, transform .12s ease; position: relative;
+  transition: all .15s, transform .12s ease; position: relative; text-decoration: none;
 }
-nav.tabs button:hover { border-color: var(--brand); color: var(--brand); transform: translateY(-1px); }
-nav.tabs button:active { transform: translateY(0) scale(.96); }
-nav.tabs button.active {
+nav.tabs button:hover, nav.tabs a:hover { border-color: var(--brand); color: var(--brand); transform: translateY(-1px); }
+nav.tabs button:active, nav.tabs a:active { transform: translateY(0) scale(.96); }
+nav.tabs button.active, nav.tabs a.active {
   background: var(--surface-strong); color: #fff; border-color: var(--surface-strong);
   box-shadow: 0 2px 8px rgba(11,27,43,.18);
 }
-nav.tabs button.active::after {
+nav.tabs button.active::after, nav.tabs a.active::after {
   content: ''; position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%);
   width: 6px; height: 6px; background: var(--surface-strong); border-radius: 50%;
 }
@@ -177,7 +178,7 @@ nav.tabs button.active::after {
   display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
   border: none; background: none; color: var(--ink); font-family: inherit;
   padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
-  transition: background .12s;
+  transition: background .12s; text-decoration: none;
 }
 .nav-dropdown-item:hover { background: var(--paper); }
 .nav-dropdown-item.active { background: var(--accent-soft); color: var(--brand); }
@@ -950,16 +951,16 @@ tr.task-soon td { background: #fffbeb; }
     padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
     box-shadow: 0 -2px 12px rgba(11,27,43,.08);
   }
-  .bottom-nav button {
+  .bottom-nav button, .bottom-nav a {
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
     background: none; border: none; font-family: inherit; color: var(--ink-soft);
-    padding: 5px 2px; border-radius: 10px; cursor: pointer;
+    padding: 5px 2px; border-radius: 10px; cursor: pointer; text-decoration: none;
     transition: color .15s, background .15s, transform .12s ease;
   }
-  .bottom-nav button:active { transform: scale(.92); }
-  .bottom-nav button.active { color: var(--brand); background: var(--accent-soft); }
+  .bottom-nav button:active, .bottom-nav a:active { transform: scale(.92); }
+  .bottom-nav button.active, .bottom-nav a.active { color: var(--brand); background: var(--accent-soft); }
   .bottom-nav-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 1; transition: transform .15s ease; }
-  .bottom-nav button.active .bottom-nav-icon { transform: translateY(-1px); }
+  .bottom-nav button.active .bottom-nav-icon, .bottom-nav a.active .bottom-nav-icon { transform: translateY(-1px); }
   .bottom-nav-label { font-size: 9.5px; font-weight: 600; white-space: nowrap; }
 
   @keyframes moreSheetFadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -983,7 +984,7 @@ tr.task-soon td { background: #fffbeb; }
   .more-sheet-item {
     display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
     background: none; border: none; font-family: inherit; font-size: 14px; font-weight: 600;
-    color: var(--ink); padding: 12px 10px; border-radius: 10px; cursor: pointer;
+    color: var(--ink); padding: 12px 10px; border-radius: 10px; cursor: pointer; text-decoration: none;
     transition: background .12s, transform .1s ease;
   }
   .more-sheet-item.active { color: var(--brand); background: var(--accent-soft); }

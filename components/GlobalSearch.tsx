@@ -2,17 +2,16 @@
 import { useState, useRef, useEffect } from "react";
 import { Search } from "lucide-react";
 import { AppData } from "@/hooks/useData";
-import { ActiveView } from "@/types";
 
 interface Props {
   data: AppData;
-  onNavigate: (view: ActiveView) => void;
+  onNavigate: (href: string) => void;
   onOpenClient: (id: string) => void;
   onOpenDeal: (id: string) => void;
   onOpenTask: (id: string) => void;
 }
 
-const RESULT_VIEW: Record<Result["type"], ActiveView> = { Client: "clients", Project: "pipeline", Talent: "talent", Task: "tasks", Contact: "clients" };
+const RESULT_HREF: Record<Result["type"], string> = { Client: "/clients", Project: "/pipeline", Talent: "/talent", Task: "/tasks", Contact: "/clients" };
 const RESULT_LABEL: Record<Result["type"], string> = { Client: "client", Project: "project", Talent: "opportunity talent", Task: "task", Contact: "kontak" };
 
 interface Result {
@@ -107,7 +106,7 @@ export default function GlobalSearch({ data, onNavigate, onOpenClient, onOpenDea
   }
 
   function seeMore(type: Result["type"]) {
-    onNavigate(RESULT_VIEW[type]);
+    onNavigate(RESULT_HREF[type]);
     setQ("");
     setOpen(false);
   }

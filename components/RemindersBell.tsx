@@ -2,7 +2,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Bell, BellRing, BellOff } from "lucide-react";
 import { AppData } from "@/hooks/useData";
-import { ActiveView } from "@/types";
 import { fmtDate, todayStr } from "@/lib/utils";
 import { computeReminders } from "@/lib/reminders";
 import { usePushSubscription } from "@/hooks/usePushSubscription";
@@ -11,7 +10,7 @@ interface Props {
   data: AppData;
   currentUserName: string;
   isAdmin: boolean;
-  onNavigate: (view: ActiveView) => void;
+  onNavigate: (href: string) => void;
   onOpenTask: (id: string) => void;
 }
 
@@ -20,7 +19,7 @@ interface Reminder {
   title: string;
   sub: string;
   severity: "overdue" | "today";
-  view: ActiveView;
+  href: string;
   // Only set for task reminders — lets pick() open that task directly instead
   // of just landing on the Tasks tab (matches how Client/Deal search results
   // already deep-link straight to the record).
@@ -122,19 +121,19 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
         const v = data.visits.find(x => x.id === r.recordId);
         if (!v) return null;
         if (r.id.startsWith("v-overdue-")) {
-          return { id: r.id, title: `Visit ke ${clientName(v.client_id)} terlewat`, sub: `${fmtDate(v.date)} · ${v.pic || "—"}`, severity: "overdue", view: "calendar" };
+          return { id: r.id, title: `Visit ke ${clientName(v.client_id)} terlewat`, sub: `${fmtDate(v.date)} · ${v.pic || "—"}`, severity: "overdue", href: "/calendar" };
         }
         if (r.id.startsWith("v-today-")) {
-          return { id: r.id, title: `Visit ke ${clientName(v.client_id)} hari ini`, sub: `${v.purpose || "—"} · ${v.pic || "—"}`, severity: "today", view: "calendar" };
+          return { id: r.id, title: `Visit ke ${clientName(v.client_id)} hari ini`, sub: `${v.purpose || "—"} · ${v.pic || "—"}`, severity: "today", href: "/calendar" };
         }
-        return { id: r.id, title: `Follow-up: ${clientName(v.client_id)} perlu dijadwalkan ulang`, sub: `${fmtDate(v.date)} · ${v.pic || "—"}`, severity: "overdue", view: "calendar" };
+        return { id: r.id, title: `Follow-up: ${clientName(v.client_id)} perlu dijadwalkan ulang`, sub: `${fmtDate(v.date)} · ${v.pic || "—"}`, severity: "overdue", href: "/calendar" };
       }
       const t = data.tasks.find(x => x.id === r.recordId);
       if (!t) return null;
       if (r.severity === "overdue") {
-        return { id: r.id, title: `Task terlambat: ${t.title}`, sub: `${fmtDate(t.due_date)} · ${t.assigned_to || "—"}`, severity: "overdue", view: "tasks", taskId: t.id };
+        return { id: r.id, title: `Task terlambat: ${t.title}`, sub: `${fmtDate(t.due_date)} · ${t.assigned_to || "—"}`, severity: "overdue", href: "/tasks", taskId: t.id };
       }
-      return { id: r.id, title: `Task jatuh tempo hari ini: ${t.title}`, sub: `${t.assigned_to || "—"}`, severity: "today", view: "tasks", taskId: t.id };
+      return { id: r.id, title: `Task jatuh tempo hari ini: ${t.title}`, sub: `${t.assigned_to || "—"}`, severity: "today", href: "/tasks", taskId: t.id };
     })
     .filter((r): r is Reminder => r !== null);
 
@@ -148,7 +147,7 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
 
   function pick(r: Reminder) {
     if (r.taskId) onOpenTask(r.taskId);
-    else onNavigate(r.view);
+    else onNavigate(r.href);
     setOpen(false);
   }
 

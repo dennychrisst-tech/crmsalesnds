@@ -34,7 +34,7 @@ export default function AdminTeam() {
           <h1 style={{ fontSize: "20px", fontWeight: 800, color: "var(--ink)", margin: 0 }}>Manajemen Tim</h1>
           <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginTop: "4px" }}>Daftar anggota tim dan role mereka</p>
         </div>
-        <Link href="/?view=summary" style={{
+        <Link href="/summary" style={{
           display: "inline-flex", alignItems: "center", gap: "6px", padding: "9px 16px",
           borderRadius: "8px", background: "var(--surface-strong)", color: "#fff", fontWeight: 700,
           fontSize: "13px", textDecoration: "none", whiteSpace: "nowrap",
