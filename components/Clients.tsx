@@ -13,6 +13,8 @@ import VisitModal from "./VisitModal";
 import { exportClients } from "@/lib/export";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
 import SortableTh from "./ui/SortableTh";
+import Pagination from "./ui/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { Download } from "lucide-react";
 
 interface Props {
@@ -184,6 +186,8 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
     return sortBy === "contact_oldest" ? aKey.localeCompare(bKey) : bKey.localeCompare(aKey);
   });
 
+  const { page, setPage, totalPages, totalItems, pageSize, paged } = usePagination(sorted, 25);
+
   function openContactNew(clientId: string) { setEditContact(null); setContactClientId(clientId); setContactModalOpen(true); }
   function openContactEdit(contact: Contact) { setEditContact(contact); setContactClientId(contact.client_id); setContactModalOpen(true); }
 
@@ -278,7 +282,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
               </tr>
             </thead>
             <tbody>
-              {sorted.map(({ client: c, lastContact, daysSince, dealValue, dealCount }) => {
+              {paged.map(({ client: c, lastContact, daysSince, dealValue, dealCount }) => {
                 const sc = c.status ? CLIENT_STATUS_COLOR[c.status] : null;
                 const pics = (Array.isArray(c.pic) ? c.pic : []) as PIC[];
                 return (
@@ -301,7 +305,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
             </tbody>
           </table>
         </div>
-      ) : sorted.map(({ client: c, lastContact, daysSince, dealValue, dealCount }) => {
+      ) : paged.map(({ client: c, lastContact, daysSince, dealValue, dealCount }) => {
         const clientVisits = visits.filter(v => v.client_id === c.id).sort((a, b) => b.date.localeCompare(a.date));
         const clientContacts = contacts.filter(ct => ct.client_id === c.id);
         const clientProjects = projects.filter(p => p.client_id === c.id);
@@ -496,6 +500,8 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
           </div>
         );
       })}
+
+      <Pagination page={page} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setPage} />
 
       <ClientModal open={clientModalOpen} client={editClient} team={team}
         onSave={onSaveClient} onDelete={handleDeleteClient}

@@ -9,6 +9,8 @@ import DealModal from "./DealModal";
 import EmptyState from "./ui/EmptyState";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
 import SortableTh, { SortDir } from "./ui/SortableTh";
+import Pagination from "./ui/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { Download } from "lucide-react";
 
 type OptySortKey = "name" | "client" | "stage" | "value" | "close_date";
@@ -149,6 +151,8 @@ export default function Opty({
   }) : filtered;
 
   function openEdit(d: Deal, tab: "detail" | "info" = "detail") { setEditDeal(d); setModalTab(tab); setModalOpen(true); }
+
+  const { page, setPage, totalPages, totalItems, pageSize, paged } = usePagination(sorted, 25);
 
   const dealDocuments = editDeal ? documents.filter(d => d.deal_id === editDeal.id) : [];
   const dealAttachments = editDeal ? attachments.filter(a => a.deal_id === editDeal.id) : [];
@@ -296,7 +300,7 @@ export default function Opty({
             </tr>
           </thead>
           <tbody>
-            {sorted.length ? sorted.map(d => (
+            {sorted.length ? paged.map(d => (
               <tr key={d.id} onClick={() => openEdit(d)} style={{ cursor: "pointer" }}>
                 <td><b>{d.name}</b>{d.product && <><br /><span className="muted" style={{ fontSize: 11 }}>{d.product}</span></>}</td>
                 <td>{clientName(d.client_id)}</td>
@@ -328,7 +332,7 @@ export default function Opty({
 
         {sorted.length > 0 && (
           <div className="mobile-cards">
-            {sorted.map(d => (
+            {paged.map(d => (
               <div key={d.id} className="mcard" onClick={() => openEdit(d)}>
                 <div className="mcard-head">
                   <div className="mcard-title">{d.name}</div>
@@ -347,6 +351,8 @@ export default function Opty({
             ))}
           </div>
         )}
+
+        <Pagination page={page} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setPage} />
       </div>
 
       <DealModal

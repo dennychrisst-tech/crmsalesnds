@@ -9,6 +9,8 @@ import TaskModal from "./TaskModal";
 import EmptyState from "./ui/EmptyState";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
 import SortableTh, { SortDir } from "./ui/SortableTh";
+import Pagination from "./ui/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 type TaskSortKey = "title" | "due_date" | "assigned_to" | "client" | "project" | "status";
 
@@ -106,6 +108,9 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
   function openNew() { setEditTask(null); setModalOpen(true); }
   function openEdit(t: Task) { setEditTask(t); setModalOpen(true); }
 
+  const { page, setPage, totalPages, totalItems, pageSize, paged } = usePagination(filtered, 25);
+  const { page: histPage, setPage: setHistPage, totalPages: histTotalPages, totalItems: histTotalItems, pageSize: histPageSize, paged: pagedHistory } = usePagination(history, 25);
+
   useEffect(() => {
     if (!openTaskId) return;
     const task = tasks.find(t => t.id === openTaskId);
@@ -178,7 +183,7 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
               </tr>
             </thead>
             <tbody>
-              {filtered.map(t => (
+              {paged.map(t => (
                 <tr key={t.id} className={urgencyClass(t.due_date, t.status)}>
                   <td style={{ fontWeight: 600 }}>{t.title}{t.notes && <div style={{ fontWeight: 400, fontSize: 12, color: "var(--ink-soft)" }}>{t.notes}</div>}</td>
                   <td>{t.due_date ? fmtDate(t.due_date) : "—"}</td>
@@ -203,7 +208,7 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
           </table>
 
           <div className="mobile-cards" style={{ padding: 10 }}>
-            {filtered.map(t => (
+            {paged.map(t => (
               <div key={t.id} className={`mcard ${urgencyClass(t.due_date, t.status)}`}>
                 <div className="mcard-head">
                   <div className="mcard-title">{t.title}</div>
@@ -225,6 +230,8 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
               </div>
             ))}
           </div>
+
+          <Pagination page={page} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setPage} />
         </div>
       )}
 
@@ -246,7 +253,7 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
               </tr>
             </thead>
             <tbody>
-              {history.map(t => (
+              {pagedHistory.map(t => (
                 <tr key={t.id} style={{ opacity: 0.75 }}>
                   <td style={{ fontWeight: 600 }}>{t.title}{t.notes && <div style={{ fontWeight: 400, fontSize: 12, color: "var(--ink-soft)" }}>{t.notes}</div>}</td>
                   <td>{t.due_date ? fmtDate(t.due_date) : "—"}</td>
@@ -269,7 +276,7 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
           </table>
 
           <div className="mobile-cards" style={{ padding: 10 }}>
-            {history.map(t => (
+            {pagedHistory.map(t => (
               <div key={t.id} className="mcard" style={{ opacity: 0.75 }}>
                 <div className="mcard-head">
                   <div className="mcard-title">{t.title}</div>
@@ -289,6 +296,8 @@ export default function TasksView({ data, currentUserName, isViewer, onSaveTask,
               </div>
             ))}
           </div>
+
+          <Pagination page={histPage} totalPages={histTotalPages} totalItems={histTotalItems} pageSize={histPageSize} onPageChange={setHistPage} />
         </div>
       )}
 

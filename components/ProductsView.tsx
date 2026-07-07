@@ -3,6 +3,8 @@ import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { Product } from "@/types";
 import ProductModal from "./ProductModal";
+import Pagination from "./ui/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 interface Props {
   data: AppData;
@@ -23,6 +25,8 @@ export default function ProductsView({ data, isViewer, onSaveProduct, onDeletePr
     .filter(p => filterCat === "All" || p.category === filterCat)
     .filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()));
 
+  const { page, setPage, totalPages, totalItems, pageSize, paged } = usePagination(filtered, 25);
+
   return (
     <section>
       <div className="toolbar">
@@ -36,16 +40,19 @@ export default function ProductsView({ data, isViewer, onSaveProduct, onDeletePr
       {!filtered.length ? (
         <div className="panel"><div className="empty-state">Belum ada produk di catalog.</div></div>
       ) : (
-        <div className="catalog-grid">
-          {filtered.map(p => (
-            <div key={p.id} className="catalog-card">
-              <div className="catalog-cat">{p.category}</div>
-              <div className="catalog-name">{p.name}</div>
-              {p.description && <div className="catalog-desc">{p.description}</div>}
-              {!isViewer && <button className="btn btn-ghost btn-sm" style={{ marginTop: 10 }} onClick={() => { setEditProduct(p); setModalOpen(true); }}>Edit</button>}
-            </div>
-          ))}
-        </div>
+        <>
+          <div className="catalog-grid">
+            {paged.map(p => (
+              <div key={p.id} className="catalog-card">
+                <div className="catalog-cat">{p.category}</div>
+                <div className="catalog-name">{p.name}</div>
+                {p.description && <div className="catalog-desc">{p.description}</div>}
+                {!isViewer && <button className="btn btn-ghost btn-sm" style={{ marginTop: 10 }} onClick={() => { setEditProduct(p); setModalOpen(true); }}>Edit</button>}
+              </div>
+            ))}
+          </div>
+          <Pagination page={page} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setPage} />
+        </>
       )}
 
       <ProductModal open={modalOpen} product={editProduct}

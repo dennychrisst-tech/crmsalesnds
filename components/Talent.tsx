@@ -10,6 +10,8 @@ import TalentManageModal from "./TalentManageModal";
 import EmptyState from "./ui/EmptyState";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
 import SortableTh, { SortDir } from "./ui/SortableTh";
+import Pagination from "./ui/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { exportProjects, exportDeals } from "@/lib/export";
 import { Download } from "lucide-react";
 
@@ -155,6 +157,9 @@ export default function Talent({
 
   function openTalentManage(p: Project) { setTalentProject(p); setTalentModalOpen(true); }
 
+  const { page: dealPage, setPage: setDealPage, totalPages: dealTotalPages, totalItems: dealTotalItems, pageSize: dealPageSize, paged: pagedTalentDeals } = usePagination(sortedTalentDeals, 25);
+  const { page, setPage, totalPages, totalItems, pageSize, paged } = usePagination(sorted, 25);
+
   return (
     <section>
       <div className="toolbar">
@@ -194,7 +199,7 @@ export default function Talent({
             </tr>
           </thead>
           <tbody>
-            {sortedTalentDeals.length ? sortedTalentDeals.map(d => (
+            {sortedTalentDeals.length ? pagedTalentDeals.map(d => (
               <tr key={d.id} onClick={() => openEditDeal(d)} style={{ cursor: "pointer" }}>
                 <td><b>{d.name}</b></td>
                 <td>{clientName(d.client_id)}</td>
@@ -216,7 +221,7 @@ export default function Talent({
 
         {sortedTalentDeals.length > 0 && (
           <div className="mobile-cards">
-            {sortedTalentDeals.map(d => (
+            {pagedTalentDeals.map(d => (
               <div key={d.id} className="mcard" onClick={() => openEditDeal(d)}>
                 <div className="mcard-head">
                   <div className="mcard-title">{d.name}</div>
@@ -230,6 +235,8 @@ export default function Talent({
             ))}
           </div>
         )}
+
+        <Pagination page={dealPage} totalPages={dealTotalPages} totalItems={dealTotalItems} pageSize={dealPageSize} onPageChange={setDealPage} />
       </div>
 
       <div className="toolbar">
@@ -271,7 +278,7 @@ export default function Talent({
             </tr>
           </thead>
           <tbody>
-            {sorted.length ? sorted.map(p => {
+            {sorted.length ? paged.map(p => {
               const projectRoles = talent_roles.filter(r => r.project_id === p.id);
               return (
                 <tr key={p.id}>
@@ -321,7 +328,7 @@ export default function Talent({
 
         {sorted.length > 0 && (
           <div className="mobile-cards">
-            {sorted.map(p => {
+            {paged.map(p => {
               const projectRoles = talent_roles.filter(r => r.project_id === p.id);
               return (
                 <div key={p.id} className="mcard">
@@ -355,6 +362,8 @@ export default function Talent({
             })}
           </div>
         )}
+
+        <Pagination page={page} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setPage} />
       </div>
       <ProjectModal open={modalOpen} project={editProject} clients={clients} team={team} defaultProduct="Talent"
         activities={editProject ? activities.filter(a => a.project_id === editProject.id) : []}

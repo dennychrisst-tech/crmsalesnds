@@ -8,6 +8,8 @@ import ProjectModal from "./ProjectModal";
 import EmptyState from "./ui/EmptyState";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
 import SortableTh, { SortDir } from "./ui/SortableTh";
+import Pagination from "./ui/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { exportProjects } from "@/lib/export";
 import { Download } from "lucide-react";
 
@@ -126,6 +128,8 @@ export default function Projects({
 
   function openEdit(p: Project, tab: "detail" | "edit" = "detail") { setEditProject(p); setModalTab(tab); setModalOpen(true); }
 
+  const { page, setPage, totalPages, totalItems, pageSize, paged } = usePagination(sorted, 25);
+
   return (
     <section>
       {clientActivityGroups.length > 0 && (
@@ -223,7 +227,7 @@ export default function Projects({
             </tr>
           </thead>
           <tbody>
-            {sorted.length ? sorted.map(p => (
+            {sorted.length ? paged.map(p => (
               <tr key={p.id} onClick={() => openEdit(p)} style={{ cursor: "pointer" }}>
                 <td>
                   <b>{p.name}</b><br /><span className="muted" style={{ fontSize: 11 }}>{p.notes}</span>
@@ -275,7 +279,7 @@ export default function Projects({
 
         {sorted.length > 0 && (
           <div className="mobile-cards">
-            {sorted.map(p => (
+            {paged.map(p => (
               <div key={p.id} className="mcard" onClick={() => openEdit(p)}>
                 <div className="mcard-head">
                   <div className="mcard-title">{p.name}</div>
@@ -308,6 +312,8 @@ export default function Projects({
             ))}
           </div>
         )}
+
+        <Pagination page={page} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setPage} />
       </div>
       <ProjectModal open={modalOpen} project={editProject} clients={clients} team={team}
         initialTab={modalTab}

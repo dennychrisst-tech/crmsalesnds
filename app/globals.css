@@ -424,6 +424,24 @@ td { transition: background .15s ease; }
 .table-zebra tbody tr:nth-child(even) td { background: var(--paper); }
 tr:hover td { background: var(--paper); }
 
+/* Pagination — shared by every long list (Client, Project, Oppty, Tasks, Talent, Catalog) */
+.pagination {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  padding: 14px 4px 4px;
+}
+.pagination-info { font-size: 12px; color: var(--ink-soft); }
+.pagination-controls { display: flex; align-items: center; gap: 4px; }
+.pagination-btn {
+  display: flex; align-items: center; justify-content: center; min-width: 30px; height: 30px;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
+  border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; padding: 0 6px;
+  transition: all .12s;
+}
+.pagination-btn:hover:not(:disabled) { border-color: var(--brand); color: var(--brand); }
+.pagination-btn.active { background: var(--surface-strong); color: #fff; border-color: var(--surface-strong); }
+.pagination-btn:disabled { opacity: .4; cursor: default; }
+.pagination-ellipsis { color: var(--ink-soft); font-size: 12px; padding: 0 2px; }
+
 /* Sortable table column headers */
 .sortable-th { cursor: pointer; user-select: none; transition: color .12s; }
 .sortable-th:hover { color: var(--brand); }
