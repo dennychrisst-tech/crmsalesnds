@@ -249,7 +249,10 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
           </div>
           {form.rescheduled_from_id && (
             <div style={{ fontSize: 12, color: "var(--brand)", marginTop: -4, marginBottom: 10 }}>
-              ↩ Jadwal ini dibuat dari reschedule visit sebelumnya
+              ↩ Jadwal ini merupakan reschedule dari tanggal {(() => {
+                const original = visits.find(v => v.id === form.rescheduled_from_id);
+                return original ? fmtDate(original.date) : "—";
+              })()}
             </div>
           )}
           <div className="dd-grid">
