@@ -160,17 +160,21 @@ export function useData() {
 
   // Fetches only `tables` (defaults to everything) and merges the result into
   // local state, leaving any table not included in this call untouched.
-  const load = useCallback(async (tables?: TableKey[]): Promise<AppData | null> => {
+  // skipProfiles=true omits the users DB query on the server — safe to use
+  // on any call after the initial load where profiles are already in state.
+  const load = useCallback(async (tables?: TableKey[], opts?: { skipProfiles?: boolean }): Promise<AppData | null> => {
     const requested = tables ?? ALL_TABLES;
+    const qs = opts?.skipProfiles ? "&skipProfiles=1" : "";
     try {
-      const json = await api(`/api/data?tables=${requested.join(",")}`);
+      const json = await api(`/api/data?tables=${requested.join(",")}${qs}`);
       let result: AppData = dataRef.current;
       commit(prev => {
         const next = { ...prev };
         for (const t of requested) {
           next[t] = (json[t] ?? []).map((row: unknown) => normalizeRow(t, row));
         }
-        next.profiles = json.profiles ?? prev.profiles;
+        // Only overwrite profiles when the server actually sent them.
+        if (json.profiles) next.profiles = json.profiles;
         result = next;
         return next;
       });
@@ -188,26 +192,29 @@ export function useData() {
   }, [commit]);
 
   useEffect(() => {
-    // Core tables unblock the UI first; secondary tables (mostly deal-detail-modal
-    // and calendar/catalog specific) fill in a moment later in the background.
-    load(CORE_TABLES).then(() => load(LAZY_TABLES));
+    // Core tables unblock the UI first; lazy tables fill in right after.
+    // Profiles are only fetched on the core call — they change rarely and
+    // skipping them on the lazy call saves one DB round-trip.
+    load(CORE_TABLES).then(() => load(LAZY_TABLES, { skipProfiles: true }));
   }, [load]);
 
-  // Poll everything every 30s so idle tabs pick up changes made elsewhere without
-  // a manual refresh. Skips while the tab is hidden/backgrounded to avoid waste.
+  // Poll only core tables every 30s — these are the ones users interact with
+  // most (clients, deals, tasks, visits, projects, contacts). Lazy tables are
+  // less time-sensitive and would add unnecessary load on frequent polls.
+  // Profiles are skipped — they change only when an admin modifies users.
   useEffect(() => {
     const interval = setInterval(() => {
-      if (document.visibilityState === "visible") load();
+      if (document.visibilityState === "visible") load(CORE_TABLES, { skipProfiles: true });
     }, 30_000);
     return () => clearInterval(interval);
   }, [load]);
 
   // The poll above skips while hidden, so returning to the tab (or resuming the
-  // installed PWA from the background) could show stale data for up to 30s —
-  // refresh immediately instead.
+  // installed PWA from the background) could show stale data — refresh all
+  // tables immediately, but still skip the profiles query.
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === "visible") load();
+      if (document.visibilityState === "visible") load(ALL_TABLES, { skipProfiles: true });
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
