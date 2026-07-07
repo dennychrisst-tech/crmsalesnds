@@ -193,8 +193,8 @@ export default function Opty({
             <h3 style={{ margin: 0, fontSize: 15 }}>Aktivitas Terakhir per Client</h3>
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span className="muted" style={{ fontSize: 12 }}>maks. 10 aktivitas / client</span>
-              <button className="btn btn-ghost btn-sm" onClick={() => setExpandedActivityClients(new Set(clientActivityGroups.map(g => g.clientId)))}>Buka Semua</button>
-              <button className="btn btn-ghost btn-sm" onClick={() => setExpandedActivityClients(new Set())}>Tutup Semua</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setExpandedActivityClients(new Set(clientActivityGroups.map(g => g.clientId)))}>Tampilkan Semua</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setExpandedActivityClients(new Set())}>Sembunyikan Semua</button>
             </span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
