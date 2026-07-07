@@ -12,6 +12,11 @@ import InstallPrompt from "@/components/InstallPrompt";
 import ToastHost from "@/components/ui/Toast";
 import Logo from "@/components/ui/Logo";
 import NavDropdown from "./NavDropdown";
+import RouteProgressBar from "./RouteProgressBar";
+
+function startNavProgress() {
+  (window as Window & { __startNavProgress?: () => void }).__startNavProgress?.();
+}
 
 // Everything CRMApp.tsx used to render around the active view — header
 // (logo/search/reminders/theme/logout), desktop tab row + dropdowns, mobile
@@ -33,6 +38,7 @@ export default function CrmShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="app">
+      <RouteProgressBar />
       <ToastHost />
       <header className="top">
         <div className="header-brand">
@@ -75,7 +81,7 @@ export default function CrmShell({ children }: { children: ReactNode }) {
 
       <nav className="tabs">
         {TABS.filter(t => DESKTOP_PRIMARY_HREFS.includes(t.href)).map(t => (
-          <Link key={t.href} href={t.href} prefetch={false} className={pathname === t.href ? "active" : ""}>
+          <Link key={t.href} href={t.href} prefetch={false} className={pathname === t.href ? "active" : ""} onClick={startNavProgress}>
             <span className="tab-icon"><t.icon size={15} /></span>{t.label}
           </Link>
         ))}
@@ -90,7 +96,7 @@ export default function CrmShell({ children }: { children: ReactNode }) {
       {/* Bottom nav — mobile only (see globals.css). Desktop keeps the tab row above. */}
       <nav className="bottom-nav">
         {TABS.filter(t => PRIMARY_HREFS.includes(t.href)).map(t => (
-          <Link key={t.href} href={t.href} prefetch={false} className={pathname === t.href && !moreOpen ? "active" : ""} onClick={() => setMoreOpen(false)}>
+          <Link key={t.href} href={t.href} prefetch={false} className={pathname === t.href && !moreOpen ? "active" : ""} onClick={() => { setMoreOpen(false); startNavProgress(); }}>
             <span className="bottom-nav-icon"><t.icon size={20} /></span>
             <span className="bottom-nav-label">{t.label}</span>
           </Link>
@@ -117,7 +123,7 @@ export default function CrmShell({ children }: { children: ReactNode }) {
                     <div className="more-sheet-group-label">{group.label}</div>
                     {items.map(t => (
                       <Link key={t.href} href={t.href} prefetch={false} className={`more-sheet-item${pathname === t.href ? " active" : ""}`}
-                        onClick={() => setMoreOpen(false)}>
+                        onClick={() => { setMoreOpen(false); startNavProgress(); }}>
                         <span className="bottom-nav-icon"><t.icon size={18} /></span>{t.label}
                       </Link>
                     ))}

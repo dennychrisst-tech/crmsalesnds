@@ -39,7 +39,7 @@ export default function NavDropdown({ label, icon: Icon, hrefs, open, onToggle, 
         <div className="nav-dropdown-menu">
           {items.map(i => (
             <Link key={i.href} href={i.href} prefetch={false} className={`nav-dropdown-item${pathname === i.href ? " active" : ""}`}
-              onClick={onCloseRequest}>
+              onClick={() => { onCloseRequest(); (window as Window & { __startNavProgress?: () => void }).__startNavProgress?.(); }}>
               <span className="tab-icon"><i.icon size={14} /></span>{i.label}
             </Link>
           ))}

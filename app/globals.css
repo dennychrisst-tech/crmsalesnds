@@ -873,6 +873,20 @@ tr.task-soon td { background: #fffbeb; }
 .sk-kpi { height: 118px; }
 .sk-panel { height: 220px; margin-bottom: 20px; }
 
+/* Route transition progress bar */
+.nav-progress {
+  position: fixed; top: 0; left: 0; height: 3px; z-index: 9999;
+  background: #00AFA0; pointer-events: none;
+  transition: width .12s ease-out, opacity .2s ease;
+}
+@keyframes nav-progress-indeterminate {
+  0%   { width: 0%;  opacity: 1; }
+  60%  { width: 75%; opacity: 1; }
+  100% { width: 88%; opacity: 1; }
+}
+.nav-progress--loading { animation: nav-progress-indeterminate .5s ease-out forwards; }
+.nav-progress--done    { width: 100% !important; opacity: 0; }
+
 /* Modal enter animation (backdrop fade + card rise) */
 @keyframes modal-fade { from { opacity: 0; } }
 @keyframes modal-rise { from { opacity: 0; transform: translateY(20px) scale(.98); } }
