@@ -26,11 +26,21 @@ export interface RawReminder {
   owner: string;
 }
 
+// "YYYY-MM-DD" + n days, staying in plain date-string math (no timezone
+// object needed since `today` is already a local-date string by the time it
+// reaches this function).
+function addDays(dateStr: string, n: number): string {
+  const d = new Date(dateStr + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
 // Shared by RemindersBell (client, per-viewer) and the reminders cron route
 // (server, per-recipient) so the actual due-date/status rules only live in
 // one place.
 export function computeReminders(visits: VisitReminderInput[], tasks: TaskReminderInput[], today: string): RawReminder[] {
   const reminders: RawReminder[] = [];
+  const tomorrow = addDays(today, 1);
 
   visits.forEach(v => {
     if (v.status === "Planned" && v.date && v.date < today) {
@@ -39,11 +49,18 @@ export function computeReminders(visits: VisitReminderInput[], tasks: TaskRemind
       reminders.push({ id: `v-today-${v.id}`, source: "visits", recordId: v.id, severity: "today", owner: v.pic });
     } else if (v.status === "Reschedule") {
       reminders.push({ id: `v-resched-${v.id}`, source: "visits", recordId: v.id, severity: "overdue", owner: v.pic });
-    } else if (v.status === "Tentative" && v.date && v.date <= today) {
-      // Unlike Planned, a Tentative slot far in the future isn't due for a
-      // nudge yet — it only becomes actionable once its date has arrived (or
-      // passed) and it's still not confirmed to Planned.
-      reminders.push({ id: `v-tentative-${v.id}`, source: "visits", recordId: v.id, severity: "overdue", owner: v.pic });
+    } else if (v.status === "Tentative" && v.date) {
+      // Tentative means the client/date is set but the appointment with the
+      // PIC isn't confirmed — the real risk is showing up to nobody. Two
+      // separate nudges: confirm with the PIC the day before (so there's
+      // still time to lock it in or reschedule), and if it still wasn't
+      // resolved by the day itself, flag that the actual outcome (met or
+      // not) needs to be recorded.
+      if (v.date === tomorrow) {
+        reminders.push({ id: `v-tentative-confirm-${v.id}`, source: "visits", recordId: v.id, severity: "today", owner: v.pic });
+      } else if (v.date <= today) {
+        reminders.push({ id: `v-tentative-${v.id}`, source: "visits", recordId: v.id, severity: "overdue", owner: v.pic });
+      }
     }
   });
 

@@ -146,7 +146,7 @@ function AgendaDayCard({
                   {v.status === "Done" ? " · Selesai" : ""}
                   {isReschedule ? ` · Reschedule${v.followup_date ? " ke " + fmtDate(v.followup_date) : ""}` : ""}
                   {isRescheduledInto ? " · Hasil reschedule" : ""}
-                  {isTentative ? " · Tentative — perlu dikonfirmasi" : ""}
+                  {isTentative ? " · Tentative — janji dgn PIC blm fix" : ""}
                 </div>
               </span>
             </button>
@@ -207,7 +207,7 @@ function DayCell({
         const isReschedule = v.status === "Reschedule";
         const isTentative = v.status === "Tentative";
         const isRescheduledInto = !!v.rescheduled_from_id;
-        const rescheduleNote = isReschedule ? ` · Reschedule ke ${v.followup_date ? fmtDate(v.followup_date) : "-"}` : isRescheduledInto ? " · Hasil reschedule" : isTentative ? " · Tentative — perlu dikonfirmasi" : "";
+        const rescheduleNote = isReschedule ? ` · Reschedule ke ${v.followup_date ? fmtDate(v.followup_date) : "-"}` : isRescheduledInto ? " · Hasil reschedule" : isTentative ? " · Tentative — janji dgn PIC blm fix" : "";
         return (
           <div key={v.id} className="vpill"
             style={{
