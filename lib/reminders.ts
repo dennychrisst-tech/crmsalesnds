@@ -39,6 +39,11 @@ export function computeReminders(visits: VisitReminderInput[], tasks: TaskRemind
       reminders.push({ id: `v-today-${v.id}`, source: "visits", recordId: v.id, severity: "today", owner: v.pic });
     } else if (v.status === "Reschedule") {
       reminders.push({ id: `v-resched-${v.id}`, source: "visits", recordId: v.id, severity: "overdue", owner: v.pic });
+    } else if (v.status === "Tentative" && v.date && v.date <= today) {
+      // Unlike Planned, a Tentative slot far in the future isn't due for a
+      // nudge yet — it only becomes actionable once its date has arrived (or
+      // passed) and it's still not confirmed to Planned.
+      reminders.push({ id: `v-tentative-${v.id}`, source: "visits", recordId: v.id, severity: "overdue", owner: v.pic });
     }
   });
 

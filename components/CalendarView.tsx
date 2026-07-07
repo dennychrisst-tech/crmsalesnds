@@ -133,18 +133,20 @@ function AgendaDayCard({
           const names = picList(v.pic);
           const color = colorForSales(names[0] || "—");
           const isReschedule = v.status === "Reschedule";
+          const isTentative = v.status === "Tentative";
           const isRescheduledInto = !!v.rescheduled_from_id;
           return (
-            <button key={v.id} type="button" className="agenda-item" style={{ background: "var(--paper)" }}
+            <button key={v.id} type="button" className="agenda-item" style={{ background: "var(--paper)", border: isTentative ? "1px dashed #C4B5FD" : undefined }}
               onClick={() => { if (!isViewer) onEditVisit(v); }}>
               <span className="agenda-item-dot" style={{ background: color.bg }} />
               <span>
-                <div className="agenda-item-title">{isReschedule ? "↻ " : isRescheduledInto ? "↩ " : ""}{clientName(v.client_id)}</div>
+                <div className="agenda-item-title">{isReschedule ? "↻ " : isRescheduledInto ? "↩ " : isTentative ? "❔ " : ""}{clientName(v.client_id)}</div>
                 <div className="agenda-item-sub">
                   {v.purpose}{names.length ? ` · ${names.join(" & ")}` : ""}
                   {v.status === "Done" ? " · Selesai" : ""}
                   {isReschedule ? ` · Reschedule${v.followup_date ? " ke " + fmtDate(v.followup_date) : ""}` : ""}
                   {isRescheduledInto ? " · Hasil reschedule" : ""}
+                  {isTentative ? " · Tentative — perlu dikonfirmasi" : ""}
                 </div>
               </span>
             </button>
@@ -203,19 +205,20 @@ function DayCell({
           ? `linear-gradient(90deg, ${colors[0].bg} 50%, ${colors[1].bg} 50%)`
           : colors[0].bg;
         const isReschedule = v.status === "Reschedule";
+        const isTentative = v.status === "Tentative";
         const isRescheduledInto = !!v.rescheduled_from_id;
-        const rescheduleNote = isReschedule ? ` · Reschedule ke ${v.followup_date ? fmtDate(v.followup_date) : "-"}` : isRescheduledInto ? " · Hasil reschedule" : "";
+        const rescheduleNote = isReschedule ? ` · Reschedule ke ${v.followup_date ? fmtDate(v.followup_date) : "-"}` : isRescheduledInto ? " · Hasil reschedule" : isTentative ? " · Tentative — perlu dikonfirmasi" : "";
         return (
           <div key={v.id} className="vpill"
             style={{
               background, color: colors[0].fg,
-              opacity: v.status === "Done" ? 0.55 : isReschedule ? 0.8 : 1,
+              opacity: v.status === "Done" ? 0.55 : isReschedule || isTentative ? 0.8 : 1,
               textDecoration: v.status === "Done" ? "line-through" : "none",
-              border: isReschedule ? `1.5px dashed ${colors[0].fg}` : isRescheduledInto ? `1.5px solid ${colors[0].fg}` : undefined,
+              border: isReschedule ? `1.5px dashed ${colors[0].fg}` : isRescheduledInto ? `1.5px solid ${colors[0].fg}` : isTentative ? `1.5px dotted ${colors[0].fg}` : undefined,
             }}
             onClick={e => { e.stopPropagation(); if (!isViewer) onEditVisit(v); }}
             title={`${clientName(v.client_id)}: ${v.purpose} (${names.join(" & ") || "Tanpa sales"})${rescheduleNote}`}>
-            {isReschedule ? "↻ " : isRescheduledInto ? "↩ " : ""}{clientName(v.client_id)}
+            {isReschedule ? "↻ " : isRescheduledInto ? "↩ " : isTentative ? "❔ " : ""}{clientName(v.client_id)}
           </div>
         );
       })}

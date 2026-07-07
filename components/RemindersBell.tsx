@@ -126,6 +126,9 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
         if (r.id.startsWith("v-today-")) {
           return { id: r.id, title: `Visit ke ${clientName(v.client_id)} hari ini`, sub: `${v.purpose || "—"} · ${v.pic || "—"}`, severity: "today", href: "/calendar" };
         }
+        if (r.id.startsWith("v-tentative-")) {
+          return { id: r.id, title: `Visit ke ${clientName(v.client_id)} masih tentative`, sub: `${fmtDate(v.date)} · perlu dikonfirmasi · ${v.pic || "—"}`, severity: "overdue", href: "/calendar" };
+        }
         return { id: r.id, title: `Follow-up: ${clientName(v.client_id)} perlu dijadwalkan ulang`, sub: `${fmtDate(v.date)} · ${v.pic || "—"}`, severity: "overdue", href: "/calendar" };
       }
       const t = data.tasks.find(x => x.id === r.recordId);

@@ -467,6 +467,7 @@ tr:hover td { background: var(--paper); }
 .badge-on-hold { background: #E7E5E4; color: #57534E; }
 .badge-dropped { background: #EFE2E2; color: var(--lost); }
 .st-planned { background: #E2EAF0; color: #2A526E; }
+.st-tentative { background: #EDE9FE; color: #6D28D9; border: 1px dashed #C4B5FD; }
 .st-done { background: var(--brand-soft); color: var(--brand); }
 .st-followup { background: #FBF0DA; color: #9A6E12; }
 .st-nogo { background: #EFE2E2; color: var(--lost); }

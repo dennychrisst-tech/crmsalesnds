@@ -1,7 +1,7 @@
 export type Sector = "Banking" | "Multifinance" | "Insurance" | "Health Care" | "Industrial" | "Technology" | "Telekomunikasi" | "Infrastruktur" | "Transportasi" | "Energy" | "Lainnya";
 export type DealStage = "Approching" | "Present Solution" | "RFI" | "RFP/BRD" | "Clarification/Requirement" | "Proposal Teknis" | "Presentasi Proposal" | "POC/Demo" | "Offering Letter" | "Proposal Clarification" | "Negotiation" | "Dealed" | "PO" | "Kontrak" | "On Hold" | "Dropped";
-export type VisitStatus = "Planned" | "Done" | "Cancel" | "Reschedule";
-export type EventStatus = VisitStatus; // same vocabulary: Planned/Done/Cancel/Reschedule
+export type VisitStatus = "Planned" | "Tentative" | "Done" | "Cancel" | "Reschedule";
+export type EventStatus = VisitStatus; // same vocabulary: Planned/Tentative/Done/Cancel/Reschedule
 export type ProjectStatus = "Initiation" | "In Progress" | "On Hold" | "Delivered" | "Closed";
 export type TalentLevel = "Junior" | "Middle" | "Senior" | "Lead";
 export type TalentRoleStatus = "Open" | "Close";
