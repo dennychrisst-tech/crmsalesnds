@@ -102,14 +102,28 @@ export default function Opty({
     if (!lastActivityDate.has(a.deal_id!)) lastActivityDate.set(a.deal_id!, a.date || a.created_at || "");
   }
 
-  const activitiesByClient = new Map<string, Activity[]>();
+  // Technova is the reseller NDS goes through to reach Sequis Life — same
+  // deal chain split across two client records, so their activity feeds are
+  // combined into one section instead of listed separately.
+  const MERGED_ACTIVITY_CLIENTS = ["Sequis Life", "Technova"];
+  function activityGroupFor(clientId: string): { key: string; label: string } {
+    const name = clientName(clientId);
+    if (MERGED_ACTIVITY_CLIENTS.some(n => n.toLowerCase() === name.toLowerCase())) {
+      return { key: MERGED_ACTIVITY_CLIENTS.join("|"), label: MERGED_ACTIVITY_CLIENTS.join(" / ") };
+    }
+    return { key: clientId, label: name };
+  }
+
+  const activitiesByClient = new Map<string, { label: string; items: Activity[] }>();
   for (const a of sortedActivities) {
     const clientId = dealById(a.deal_id)!.client_id;
-    const list = activitiesByClient.get(clientId) || [];
-    if (list.length < 10) { list.push(a); activitiesByClient.set(clientId, list); }
+    const { key, label } = activityGroupFor(clientId);
+    const group = activitiesByClient.get(key) || { label, items: [] };
+    if (group.items.length < 10) group.items.push(a);
+    activitiesByClient.set(key, group);
   }
   const clientActivityGroups = [...activitiesByClient.entries()]
-    .map(([clientId, items]) => ({ clientId, items }))
+    .map(([key, { label, items }]) => ({ key, label, items }))
     .sort((a, b) => (b.items[0].date || b.items[0].created_at || "").localeCompare(a.items[0].date || a.items[0].created_at || ""));
 
   const filtered = deals.filter(d => {
@@ -193,28 +207,29 @@ export default function Opty({
             <h3 style={{ margin: 0, fontSize: 15 }}>Aktivitas Terakhir per Client</h3>
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span className="muted" style={{ fontSize: 12 }}>maks. 10 aktivitas / client</span>
-              <button className="btn btn-ghost btn-sm" onClick={() => setExpandedActivityClients(new Set(clientActivityGroups.map(g => g.clientId)))}>Tampilkan Semua</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setExpandedActivityClients(new Set(clientActivityGroups.map(g => g.key)))}>Tampilkan Semua</button>
               <button className="btn btn-ghost btn-sm" onClick={() => setExpandedActivityClients(new Set())}>Sembunyikan Semua</button>
             </span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {clientActivityGroups.map(g => {
-              const isOpen = expandedActivityClients.has(g.clientId);
+              const isOpen = expandedActivityClients.has(g.key);
+              const isMerged = new Set(g.items.map(a => dealById(a.deal_id)?.client_id)).size > 1;
               return (
-                <div key={g.clientId}>
+                <div key={g.key}>
                   <button
                     className="ccard-collapse-toggle"
                     style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}
-                    onClick={() => toggleActivityClient(g.clientId)}
+                    onClick={() => toggleActivityClient(g.key)}
                   >
-                    <span>{isOpen ? "▾" : "▸"} <b style={{ color: "var(--ink)" }}>{clientName(g.clientId)}</b> ({g.items.length} aktivitas)</span>
+                    <span>{isOpen ? "▾" : "▸"} <b style={{ color: "var(--ink)" }}>{g.label}</b> ({g.items.length} aktivitas)</span>
                     <span className="muted">{fmtDate((g.items[0].date || g.items[0].created_at || "").slice(0, 10))}</span>
                   </button>
                   {isOpen && (
                     <table className="data-table table-zebra">
                       <thead>
                         <tr>
-                          <th>Tanggal</th><th>PIC Handle</th><th>PIC Client</th><th>Oppty</th><th>Aktivitas</th>
+                          <th>Tanggal</th>{isMerged && <th>Client</th>}<th>PIC Handle</th><th>PIC Client</th><th>Oppty</th><th>Aktivitas</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -223,8 +238,9 @@ export default function Opty({
                           return (
                             <tr key={a.id} style={{ cursor: deal ? "pointer" : "default" }} onClick={() => deal && openEdit(deal, "detail")}>
                               <td>{fmtDate((a.date || a.created_at || "").slice(0, 10))}</td>
+                              {isMerged && <td>{deal ? clientName(deal.client_id) : "—"}</td>}
                               <td>{a.created_by || "—"}</td>
-                              <td>{contactName(g.clientId)}</td>
+                              <td>{deal ? contactName(deal.client_id) : "—"}</td>
                               <td>{deal?.name || "—"}</td>
                               <td>{a.description}</td>
                             </tr>
