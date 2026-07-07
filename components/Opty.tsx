@@ -91,6 +91,16 @@ export default function Opty({
   const sortedActivities = [...activities]
     .filter(a => a.deal_id && dealIds.has(a.deal_id))
     .sort((a, b) => (b.date || b.created_at || "").localeCompare(a.date || a.created_at || ""));
+
+  // "Terakhir Update" per oppty — deals have no generic updated_at column, so
+  // the most recent activity log entry stands in as "when this was last
+  // touched" (sortedActivities is already newest-first, so the first hit per
+  // deal wins).
+  const lastActivityDate = new Map<string, string>();
+  for (const a of sortedActivities) {
+    if (!lastActivityDate.has(a.deal_id!)) lastActivityDate.set(a.deal_id!, a.date || a.created_at || "");
+  }
+
   const activitiesByClient = new Map<string, Activity[]>();
   for (const a of sortedActivities) {
     const clientId = dealById(a.deal_id)!.client_id;
@@ -248,6 +258,7 @@ export default function Opty({
               <th>Owner</th>
               <SortableTh active={sortKey === "value"} dir={sortDir} onClick={() => toggleSort("value")}>Nilai</SortableTh>
               <SortableTh active={sortKey === "close_date"} dir={sortDir} onClick={() => toggleSort("close_date")}>Target Closing</SortableTh>
+              <th>Update Terakhir</th>
               <th></th>
             </tr>
           </thead>
@@ -264,6 +275,7 @@ export default function Opty({
                 <td>{d.owner || "—"}</td>
                 <td>{fmtIDR(d.value)}</td>
                 <td>{fmtDate(d.close_date)}</td>
+                <td>{lastActivityDate.has(d.id) ? fmtDate(lastActivityDate.get(d.id)!.slice(0, 10)) : <span className="muted">—</span>}</td>
                 <td>
                   <span style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                     <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openEdit(d, "detail"); }}>Detail</button>
@@ -271,7 +283,7 @@ export default function Opty({
                   </span>
                 </td>
               </tr>
-            )) : <tr><td colSpan={7}><EmptyState icon="🎯" label="Belum ada opportunity" sub="Coba ubah filter, atau tambah opportunity pertama Anda" /></td></tr>}
+            )) : <tr><td colSpan={8}><EmptyState icon="🎯" label="Belum ada opportunity" sub="Coba ubah filter, atau tambah opportunity pertama Anda" /></td></tr>}
           </tbody>
         </table>
 
@@ -293,6 +305,7 @@ export default function Opty({
                 <div className="mcard-row"><span>Owner</span><b>{d.owner || "—"}</b></div>
                 <div className="mcard-row"><span>Nilai</span><b>{fmtIDR(d.value)}</b></div>
                 <div className="mcard-row"><span>Target Closing</span><b>{fmtDate(d.close_date)}</b></div>
+                <div className="mcard-row"><span>Update Terakhir</span><b>{lastActivityDate.has(d.id) ? fmtDate(lastActivityDate.get(d.id)!.slice(0, 10)) : "—"}</b></div>
                 <div className="mcard-actions">
                   <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openEdit(d, "detail"); }}>Detail</button>
                   {!isViewer && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openEdit(d, "info"); }}>Edit</button>}
