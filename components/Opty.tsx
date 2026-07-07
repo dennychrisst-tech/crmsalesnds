@@ -222,7 +222,7 @@ export default function Opty({
                     style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}
                     onClick={() => toggleActivityClient(g.key)}
                   >
-                    <span>{isOpen ? "▾" : "▸"} <b style={{ color: "var(--ink)" }}>{g.label}</b> ({g.items.length} aktivitas)</span>
+                    <span>{isOpen ? "▾" : "▸"} <b style={{ color: "var(--ink)", fontSize: 15 }}>{g.label}</b> <span style={{ fontSize: 11 }}>({g.items.length} aktivitas)</span></span>
                     <span className="muted">{fmtDate((g.items[0].date || g.items[0].created_at || "").slice(0, 10))}</span>
                   </button>
                   {isOpen && (

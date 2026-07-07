@@ -3,7 +3,7 @@ import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Project, PIC, Activity } from "@/types";
-import { PROJ_STATUS, PROJECT_STATUS_COLOR, fmtIDR, fmtDate } from "@/lib/utils";
+import { PROJECT_STATUS_COLOR, fmtIDR, fmtDate } from "@/lib/utils";
 import ProjectModal from "./ProjectModal";
 import EmptyState from "./ui/EmptyState";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
@@ -47,7 +47,6 @@ export default function Projects({
   const [sortKey, setSortKey] = useState<ProjectSortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [expandedActivityClients, setExpandedActivityClients] = useState<Set<string>>(new Set());
-  const [showClientProgress, setShowClientProgress] = useState(false);
 
   function toggleActivityClient(id: string) {
     setExpandedActivityClients(prev => {
@@ -58,23 +57,6 @@ export default function Projects({
   }
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
-  const statusIndex = (status: string) => PROJ_STATUS.indexOf(status as typeof PROJ_STATUS[number]);
-
-  // Per-client rollup: for clients with more than one project, show whichever
-  // one is furthest along the delivery status as "where they're at" — gives a
-  // one-glance read on client progress without opening every project.
-  const clientProgress = Object.values(
-    projects.reduce((acc, p) => {
-      const key = p.client_id;
-      if (!acc[key] || statusIndex(p.status) > statusIndex(acc[key].status)) {
-        acc[key] = { client_id: key, status: p.status, count: (acc[key]?.count || 0) + 1, value: (acc[key]?.value || 0) + p.value };
-      } else {
-        acc[key] = { ...acc[key], count: acc[key].count + 1, value: acc[key].value + p.value };
-      }
-      return acc;
-    }, {} as Record<string, { client_id: string; status: string; count: number; value: number }>)
-  ).sort((a, b) => statusIndex(b.status) - statusIndex(a.status));
-
   const projectById = (id: string | null) => projects.find(p => p.id === id) || null;
   const contactName = (clientId: string) => contacts.find(c => c.client_id === clientId)?.name || "—";
 
@@ -146,51 +128,6 @@ export default function Projects({
 
   return (
     <section>
-      {clientProgress.length > 0 && (
-        <div className="panel" style={{ marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: showClientProgress ? 12 : 0 }}>
-            <h3 style={{ margin: 0, fontSize: 15 }}>Progress per Client</h3>
-            <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span className="muted" style={{ fontSize: 12 }}>{clientProgress.length} client aktif</span>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowClientProgress(v => !v)}>
-                {showClientProgress ? "Sembunyikan" : "Tampilkan"}
-              </button>
-            </span>
-          </div>
-          {showClientProgress && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {clientProgress.map(c => {
-                const color = PROJECT_STATUS_COLOR[c.status] || "var(--brand)";
-                return (
-                  <div
-                    key={c.client_id}
-                    className="funnel-row"
-                    style={{ cursor: "pointer", flexWrap: "wrap" }}
-                    onClick={() => setSearch(clientName(c.client_id))}
-                    title="Klik untuk filter tabel ke client ini"
-                  >
-                    <div style={{ width: 160, flexShrink: 0, fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {clientName(c.client_id)}
-                    </div>
-                    <div className="funnel-track" style={{ flex: 1, minWidth: 80 }}>
-                      <div className="funnel-fill" style={{
-                        width: `${((statusIndex(c.status) + 1) / PROJ_STATUS.length) * 100}%`,
-                        background: color,
-                      }} />
-                    </div>
-                    <span className="badge" style={{ width: 170, flexShrink: 0, textAlign: "center", background: `${color}22`, color }}>
-                      {c.status}
-                    </span>
-                    <div style={{ width: 110, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700 }}>{fmtIDR(c.value)}</div>
-                    <div style={{ width: 60, flexShrink: 0, textAlign: "right", fontSize: 12, color: "var(--ink-soft)" }}>{c.count} project</div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
       {clientActivityGroups.length > 0 && (
         <div className="panel" style={{ marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
@@ -212,7 +149,7 @@ export default function Projects({
                     style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}
                     onClick={() => toggleActivityClient(g.key)}
                   >
-                    <span>{isOpen ? "▾" : "▸"} <b style={{ color: "var(--ink)" }}>{g.label}</b> ({g.items.length} aktivitas)</span>
+                    <span>{isOpen ? "▾" : "▸"} <b style={{ color: "var(--ink)", fontSize: 15 }}>{g.label}</b> <span style={{ fontSize: 11 }}>({g.items.length} aktivitas)</span></span>
                     <span className="muted">{fmtDate((g.items[0].date || g.items[0].created_at || "").slice(0, 10))}</span>
                   </button>
                   {isOpen && (
