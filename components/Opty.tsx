@@ -38,7 +38,7 @@ export default function Opty({
   onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment,
   onAddActivity, onDeleteActivity,
 }: Props) {
-  const { clients, products, documents, attachments, activities, profiles } = data;
+  const { clients, contacts, products, documents, attachments, activities, profiles } = data;
   const { isPending, requestDelete } = useUndoableDelete(onDeleteDeal);
   const deals = data.deals.filter(d => !isPending(d.id) && !isClosedStage(d.stage) && d.product !== "Talent");
   async function handleDeleteDeal(id: string) {
@@ -71,6 +71,17 @@ export default function Opty({
       return acc;
     }, {} as Record<string, { client_id: string; stage: string; count: number; value: number }>)
   ).sort((a, b) => stageIndex(b.stage) - stageIndex(a.stage));
+
+  const dealById = (id: string | null) => deals.find(d => d.id === id) || null;
+  const contactName = (clientId: string) => contacts.find(c => c.client_id === clientId)?.name || "—";
+
+  // Latest activity log entries across every open opportunity on this page —
+  // a quick "what happened lately" feed without opening each deal one by one.
+  const dealIds = new Set(deals.map(d => d.id));
+  const recentActivities = [...activities]
+    .filter(a => a.deal_id && dealIds.has(a.deal_id))
+    .sort((a, b) => (b.date || b.created_at || "").localeCompare(a.date || a.created_at || ""))
+    .slice(0, 10);
 
   const filtered = deals.filter(d => {
     const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) || clientName(d.client_id).toLowerCase().includes(search.toLowerCase());
@@ -137,6 +148,36 @@ export default function Opty({
               );
             })}
           </div>
+        </div>
+      )}
+
+      {recentActivities.length > 0 && (
+        <div className="panel" style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <h3 style={{ margin: 0, fontSize: 15 }}>10 Aktivitas Terakhir</h3>
+          </div>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Tanggal</th><th>Client</th><th>PIC Handle</th><th>PIC Client</th><th>Oppty</th><th>Aktivitas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentActivities.map(a => {
+                const deal = dealById(a.deal_id);
+                return (
+                  <tr key={a.id} style={{ cursor: deal ? "pointer" : "default" }} onClick={() => deal && openEdit(deal, "detail")}>
+                    <td>{fmtDate((a.date || a.created_at || "").slice(0, 10))}</td>
+                    <td>{deal ? clientName(deal.client_id) : "—"}</td>
+                    <td>{a.created_by || "—"}</td>
+                    <td>{deal ? contactName(deal.client_id) : "—"}</td>
+                    <td>{deal?.name || "—"}</td>
+                    <td>{a.description}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
