@@ -371,6 +371,9 @@ nav.tabs button.active::after, nav.tabs a.active::after {
 .cal-dot-holiday { background: #DC2626; border: 1px solid #991B1B; }
 .wfo-drop-target { background: #FFF7ED; border-color: #F97316 !important; }
 .leave-drop-target { background: #FEF2F2; border-color: #DC2626 !important; }
+/* --brand-soft/--brand already flip for dark mode via the root variables, so
+   unlike wfo/leave above this doesn't need its own [data-theme="dark"] override. */
+.visit-drop-target { background: var(--brand-soft); border-color: var(--brand) !important; }
 /* These highlight states hardcode a light tint with no color override, which
    left inherited (dark-mode-light) text invisible on top of them — swap the
    solid light fill for a translucent tint of the same hue instead, so the

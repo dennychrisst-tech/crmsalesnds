@@ -27,13 +27,13 @@ export async function GET(req: NextRequest) {
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
   const [visitRows, taskRows, users, subscriptions] = await Promise.all([
-    prisma.visit.findMany({ select: { id: true, date: true, status: true, pic: true } }),
+    prisma.visit.findMany({ select: { id: true, date: true, status: true, pic: true, rescheduled_to_id: true } }),
     prisma.task.findMany({ select: { id: true, due_date: true, status: true, assigned_to: true } }),
     prisma.user.findMany({ select: { id: true, name: true, role: true } }),
     prisma.pushSubscription.findMany(),
   ]);
 
-  const visits: VisitReminderInput[] = visitRows.map(v => ({ id: v.id, date: d10(v.date) ?? "", status: v.status, pic: v.pic }));
+  const visits: VisitReminderInput[] = visitRows.map(v => ({ id: v.id, date: d10(v.date) ?? "", status: v.status, pic: v.pic, rescheduled_to_id: v.rescheduled_to_id }));
   const tasks: TaskReminderInput[] = taskRows.map(t => ({ id: t.id, due_date: d10(t.due_date), status: t.status, assigned_to: t.assigned_to }));
 
   const reminders = computeReminders(visits, tasks, todayStrInJakarta());

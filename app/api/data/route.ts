@@ -19,7 +19,19 @@ function serializeDates(obj: unknown): unknown {
 const QUERIES: Record<string, () => Promise<any>> = {
   clients:     () => prisma.client.findMany({ orderBy: { created_at: "asc" } }),
   contacts:    () => prisma.contact.findMany({ orderBy: { created_at: "asc" } }),
-  visits:      () => prisma.visit.findMany({ take: 500, orderBy: { date: "desc" } }),
+  // Plain `take: 500` on the newest-by-date rows silently dropped old
+  // still-open visits (Planned/Tentative/Reschedule) once total volume passed
+  // 500 team-wide — they'd vanish from Calendar/Dashboard/Reminders with no
+  // record ever having been closed out. Open statuses are fetched in full
+  // (that set stays small by nature — people do eventually resolve them);
+  // only Done/Cancel history is capped, since that's just for reporting.
+  visits: async () => {
+    const [open, closed] = await Promise.all([
+      prisma.visit.findMany({ where: { status: { notIn: ["Done", "Cancel"] } }, orderBy: { date: "desc" } }),
+      prisma.visit.findMany({ where: { status: { in: ["Done", "Cancel"] } }, take: 500, orderBy: { date: "desc" } }),
+    ]);
+    return [...open, ...closed];
+  },
   deals:       () => prisma.deal.findMany({ orderBy: { created_at: "asc" } }),
   projects:    () => prisma.project.findMany({ orderBy: { created_at: "asc" } }),
   tasks:       () => prisma.task.findMany({ orderBy: { due_date: "asc" } }),

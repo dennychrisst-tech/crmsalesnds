@@ -9,7 +9,7 @@ export type ReminderSource = "visits" | "tasks";
 // `status` widened to plain string (rather than Visit/Task's status union) —
 // Prisma returns the raw DB column type here, and the checks below only ever
 // compare it against string literals.
-export type VisitReminderInput = Pick<Visit, "id" | "date" | "pic"> & { status: string };
+export type VisitReminderInput = Pick<Visit, "id" | "date" | "pic" | "rescheduled_to_id"> & { status: string };
 // due_date widened to string | null — the Task interface claims non-null,
 // but the DB column (and Prisma's return type) is actually nullable.
 export type TaskReminderInput = Pick<Task, "id" | "assigned_to"> & { status: string; due_date: string | null };
@@ -47,7 +47,10 @@ export function computeReminders(visits: VisitReminderInput[], tasks: TaskRemind
       reminders.push({ id: `v-overdue-${v.id}`, source: "visits", recordId: v.id, severity: "overdue", owner: v.pic });
     } else if (v.status === "Planned" && v.date === today) {
       reminders.push({ id: `v-today-${v.id}`, source: "visits", recordId: v.id, severity: "today", owner: v.pic });
-    } else if (v.status === "Reschedule") {
+    } else if (v.status === "Reschedule" && !v.rescheduled_to_id) {
+      // Once the follow-up visit is booked (rescheduled_to_id set), this visit
+      // is just historical record-keeping — nagging about it forever would be
+      // wrong since there's nothing left to schedule.
       reminders.push({ id: `v-resched-${v.id}`, source: "visits", recordId: v.id, severity: "overdue", owner: v.pic });
     } else if (v.status === "Tentative" && v.date) {
       // Tentative means the client/date is set but the appointment with the

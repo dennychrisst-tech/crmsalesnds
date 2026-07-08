@@ -17,6 +17,7 @@ import FilterSheet, { FilterField } from "./ui/FilterSheet";
 
 const WFO_DRAG_PREFIX = "wfo:";
 const LEAVE_DRAG_PREFIX = "leave:";
+const VISIT_DRAG_PREFIX = "visit:";
 
 interface Props {
   data: AppData;
@@ -185,51 +186,66 @@ function AgendaDayCard({
   );
 }
 
+// Draggable month-view pill — a separate component (not inlined in DayCell's
+// .map()) because useDraggable is a hook and can't be called from inside a
+// loop. Only Planned/Tentative/Reschedule visits are draggable: Done/Cancel
+// are closed-out history, moving them would misleadingly imply the visit
+// itself happened on a different day.
+function VisitPill({ v, clientName, isViewer, onEditVisit }: {
+  v: Visit; clientName: (id: string) => string; isViewer?: boolean; onEditVisit: (v: Visit) => void;
+}) {
+  const names = picList(v.pic);
+  const colors = (names.length ? names : ["—"]).map(colorForSales);
+  const background = colors.length > 1
+    ? `linear-gradient(90deg, ${colors[0].bg} 50%, ${colors[1].bg} 50%)`
+    : colors[0].bg;
+  const isReschedule = v.status === "Reschedule";
+  const isTentative = v.status === "Tentative";
+  const isCancel = v.status === "Cancel";
+  const isDone = v.status === "Done";
+  const isRescheduledInto = !!v.rescheduled_from_id;
+  const rescheduleNote = isReschedule ? ` · Reschedule ke ${v.followup_date ? fmtDate(v.followup_date) : "-"}` : isRescheduledInto ? " · Hasil reschedule" : isTentative ? " · Tentative — janji dgn PIC blm fix" : isCancel ? " · Dibatalkan" : "";
+  const draggable = !isViewer && !isCancel && !isDone;
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `${VISIT_DRAG_PREFIX}${v.id}`, disabled: !draggable });
+  return (
+    <div ref={setNodeRef} {...(draggable ? { ...attributes, ...listeners } : {})} className="vpill"
+      style={{
+        // Cancel overrides to red since it's no longer an active schedule, but
+        // Tentative keeps the sales color as background (see below) — only a
+        // small yellow "tentative" chip is added, so who it belongs to stays visible.
+        background: isCancel ? "#FEE2E2" : background,
+        color: isCancel ? "#991B1B" : colors[0].fg,
+        opacity: isDragging ? 0.35 : isDone ? 0.55 : isCancel ? 0.85 : isReschedule ? 0.8 : 1,
+        textDecoration: isDone || isCancel ? "line-through" : "none",
+        border: isReschedule ? `1.5px dashed ${colors[0].fg}` : isRescheduledInto ? `1.5px solid ${colors[0].fg}` : isTentative ? "1.5px dotted #FDE047" : undefined,
+        cursor: draggable ? "grab" : "pointer",
+      }}
+      onClick={e => { e.stopPropagation(); if (!isViewer) onEditVisit(v); }}
+      title={`${clientName(v.client_id)}: ${v.purpose} (${names.join(" & ") || "Tanpa sales"})${rescheduleNote}${draggable ? " — seret untuk pindah tanggal" : ""}`}>
+      {isReschedule ? "↻ " : isRescheduledInto ? "↩ " : isTentative ? "◐ " : isCancel ? "✕ " : ""}{clientName(v.client_id)}
+      {isTentative && <span style={{ background: "#FDE047", color: "#713F12", borderRadius: 3, padding: "0 4px", fontSize: "0.72em", fontWeight: 600, fontStyle: "italic", marginLeft: 4 }}>tentative</span>}
+    </div>
+  );
+}
+
 function DayCell({
   ds, day, isToday, isWeekend, isWeekFocus, holiday, dayVisits, dayEvents, clientName, isViewer, activeDragKind, onOpenNewVisit, onEditVisit, onEditEvent,
 }: {
   ds: string; day: number; isToday: boolean; isWeekend: boolean; isWeekFocus?: boolean; holiday?: string; dayVisits: Visit[]; dayEvents: CalendarEvent[];
-  clientName: (id: string) => string; isViewer?: boolean; activeDragKind: "wfo" | "leave" | null;
+  clientName: (id: string) => string; isViewer?: boolean; activeDragKind: "wfo" | "leave" | "visit" | null;
   onOpenNewVisit: (ds: string) => void; onEditVisit: (v: Visit) => void; onEditEvent: (e: CalendarEvent) => void;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: ds });
-  const dropClass = isOver ? (activeDragKind === "leave" ? " leave-drop-target" : " wfo-drop-target") : "";
+  const dropClass = isOver ? (activeDragKind === "leave" ? " leave-drop-target" : activeDragKind === "visit" ? " visit-drop-target" : " wfo-drop-target") : "";
   return (
     <div ref={setNodeRef} className={`cell${isToday ? " today" : ""}${isWeekend ? " weekend" : ""}${holiday ? " cell-holiday" : ""}${isWeekFocus ? " cell-week-focus" : ""}${dropClass}`}
       onDoubleClick={() => { if (!isViewer) onOpenNewVisit(ds); }}
-      title={holiday ? holiday : isViewer ? "" : "Double-klik untuk tambah visit, atau seret WFO/Cuti ke sini"}>
+      title={holiday ? holiday : isViewer ? "" : "Double-klik untuk tambah visit, atau seret visit/WFO/Cuti ke sini"}>
       <div className="dnum">{day}</div>
       {holiday && <div className="dnum-holiday" title={holiday}>{holiday}</div>}
-      {dayVisits.map(v => {
-        const names = picList(v.pic);
-        const colors = (names.length ? names : ["—"]).map(colorForSales);
-        const background = colors.length > 1
-          ? `linear-gradient(90deg, ${colors[0].bg} 50%, ${colors[1].bg} 50%)`
-          : colors[0].bg;
-        const isReschedule = v.status === "Reschedule";
-        const isTentative = v.status === "Tentative";
-        const isCancel = v.status === "Cancel";
-        const isRescheduledInto = !!v.rescheduled_from_id;
-        const rescheduleNote = isReschedule ? ` · Reschedule ke ${v.followup_date ? fmtDate(v.followup_date) : "-"}` : isRescheduledInto ? " · Hasil reschedule" : isTentative ? " · Tentative — janji dgn PIC blm fix" : isCancel ? " · Dibatalkan" : "";
-        return (
-          <div key={v.id} className="vpill"
-            style={{
-              // Cancel overrides to red since it's no longer an active schedule, but
-              // Tentative keeps the sales color as background (see below) — only a
-              // small yellow "tentative" chip is added, so who it belongs to stays visible.
-              background: isCancel ? "#FEE2E2" : background,
-              color: isCancel ? "#991B1B" : colors[0].fg,
-              opacity: v.status === "Done" ? 0.55 : isCancel ? 0.85 : isReschedule ? 0.8 : 1,
-              textDecoration: v.status === "Done" || isCancel ? "line-through" : "none",
-              border: isReschedule ? `1.5px dashed ${colors[0].fg}` : isRescheduledInto ? `1.5px solid ${colors[0].fg}` : isTentative ? "1.5px dotted #FDE047" : undefined,
-            }}
-            onClick={e => { e.stopPropagation(); if (!isViewer) onEditVisit(v); }}
-            title={`${clientName(v.client_id)}: ${v.purpose} (${names.join(" & ") || "Tanpa sales"})${rescheduleNote}`}>
-            {isReschedule ? "↻ " : isRescheduledInto ? "↩ " : isTentative ? "◐ " : isCancel ? "✕ " : ""}{clientName(v.client_id)}
-            {isTentative && <span style={{ background: "#FDE047", color: "#713F12", borderRadius: 3, padding: "0 4px", fontSize: "0.72em", fontWeight: 600, fontStyle: "italic", marginLeft: 4 }}>tentative</span>}
-          </div>
-        );
-      })}
+      {dayVisits.map(v => (
+        <VisitPill key={v.id} v={v} clientName={clientName} isViewer={isViewer} onEditVisit={onEditVisit} />
+      ))}
       {dayEvents.map(ev => {
         const isWfo = ev.type === "WFO";
         const isLeave = ev.type === "Cuti";
@@ -280,6 +296,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
   const [showLeavePanel, setShowLeavePanel] = useState(false);
   const [activeLeaveName, setActiveLeaveName] = useState<string | null>(null);
   const [pendingLeave, setPendingLeave] = useState<Set<string>>(new Set());
+  const [activeVisitDrag, setActiveVisitDrag] = useState(false);
   const [localWeekFocus, setLocalWeekFocus] = useState<DateRange | null>(null);
 
   useEffect(() => {
@@ -320,6 +337,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
     const id = String(e.active.id);
     if (id.startsWith(WFO_DRAG_PREFIX)) setActiveWfoName(id.slice(WFO_DRAG_PREFIX.length));
     else if (id.startsWith(LEAVE_DRAG_PREFIX)) setActiveLeaveName(id.slice(LEAVE_DRAG_PREFIX.length));
+    else if (id.startsWith(VISIT_DRAG_PREFIX)) setActiveVisitDrag(true);
   }
 
   async function markWfo(name: string, ds: string) {
@@ -358,14 +376,29 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
     }
   }
 
+  // Drag a visit pill to another day in the month grid — a quicker path than
+  // opening the modal and typing a new date, e.g. when a client asks to move
+  // a meeting one day over. Only wired for still-open visits (see VisitPill).
+  async function moveVisitDate(visitId: string, newDs: string) {
+    const visit = visits.find(v => v.id === visitId);
+    if (!visit || visit.date === newDs) return;
+    try {
+      await onSaveVisit({ id: visitId, date: newDs } as unknown as Visit);
+    } catch {
+      // useData's mutation helpers already surface the failure via error toast.
+    }
+  }
+
   async function handleDragEnd(e: DragEndEvent) {
     setActiveWfoName(null);
     setActiveLeaveName(null);
+    setActiveVisitDrag(false);
     const { over, active } = e;
     if (!over) return;
     const id = String(active.id);
     if (id.startsWith(WFO_DRAG_PREFIX)) await markWfo(id.slice(WFO_DRAG_PREFIX.length), String(over.id));
     else if (id.startsWith(LEAVE_DRAG_PREFIX)) await markLeave(id.slice(LEAVE_DRAG_PREFIX.length), String(over.id));
+    else if (id.startsWith(VISIT_DRAG_PREFIX)) await moveVisitDate(id.slice(VISIT_DRAG_PREFIX.length), String(over.id));
   }
 
   const filteredVisits = visits.filter(v => picMatches(v.pic, salesFilter));
@@ -514,7 +547,7 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
               {Array.from({ length: firstDay }, (_, i) => <div key={`e${i}`} className="cell empty" />)}
               {monthDays.map(({ ds, day, isWeekend, isWeekFocus, holiday, dayVisits, dayEvents }) => (
                 <DayCell key={ds} ds={ds} day={day} isToday={ds === today} isWeekend={isWeekend} isWeekFocus={isWeekFocus} holiday={holiday} dayVisits={dayVisits} dayEvents={dayEvents}
-                  clientName={clientName} isViewer={isViewer} activeDragKind={activeWfoName ? "wfo" : activeLeaveName ? "leave" : null}
+                  clientName={clientName} isViewer={isViewer} activeDragKind={activeWfoName ? "wfo" : activeLeaveName ? "leave" : activeVisitDrag ? "visit" : null}
                   onOpenNewVisit={openNewVisit} onEditVisit={openEditVisit} onEditEvent={openEditEvent} />
               ))}
             </div>
