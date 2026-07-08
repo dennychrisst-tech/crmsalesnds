@@ -22,12 +22,31 @@ function KpiCard({ label, value, sub, accent }: { label: string; value: string; 
   );
 }
 
+function fillRateColor(rate: number) {
+  return rate >= 20 ? { bg: "#DCFCE7", fg: "#15803D" } : rate > 0 ? { bg: "#FEF3C7", fg: "#B45309" } : { bg: "#F1EFE8", fg: "#5C5440" };
+}
+
 function FillRateBadge({ rate }: { rate: number }) {
-  const style = rate >= 20 ? { bg: "#DCFCE7", fg: "#15803D" } : rate > 0 ? { bg: "#FEF3C7", fg: "#B45309" } : { bg: "#F1EFE8", fg: "#5C5440" };
+  const style = fillRateColor(rate);
   return (
     <span style={{ fontWeight: 700, fontSize: 12, padding: "2px 8px", borderRadius: 999, background: style.bg, color: style.fg }}>
       {rate.toFixed(1)}%
     </span>
+  );
+}
+
+// Fill Rate per Client/Role were plain number badges with no way to compare
+// rows at a glance — a bar makes scanning "who's lagging" instant instead of
+// reading percentages one row at a time.
+function FillRateBar({ rate }: { rate: number }) {
+  const style = fillRateColor(rate);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ flex: 1, minWidth: 50, background: "var(--line)", borderRadius: 999, height: 7, overflow: "hidden" }}>
+        <div style={{ width: `${Math.min(rate, 100)}%`, height: "100%", background: style.fg, borderRadius: 999 }} />
+      </div>
+      <FillRateBadge rate={rate} />
+    </div>
   );
 }
 
@@ -143,7 +162,7 @@ export default function TalentFillRateView({ data, onOpenClient }: Props) {
               <>
                 <table className="data-table">
                   <thead>
-                    <tr><th>Client</th><th>Requisition</th><th>Req CV</th><th>Submitted</th><th>Reject</th><th>Not Response</th><th>PO Issued</th><th>Fill Rate</th></tr>
+                    <tr><th>Client</th><th>Requisition</th><th>Req CV</th><th>Submitted</th><th>Reject</th><th>Not Response</th><th>PO Issued</th><th style={{ minWidth: 130 }}>Fill Rate</th></tr>
                   </thead>
                   <tbody>
                     {clientRows.map(row => (
@@ -155,7 +174,7 @@ export default function TalentFillRateView({ data, onOpenClient }: Props) {
                         <td>{row.cv_reject}</td>
                         <td>{row.cv_not_response}</td>
                         <td>{row.po_issued}</td>
-                        <td><FillRateBadge rate={row.fillRate} /></td>
+                        <td><FillRateBar rate={row.fillRate} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -166,6 +185,9 @@ export default function TalentFillRateView({ data, onOpenClient }: Props) {
                       <div className="mcard-head">
                         <div className="mcard-title">{row.name}</div>
                         <FillRateBadge rate={row.fillRate} />
+                      </div>
+                      <div style={{ background: "var(--line)", borderRadius: 999, height: 6, overflow: "hidden", margin: "2px 0 8px" }}>
+                        <div style={{ width: `${Math.min(row.fillRate, 100)}%`, height: "100%", background: fillRateColor(row.fillRate).fg, borderRadius: 999 }} />
                       </div>
                       <div className="mcard-row"><span>Requisition</span><b>{row.count}</b></div>
                       <div className="mcard-row"><span>Req CV / Submitted</span><b>{row.req_cv} / {row.cv_submitted}</b></div>
@@ -184,7 +206,7 @@ export default function TalentFillRateView({ data, onOpenClient }: Props) {
               <>
                 <table className="data-table">
                   <thead>
-                    <tr><th>Role</th><th>Requisition</th><th>Submitted</th><th>Reject</th><th>Not Response</th><th>PO Issued</th><th>Fill Rate</th></tr>
+                    <tr><th>Role</th><th>Requisition</th><th>Submitted</th><th>Reject</th><th>Not Response</th><th>PO Issued</th><th style={{ minWidth: 130 }}>Fill Rate</th></tr>
                   </thead>
                   <tbody>
                     {roleRows.map(row => (
@@ -195,7 +217,7 @@ export default function TalentFillRateView({ data, onOpenClient }: Props) {
                         <td>{row.cv_reject}</td>
                         <td>{row.cv_not_response}</td>
                         <td>{row.po_issued}</td>
-                        <td><FillRateBadge rate={row.fillRate} /></td>
+                        <td><FillRateBar rate={row.fillRate} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -206,6 +228,9 @@ export default function TalentFillRateView({ data, onOpenClient }: Props) {
                       <div className="mcard-head">
                         <div className="mcard-title">{row.role}</div>
                         <FillRateBadge rate={row.fillRate} />
+                      </div>
+                      <div style={{ background: "var(--line)", borderRadius: 999, height: 6, overflow: "hidden", margin: "2px 0 8px" }}>
+                        <div style={{ width: `${Math.min(row.fillRate, 100)}%`, height: "100%", background: fillRateColor(row.fillRate).fg, borderRadius: 999 }} />
                       </div>
                       <div className="mcard-row"><span>Requisition</span><b>{row.count}</b></div>
                       <div className="mcard-row"><span>Submitted</span><b>{row.cv_submitted}</b></div>

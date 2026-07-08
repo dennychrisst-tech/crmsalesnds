@@ -7,6 +7,7 @@ import { fmtIDR, fmtDate, fmtDateStr, picMatches, STAGE_COLOR, isWonStage } from
 import { exportWeeklyReport } from "@/lib/export";
 import { shareToWhatsApp } from "@/lib/share";
 import Modal, { ModalActions } from "./ui/Modal";
+import { PeriodDelta } from "./ui/PeriodDelta";
 
 function getWeekRange(offset: number) {
   const now = new Date();
@@ -36,6 +37,9 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
   const [offset, setOffset] = useState(0);
   const [detailProject, setDetailProject] = useState<Project | null>(null);
   const { start, end, label } = getWeekRange(offset);
+  // Previous week's same-shape figures, purely for the "vs minggu lalu" hint
+  // under each KPI — not otherwise rendered.
+  const { start: prevStart, end: prevEnd } = getWeekRange(offset - 1);
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
@@ -45,6 +49,10 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
   const weekDealUpdates = deals.filter(d => d.stage_updated_at && inRange(d.stage_updated_at, start, end));
   const weekActivityLog = activities.filter(a => inRange(a.date, start, end));
   const weekWon = weekDealUpdates.filter(d => isWonStage(d.stage));
+
+  const prevWeekVisits = visits.filter(v => v.status === "Done" && inRange(v.date, prevStart, prevEnd));
+  const prevWeekDealUpdates = deals.filter(d => d.stage_updated_at && inRange(d.stage_updated_at, prevStart, prevEnd));
+  const prevWeekWon = prevWeekDealUpdates.filter(d => isWonStage(d.stage));
   // Counts as "active" whether the update came from a visit or just a logged
   // activity (WA/phone follow-up with no visit) — both are real sales work.
   const activeSales = new Set([
@@ -142,16 +150,19 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
           <div className="kpi-label">Visit Selesai</div>
           <div className="kpi-num">{weekVisits.length}</div>
           <div className="kpi-sub">{new Set(weekVisits.map(v => v.client_id)).size} client dikunjungi</div>
+          <PeriodDelta current={weekVisits.length} previous={prevWeekVisits.length} label="minggu lalu" />
         </div>
         <div className="kpi kpi-v2" style={{ cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end })} title="Buka Pipeline · deal update minggu ini saja">
           <div className="kpi-label">Update Pipeline</div>
           <div className="kpi-num">{weekDealUpdates.length}</div>
           <div className="kpi-sub">deal berpindah stage</div>
+          <PeriodDelta current={weekDealUpdates.length} previous={prevWeekDealUpdates.length} label="minggu lalu" />
         </div>
         <div className="kpi kpi-v2" style={{ borderColor: weekWon.length ? "var(--brand)" : "", cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end }, "Dealed")} title="Buka Pipeline · stage Dealed, minggu ini saja">
           <div className="kpi-label">Closed Won</div>
           <div className="kpi-num" style={{ color: weekWon.length ? "var(--brand)" : "" }}>{weekWon.length}</div>
           <div className="kpi-sub">{fmtIDR(weekWon.reduce((s, d) => s + d.value, 0))}</div>
+          <PeriodDelta current={weekWon.length} previous={prevWeekWon.length} label="minggu lalu" />
         </div>
         <div className="kpi">
           <div className="kpi-label">Sales Aktif</div>

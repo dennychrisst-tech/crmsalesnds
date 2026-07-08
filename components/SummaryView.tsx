@@ -1,11 +1,16 @@
 "use client";
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
-import { fmtIDR, fmtDate, picMatches, fmtDateStr, isWonStage } from "@/lib/utils";
+import { DateRange } from "@/types";
+import { fmtIDR, fmtDate, picMatches, fmtDateStr, isWonStage, weeklyCount } from "@/lib/utils";
+import { Sparkline } from "./ui/Sparkline";
+import { PeriodDelta } from "./ui/PeriodDelta";
 
 interface Props {
   data: AppData;
   onOpenVisit: (visitId: string) => void;
+  onOpenCalendarWeek: (range: DateRange) => void;
+  onOpenPipelineWeek: (range: DateRange, stage?: string) => void;
 }
 
 type Period = "week" | "month";
@@ -57,7 +62,7 @@ interface FeedItem {
   onClick?: () => void;
 }
 
-export default function SummaryView({ data, onOpenVisit }: Props) {
+export default function SummaryView({ data, onOpenVisit, onOpenCalendarWeek, onOpenPipelineWeek }: Props) {
   const { clients, deals, visits, tasks, activities, events, profiles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [period, setPeriod] = useState<Period>("week");
@@ -82,6 +87,27 @@ export default function SummaryView({ data, onOpenVisit }: Props) {
   const doneVisits     = periodVisits.filter(v => v.status === "Done");
   const wonValue       = wonDeals.reduce((s, d) => s + d.value, 0);
   const newPipeline    = periodDeals.reduce((s, d) => s + d.value, 0);
+
+  // Previous period's same-shape figures — only used for the "vs periode
+  // lalu" hint under each KPI and (in week mode) the trailing-weeks sparkline.
+  const prevRange = period === "week" ? getWeekRange(offset - 1) : getMonthRange(offset - 1);
+  const prevDoneVisits = visits.filter(v => v.status === "Done" && inRange(v.date, prevRange.start, prevRange.end) && matchSales(v.pic));
+  const prevDoneTasks  = tasks.filter(t => t.status === "Done" && inRange(t.due_date, prevRange.start, prevRange.end) && matchSales(t.assigned_to));
+  const prevPeriodDeals = deals.filter(d => (d.created_at || "") > HISTORICAL_DATA_CUTOFF && inRange(d.created_at, prevRange.start, prevRange.end) && matchSales(d.owner));
+  const prevWonDeals   = deals.filter(d => isWonStage(d.stage) && inRange(d.stage_updated_at || d.created_at, prevRange.start, prevRange.end) && matchSales(d.owner));
+  const prevLostDeals  = deals.filter(d => d.stage === "Dropped" && inRange(d.stage_updated_at || d.created_at, prevRange.start, prevRange.end) && matchSales(d.owner));
+  const prevActivities = activities.filter(a => inRange(a.date || a.created_at, prevRange.start, prevRange.end) && matchSales(a.created_by));
+
+  // Trailing 7-week trend, anchored on the currently viewed week — month mode
+  // skips the sparkline (a 7-week trend doesn't map cleanly onto "per bulan"),
+  // the delta hint above still applies either way.
+  const weekAnchor = period === "week" ? toDate(end) : null;
+  const sparkVisitsDone = weekAnchor ? weeklyCount(visits.filter(v => v.status === "Done" && matchSales(v.pic)), v => v.date, 7, weekAnchor) : null;
+  const sparkTasksDone  = weekAnchor ? weeklyCount(tasks.filter(t => t.status === "Done" && matchSales(t.assigned_to)), t => t.due_date || "", 7, weekAnchor) : null;
+  const sparkNewDeals   = weekAnchor ? weeklyCount(deals.filter(d => (d.created_at || "") > HISTORICAL_DATA_CUTOFF && matchSales(d.owner)), d => (d.created_at || "").slice(0, 10), 7, weekAnchor) : null;
+  const sparkWon        = weekAnchor ? weeklyCount(deals.filter(d => isWonStage(d.stage) && matchSales(d.owner)), d => (d.stage_updated_at || d.created_at || "").slice(0, 10), 7, weekAnchor) : null;
+  const sparkLost       = weekAnchor ? weeklyCount(deals.filter(d => d.stage === "Dropped" && matchSales(d.owner)), d => (d.stage_updated_at || d.created_at || "").slice(0, 10), 7, weekAnchor) : null;
+  const sparkActivities = weekAnchor ? weeklyCount(activities.filter(a => matchSales(a.created_by)), a => (a.date || a.created_at || "").slice(0, 10), 7, weekAnchor) : null;
 
   // Activity feed — merge all types
   const feed: FeedItem[] = useMemo(() => {
@@ -183,35 +209,47 @@ export default function SummaryView({ data, onOpenVisit }: Props) {
 
       {/* KPI Cards */}
       <div className="kpis" style={{ marginBottom: 20 }}>
-        <div className="kpi">
+        <div className="kpi kpi-v2" style={{ cursor: "pointer" }} onClick={() => onOpenCalendarWeek({ start, end })} title="Buka Calendar Visit · periode ini saja">
           <div className="kpi-label">Visit dilakukan</div>
           <div className="kpi-num">{doneVisits.length}</div>
           <div className="kpi-sub">dari {periodVisits.length} terjadwal</div>
+          <PeriodDelta current={doneVisits.length} previous={prevDoneVisits.length} label="periode lalu" />
+          {sparkVisitsDone && <Sparkline data={sparkVisitsDone} color="var(--brand)" />}
         </div>
         <div className="kpi">
           <div className="kpi-label">Task selesai</div>
           <div className="kpi-num">{doneTasks.length}</div>
           <div className="kpi-sub">dari {periodTasks.length} task</div>
+          <PeriodDelta current={doneTasks.length} previous={prevDoneTasks.length} label="periode lalu" />
+          {sparkTasksDone && <Sparkline data={sparkTasksDone} color="var(--gold)" />}
         </div>
-        <div className="kpi">
+        <div className="kpi kpi-v2" style={{ cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end })} title="Buka Pipeline · project baru periode ini saja">
           <div className="kpi-label">Project baru</div>
           <div className="kpi-num">{periodDeals.length}</div>
           <div className="kpi-sub">{fmtIDR(newPipeline)}</div>
+          <PeriodDelta current={periodDeals.length} previous={prevPeriodDeals.length} label="periode lalu" />
+          {sparkNewDeals && <Sparkline data={sparkNewDeals} color="var(--ink-soft)" />}
         </div>
-        <div className="kpi" style={{ borderColor: wonDeals.length ? "var(--brand)" : "" }}>
+        <div className="kpi kpi-v2" style={{ borderColor: wonDeals.length ? "var(--brand)" : "", cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end }, "Dealed")} title="Buka Pipeline · stage Dealed, periode ini saja">
           <div className="kpi-label">Project Won</div>
           <div className="kpi-num" style={{ color: wonDeals.length ? "var(--brand)" : "" }}>{wonDeals.length}</div>
           <div className="kpi-sub">{fmtIDR(wonValue)}</div>
+          <PeriodDelta current={wonDeals.length} previous={prevWonDeals.length} label="periode lalu" />
+          {sparkWon && <Sparkline data={sparkWon} color="var(--brand)" />}
         </div>
-        <div className="kpi" style={{ borderColor: lostDeals.length ? "var(--danger)" : "" }}>
+        <div className="kpi kpi-v2" style={{ borderColor: lostDeals.length ? "var(--danger)" : "", cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end }, "Dropped")} title="Buka Pipeline · stage Dropped, periode ini saja">
           <div className="kpi-label">Project Lost</div>
           <div className="kpi-num" style={{ color: lostDeals.length ? "var(--danger)" : "" }}>{lostDeals.length}</div>
           <div className="kpi-sub">{lostDeals.length ? lostDeals.map(d => d.name).join(", ").slice(0, 40) : "Tidak ada"}</div>
+          <PeriodDelta current={lostDeals.length} previous={prevLostDeals.length} label="periode lalu" />
+          {sparkLost && <Sparkline data={sparkLost} color="var(--danger)" warn />}
         </div>
         <div className="kpi">
           <div className="kpi-label">Aktivitas dicatat</div>
           <div className="kpi-num">{periodActivities.length}</div>
           <div className="kpi-sub">{periodEvents.length} event tambahan</div>
+          <PeriodDelta current={periodActivities.length} previous={prevActivities.length} label="periode lalu" />
+          {sparkActivities && <Sparkline data={sparkActivities} color="var(--accent)" />}
         </div>
       </div>
 

@@ -155,6 +155,23 @@ export function todayStr(): string {
   return fmtDateStr(new Date());
 }
 
+// Buckets items into `weeks` consecutive Mon–Sun counts, the most recent
+// bucket ending on `anchor`'s week — shared by Dashboard's KPI sparklines and
+// any other report that wants the same trailing-weeks trend line. Defaults
+// to real "today" (Dashboard's case); pass the viewed period's end date to
+// anchor the trend on whatever week/month a report is currently showing
+// instead of always trailing off of the current date.
+export function weeklyCount<T>(items: T[], getDate: (item: T) => string, weeks = 7, anchor: Date = new Date()): number[] {
+  return Array.from({ length: weeks }, (_, i) => {
+    const mon = new Date(anchor);
+    mon.setDate(anchor.getDate() - ((anchor.getDay() + 6) % 7) - (weeks - 1 - i) * 7);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    const s = fmtDateStr(mon);
+    const e = fmtDateStr(sun);
+    return items.filter(item => { const d = getDate(item); return d >= s && d <= e; }).length;
+  });
+}
+
 // Source: SKB 3 Menteri — Hari Libur Nasional dan Cuti Bersama Tahun 2026
 // (Kemenko PMK, https://www.kemenkopmk.go.id/pemerintah-tetapkan-17-hari-libur-nasional-dan-8-hari-cuti-bersama-tahun-2026).
 // Update this list each year — there's no calendar-computation for movable

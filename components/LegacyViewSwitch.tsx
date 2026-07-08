@@ -137,7 +137,10 @@ export default function LegacyViewSwitch({ view }: { view: LegacyView }) {
           openTaskId={searchParams.get("openTaskId")} onOpenTaskHandled={() => clearParams("openTaskId")} />
       );
     case "summary":
-      return <SummaryView data={data} onOpenVisit={openVisit} />;
+      return (
+        <SummaryView data={data} onOpenVisit={openVisit}
+          onOpenCalendarWeek={openCalendarWeek} onOpenPipelineWeek={openPipelineWeek} />
+      );
     case "visit-report":
       return <VisitReport data={data} />;
     case "weekly-report":
