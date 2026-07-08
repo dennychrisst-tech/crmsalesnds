@@ -99,8 +99,19 @@ export const SALES_COLOR_PALETTE = [
   { bg: "#9333EA", fg: "#FFFFFF" },
   { bg: "#CA8A04", fg: "#1F2937" },
 ];
+// Explicit overrides for the current sales team — the hash below put Dova
+// (#9333EA) and Rio (#7C3AED) next to each other in the same purple family,
+// too close to tell apart on a pill/dot. Anyone not listed here still falls
+// back to the hash so new hires / one-off PIC names get a stable color too.
+const SALES_COLOR_OVERRIDES: Record<string, { bg: string; fg: string }> = {
+  Denny: { bg: "#2563EB", fg: "#FFFFFF" },
+  Dova: { bg: "#EA580C", fg: "#FFFFFF" },
+  Rio: { bg: "#7C3AED", fg: "#FFFFFF" },
+  Cris: { bg: "#0D9488", fg: "#FFFFFF" },
+};
 export function colorForSales(name: string) {
   const key = name || "—";
+  if (SALES_COLOR_OVERRIDES[key]) return SALES_COLOR_OVERRIDES[key];
   let hash = 0;
   for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
   return SALES_COLOR_PALETTE[hash % SALES_COLOR_PALETTE.length];

@@ -137,7 +137,7 @@ function AgendaDayCard({
           const isCancel = v.status === "Cancel";
           const isRescheduledInto = !!v.rescheduled_from_id;
           return (
-            <button key={v.id} type="button" className="agenda-item" style={{ background: isCancel ? "#FDE4E4" : "var(--paper)", border: isTentative ? "1px dashed #C4B5FD" : undefined, opacity: isCancel ? 0.7 : 1 }}
+            <button key={v.id} type="button" className="agenda-item" style={{ background: isCancel ? "#FDE4E4" : isTentative ? "#FEF9C3" : "var(--paper)", border: isTentative ? "1px dashed #FDE047" : undefined, opacity: isCancel ? 0.7 : 1 }}
               onClick={() => { if (!isViewer) onEditVisit(v); }}>
               <span className="agenda-item-dot" style={{ background: color.bg }} />
               <span>
@@ -214,10 +214,11 @@ function DayCell({
         return (
           <div key={v.id} className="vpill"
             style={{
-              background: isCancel ? "#FEE2E2" : background, color: isCancel ? "#991B1B" : colors[0].fg,
-              opacity: v.status === "Done" ? 0.55 : isCancel ? 0.85 : isReschedule || isTentative ? 0.8 : 1,
+              background: isCancel ? "#FEE2E2" : isTentative ? "#FEF9C3" : background,
+              color: isCancel ? "#991B1B" : isTentative ? "#854D0E" : colors[0].fg,
+              opacity: v.status === "Done" ? 0.55 : isCancel ? 0.85 : isReschedule ? 0.8 : 1,
               textDecoration: v.status === "Done" || isCancel ? "line-through" : "none",
-              border: isReschedule ? `1.5px dashed ${colors[0].fg}` : isRescheduledInto ? `1.5px solid ${colors[0].fg}` : isTentative ? `1.5px dotted ${colors[0].fg}` : undefined,
+              border: isReschedule ? `1.5px dashed ${colors[0].fg}` : isRescheduledInto ? `1.5px solid ${colors[0].fg}` : isTentative ? "1.5px dotted #CA8A04" : undefined,
             }}
             onClick={e => { e.stopPropagation(); if (!isViewer) onEditVisit(v); }}
             title={`${clientName(v.client_id)}: ${v.purpose} (${names.join(" & ") || "Tanpa sales"})${rescheduleNote}`}>
