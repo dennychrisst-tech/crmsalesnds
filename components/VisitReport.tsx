@@ -50,10 +50,10 @@ export default function VisitReport({ data }: Props) {
         (v.pic_client || "").toLowerCase().includes(q)
       );
     }
-    return list;
+    return list.sort((a, b) => b.date.localeCompare(a.date));
   }, [visits, filterMonth, filterSales, search]);
 
-  // Group by client, sorted by client name
+  // Group by client, ordered by most recent visit date (not client name)
   const grouped = useMemo(() => {
     const map: Record<string, typeof filtered> = {};
     filtered.forEach(v => {
@@ -63,7 +63,7 @@ export default function VisitReport({ data }: Props) {
     });
     // sort visits within each group by date desc
     Object.values(map).forEach(arr => arr.sort((a, b) => b.date.localeCompare(a.date)));
-    return Object.entries(map).sort((a, b) => clientName(a[0]).localeCompare(clientName(b[0])));
+    return Object.entries(map).sort((a, b) => b[1][0].date.localeCompare(a[1][0].date));
   }, [filtered]);
 
   function toggleExpand(id: string) {
