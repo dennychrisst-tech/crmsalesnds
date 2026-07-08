@@ -6,5 +6,6 @@ export function StageBadge({ stage }: { stage: string }) {
 
 export function VisitBadge({ status }: { status: string }) {
   const title = status === "Tentative" ? "Client & tanggal sudah pasti, tapi janji dengan PIC belum confirm — visit bisa saja tidak jadi ketemu" : undefined;
-  return <span className={`badge ${visitStatusClass(status)}`} title={title}>{status}</span>;
+  const mark = status === "Cancel" ? "✕ " : "";
+  return <span className={`badge ${visitStatusClass(status)}`} title={title}>{mark}{status}</span>;
 }

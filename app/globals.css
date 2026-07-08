@@ -470,7 +470,7 @@ tr:hover td { background: var(--paper); }
 .st-tentative { background: #EDE9FE; color: #6D28D9; border: 1px dashed #C4B5FD; }
 .st-done { background: var(--brand-soft); color: var(--brand); }
 .st-followup { background: #FBF0DA; color: #9A6E12; }
-.st-nogo { background: #EFE2E2; color: var(--lost); }
+.st-nogo { background: #FDE4E4; color: var(--danger); border: 1px solid #F5B5B5; text-decoration: line-through; }
 
 /* Bare (no background box of their own) text using an inline stage/status
    color meant for a light background — e.g. Pipeline kanban column headers,
