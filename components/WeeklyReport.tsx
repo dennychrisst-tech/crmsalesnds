@@ -40,6 +40,8 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
   const weekVisits = visits.filter(v => v.status === "Done" && inRange(v.date, start, end));
+  const weekReschedules = visits.filter(v => v.status === "Reschedule" && inRange(v.date, start, end));
+  const weekCancels = visits.filter(v => v.status === "Cancel" && inRange(v.date, start, end));
   const weekDealUpdates = deals.filter(d => d.stage_updated_at && inRange(d.stage_updated_at, start, end));
   const weekActivityLog = activities.filter(a => inRange(a.date, start, end));
   const weekWon = weekDealUpdates.filter(d => isWonStage(d.stage));
@@ -78,6 +80,8 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
 
   const salesData = team.map(name => {
     const salesVisits = weekVisits.filter(v => picMatches(v.pic, name)).sort((a, b) => b.date.localeCompare(a.date));
+    const rescheduledVisits = weekReschedules.filter(v => picMatches(v.pic, name)).sort((a, b) => b.date.localeCompare(a.date));
+    const cancelledVisits = weekCancels.filter(v => picMatches(v.pic, name)).sort((a, b) => b.date.localeCompare(a.date));
     const salesDealUpdates = weekDealUpdates.filter(d => d.owner === name);
     // Activities already shown on one of this week's visit cards don't repeat
     // here — this section is only for updates that had no visit at all.
@@ -85,7 +89,7 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
     const standaloneActivities = weekActivityLog
       .filter(a => a.created_by === name && !attachedIds.has(a.id))
       .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-    return { name, visits: salesVisits, dealUpdates: salesDealUpdates, standaloneActivities };
+    return { name, visits: salesVisits, rescheduledVisits, cancelledVisits, dealUpdates: salesDealUpdates, standaloneActivities };
   });
 
   function buildShareText() {
@@ -97,13 +101,23 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
       `Update pipeline: ${weekDealUpdates.length}`,
       `Closed Won: ${weekWon.length}${weekWon.length ? ` — ${fmtIDR(weekWon.reduce((s, d) => s + d.value, 0))}` : ""}`,
     ];
+    if (weekReschedules.length) lines.push(`Reschedule: ${weekReschedules.length}`);
+    if (weekCancels.length) lines.push(`Cancel: ${weekCancels.length}`);
     for (const s of salesData) {
-      if (!s.visits.length) continue;
+      if (!s.visits.length && !s.rescheduledVisits.length && !s.cancelledVisits.length) continue;
       lines.push("", `*${s.name}* — ${s.visits.length} visit`);
       for (const v of s.visits) {
         const summary = (v.summary || "").trim().replace(/\s+/g, " ");
         const short = summary.length > 120 ? summary.slice(0, 117) + "…" : summary;
         lines.push(`• ${fmtDate(v.date)} ${clientName(v.client_id)}${short ? ` — ${short}` : ""}`);
+      }
+      for (const v of s.rescheduledVisits) {
+        const reason = (v.reschedule_reason || "").trim().replace(/\s+/g, " ");
+        lines.push(`• ↻ ${fmtDate(v.date)} ${clientName(v.client_id)} — Reschedule${reason ? `: ${reason}` : ""}`);
+      }
+      for (const v of s.cancelledVisits) {
+        const reason = (v.cancel_reason || "").trim().replace(/\s+/g, " ");
+        lines.push(`• ✕ ${fmtDate(v.date)} ${clientName(v.client_id)} — Cancel${reason ? `: ${reason}` : ""}`);
       }
     }
     return lines.join("\n");
@@ -160,10 +174,22 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
                   <span>{s.dealUpdates.length} update pipeline</span>
                 </>
               )}
+              {s.rescheduledVisits.length > 0 && (
+                <>
+                  <span>·</span>
+                  <span>{s.rescheduledVisits.length} reschedule</span>
+                </>
+              )}
+              {s.cancelledVisits.length > 0 && (
+                <>
+                  <span>·</span>
+                  <span>{s.cancelledVisits.length} cancel</span>
+                </>
+              )}
             </div>
           </div>
 
-          {s.visits.length === 0 && s.standaloneActivities.length === 0 ? (
+          {s.visits.length === 0 && s.rescheduledVisits.length === 0 && s.cancelledVisits.length === 0 && s.standaloneActivities.length === 0 ? (
             <div className="empty-state" style={{ padding: "14px 0" }}>Belum ada visit atau update aktivitas minggu ini.</div>
           ) : (
             <>
@@ -225,6 +251,38 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
                 );
               })}
             </div>
+            )}
+
+            {(s.rescheduledVisits.length > 0 || s.cancelledVisits.length > 0) && (
+              <div className="wr-card-list" style={{ marginTop: s.visits.length ? 10 : 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 2 }}>
+                  Reschedule & Cancel Minggu Ini
+                </div>
+                {s.rescheduledVisits.map(v => (
+                  <div key={v.id} className="wr-card" style={{ borderLeftColor: "#CA8A04" }}>
+                    <div className="wr-card-top">
+                      <span className="wr-date">{fmtDate(v.date)}</span>
+                      <span className="wr-client">{clientName(v.client_id)}</span>
+                      <span className="wr-approach" style={{ background: "#FEF9C3", color: "#854D0E" }}>↻ Reschedule</span>
+                    </div>
+                    <div className="wr-summary">
+                      {v.reschedule_reason || <em className="muted">Alasan reschedule belum diisi.</em>}
+                    </div>
+                  </div>
+                ))}
+                {s.cancelledVisits.map(v => (
+                  <div key={v.id} className="wr-card" style={{ borderLeftColor: "#991B1B" }}>
+                    <div className="wr-card-top">
+                      <span className="wr-date">{fmtDate(v.date)}</span>
+                      <span className="wr-client">{clientName(v.client_id)}</span>
+                      <span className="wr-approach" style={{ background: "#FEE2E2", color: "#991B1B" }}>✕ Cancel</span>
+                    </div>
+                    <div className="wr-summary">
+                      {v.cancel_reason || <em className="muted">Alasan cancel belum diisi.</em>}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
 
             {s.standaloneActivities.length > 0 && (

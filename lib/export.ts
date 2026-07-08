@@ -140,21 +140,31 @@ export async function exportVisitReport(visits: Visit[], clientName: (id: string
 }
 
 export async function exportWeeklyReport(
-  salesData: { name: string; visits: Visit[] }[],
+  salesData: { name: string; visits: Visit[]; rescheduledVisits?: Visit[]; cancelledVisits?: Visit[] }[],
   clientName: (id: string) => string,
   relatedDeal: (v: Visit) => Deal | null,
   label: string
 ) {
   interface Row { name: string; v: Visit; deal: Deal | null }
   const rows: Row[] = [];
-  salesData.forEach(s => s.visits.forEach(v => rows.push({ name: s.name, v, deal: relatedDeal(v) })));
+  salesData.forEach(s => {
+    s.visits.forEach(v => rows.push({ name: s.name, v, deal: relatedDeal(v) }));
+    (s.rescheduledVisits || []).forEach(v => rows.push({ name: s.name, v, deal: relatedDeal(v) }));
+    (s.cancelledVisits || []).forEach(v => rows.push({ name: s.name, v, deal: relatedDeal(v) }));
+  });
 
   const columns: ColumnDef<Row>[] = [
     { header: "Sales", width: 14, value: r => r.name },
     { header: "Tanggal", width: 12, value: r => r.v.date },
     { header: "Client", width: 22, value: r => clientName(r.v.client_id) },
+    { header: "Status", width: 12, value: r => r.v.status },
     { header: "Jenis Approach", width: 16, value: r => r.v.approach || "" },
-    { header: "Hasil Visit", width: 34, wrap: true, value: r => r.v.summary || "" },
+    {
+      header: "Catatan", width: 34, wrap: true,
+      value: r => r.v.status === "Reschedule" ? (r.v.reschedule_reason || "")
+        : r.v.status === "Cancel" ? (r.v.cancel_reason || "")
+        : (r.v.summary || ""),
+    },
     { header: "Deal Terkait", width: 26, wrap: true, value: r => r.deal?.name || "" },
     { header: "Stage", width: 18, value: r => r.deal?.stage || "" },
   ];
