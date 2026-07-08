@@ -141,7 +141,7 @@ function AgendaDayCard({
               onClick={() => { if (!isViewer) onEditVisit(v); }}>
               <span className="agenda-item-dot" style={{ background: color.bg }} />
               <span>
-                <div className="agenda-item-title" style={{ textDecoration: isCancel ? "line-through" : "none" }}>{isReschedule ? "↻ " : isRescheduledInto ? "↩ " : isTentative ? "❔ " : isCancel ? "✕ " : ""}{clientName(v.client_id)}</div>
+                <div className="agenda-item-title" style={{ textDecoration: isCancel ? "line-through" : "none" }}>{isReschedule ? "↻ " : isRescheduledInto ? "↩ " : isTentative ? "◐ " : isCancel ? "✕ " : ""}{clientName(v.client_id)}</div>
                 <div className="agenda-item-sub">
                   {v.purpose}{names.length ? ` · ${names.join(" & ")}` : ""}
                   {v.status === "Done" ? " · Selesai" : ""}
@@ -222,7 +222,8 @@ function DayCell({
             }}
             onClick={e => { e.stopPropagation(); if (!isViewer) onEditVisit(v); }}
             title={`${clientName(v.client_id)}: ${v.purpose} (${names.join(" & ") || "Tanpa sales"})${rescheduleNote}`}>
-            {isReschedule ? "↻ " : isRescheduledInto ? "↩ " : isTentative ? "❔ " : isCancel ? "✕ " : ""}{clientName(v.client_id)}
+            {isReschedule ? "↻ " : isRescheduledInto ? "↩ " : isTentative ? "◐ " : isCancel ? "✕ " : ""}{clientName(v.client_id)}
+            {isTentative && <span style={{ fontStyle: "italic", fontWeight: 400, fontSize: "0.85em", opacity: 0.75 }}> · tentative</span>}
           </div>
         );
       })}
