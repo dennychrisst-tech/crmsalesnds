@@ -62,6 +62,8 @@ export interface Visit {
   jabatan: string;
   followup_date?: string | null;
   summary: string;
+  reschedule_reason?: string;
+  cancel_reason?: string;
   rescheduled_to_id?: string | null;
   rescheduled_from_id?: string | null;
   created_by_id?: string;

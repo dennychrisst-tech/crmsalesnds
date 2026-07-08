@@ -41,7 +41,8 @@ function emptyVisit(clientId: string, defaultPic = "", date = todayStr()): Visit
     id: uuid(), client_id: clientId, deal_id: null, project_id: null, date,
     purpose: "", approach: "", status: "Planned",
     pic: defaultPic, pic_client: "", jabatan: "",
-    followup_date: null, summary: "", rescheduled_to_id: null, rescheduled_from_id: null,
+    followup_date: null, summary: "", reschedule_reason: "", cancel_reason: "",
+    rescheduled_to_id: null, rescheduled_from_id: null,
   };
 }
 
@@ -116,6 +117,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
   const clientProjects = projects.filter(p => p.client_id === form.client_id);
   const isDone = form.status === "Done";
   const isReschedule = form.status === "Reschedule";
+  const isCancel = form.status === "Cancel";
 
   function handleClientChange(clientId: string) {
     setForm(f => ({ ...f, client_id: clientId, pic_client: "", jabatan: "", deal_id: null, project_id: null }));
@@ -170,10 +172,8 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         } else {
           const newId = uuid();
           await onSave({
-            // purpose is left blank, not copied from form.purpose — that field now
-            // holds the *reschedule reason* for this visit, not the new visit's own purpose.
             id: newId, client_id: form.client_id, deal_id: form.deal_id ?? null,
-            date: form.followup_date, purpose: "", approach: form.approach, status: "Planned",
+            date: form.followup_date, purpose: form.purpose, approach: form.approach, status: "Planned",
             pic: form.pic, pic_client: form.pic_client, jabatan: form.jabatan,
             followup_date: null, summary: "", rescheduled_from_id: form.id,
           });
@@ -278,9 +278,21 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
             </div>
           </div>
           <div className="dd-block">
-            <div className="dd-label">{isReschedule ? "Alasan Reschedule" : "Tujuan Visit"}</div>
+            <div className="dd-label">Tujuan Visit</div>
             <div className="dd-text">{form.purpose || "—"}</div>
           </div>
+          {isReschedule && (
+            <div className="dd-block">
+              <div className="dd-label">Alasan Reschedule</div>
+              <div className="dd-text">{form.reschedule_reason || "—"}</div>
+            </div>
+          )}
+          {isCancel && (
+            <div className="dd-block">
+              <div className="dd-label">Alasan Cancel</div>
+              <div className="dd-text">{form.cancel_reason || "—"}</div>
+            </div>
+          )}
           {form.status === "Done" && (
             <div className="dd-block">
               <div className="dd-label">Summary / Hasil</div>
@@ -400,10 +412,22 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
           <option value="Maintain Relation">Maintain Relation</option>
         </select>
       </Field>
-      <Field label={isReschedule ? "Alasan Reschedule" : "Tujuan visit"}>
-        <input className={inputCls} value={form.purpose} onChange={e => set("purpose", e.target.value)}
-          placeholder={isReschedule ? "Mis. client reschedule karena ada acara mendadak" : "Mis. business introduction, review SLA"} />
+      <Field label="Tujuan visit">
+        <input className={inputCls} value={form.purpose} onChange={e => set("purpose", e.target.value)} placeholder="Mis. business introduction, review SLA" />
       </Field>
+
+      {isReschedule && (
+        <Field label="Alasan Reschedule">
+          <input className={inputCls} value={form.reschedule_reason || ""} onChange={e => set("reschedule_reason", e.target.value)}
+            placeholder="Mis. client reschedule karena ada acara mendadak" />
+        </Field>
+      )}
+      {isCancel && (
+        <Field label="Alasan Cancel">
+          <input className={inputCls} value={form.cancel_reason || ""} onChange={e => set("cancel_reason", e.target.value)}
+            placeholder="Mis. budget belum disetujui, project ditunda" />
+        </Field>
+      )}
 
       {/* Summary & Task — hanya muncul saat status Done */}
       {isDone && (
