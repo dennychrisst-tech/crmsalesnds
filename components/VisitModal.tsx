@@ -170,8 +170,10 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
         } else {
           const newId = uuid();
           await onSave({
+            // purpose is left blank, not copied from form.purpose — that field now
+            // holds the *reschedule reason* for this visit, not the new visit's own purpose.
             id: newId, client_id: form.client_id, deal_id: form.deal_id ?? null,
-            date: form.followup_date, purpose: form.purpose, approach: form.approach, status: "Planned",
+            date: form.followup_date, purpose: "", approach: form.approach, status: "Planned",
             pic: form.pic, pic_client: form.pic_client, jabatan: form.jabatan,
             followup_date: null, summary: "", rescheduled_from_id: form.id,
           });
@@ -276,7 +278,7 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
             </div>
           </div>
           <div className="dd-block">
-            <div className="dd-label">Tujuan Visit</div>
+            <div className="dd-label">{isReschedule ? "Alasan Reschedule" : "Tujuan Visit"}</div>
             <div className="dd-text">{form.purpose || "—"}</div>
           </div>
           {form.status === "Done" && (
@@ -398,8 +400,9 @@ export default function VisitModal({ open, visit, preClientId, preDate, clients,
           <option value="Maintain Relation">Maintain Relation</option>
         </select>
       </Field>
-      <Field label="Tujuan visit">
-        <input className={inputCls} value={form.purpose} onChange={e => set("purpose", e.target.value)} placeholder="Mis. business introduction, review SLA" />
+      <Field label={isReschedule ? "Alasan Reschedule" : "Tujuan visit"}>
+        <input className={inputCls} value={form.purpose} onChange={e => set("purpose", e.target.value)}
+          placeholder={isReschedule ? "Mis. client reschedule karena ada acara mendadak" : "Mis. business introduction, review SLA"} />
       </Field>
 
       {/* Summary & Task — hanya muncul saat status Done */}
