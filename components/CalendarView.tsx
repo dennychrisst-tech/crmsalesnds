@@ -214,16 +214,19 @@ function DayCell({
         return (
           <div key={v.id} className="vpill"
             style={{
-              background: isCancel ? "#FEE2E2" : isTentative ? "#FEF9C3" : background,
-              color: isCancel ? "#991B1B" : isTentative ? "#854D0E" : colors[0].fg,
+              // Cancel overrides to red since it's no longer an active schedule, but
+              // Tentative keeps the sales color as background (see below) — only a
+              // small yellow "tentative" chip is added, so who it belongs to stays visible.
+              background: isCancel ? "#FEE2E2" : background,
+              color: isCancel ? "#991B1B" : colors[0].fg,
               opacity: v.status === "Done" ? 0.55 : isCancel ? 0.85 : isReschedule ? 0.8 : 1,
               textDecoration: v.status === "Done" || isCancel ? "line-through" : "none",
-              border: isReschedule ? `1.5px dashed ${colors[0].fg}` : isRescheduledInto ? `1.5px solid ${colors[0].fg}` : isTentative ? "1.5px dotted #CA8A04" : undefined,
+              border: isReschedule ? `1.5px dashed ${colors[0].fg}` : isRescheduledInto ? `1.5px solid ${colors[0].fg}` : isTentative ? "1.5px dotted #FDE047" : undefined,
             }}
             onClick={e => { e.stopPropagation(); if (!isViewer) onEditVisit(v); }}
             title={`${clientName(v.client_id)}: ${v.purpose} (${names.join(" & ") || "Tanpa sales"})${rescheduleNote}`}>
             {isReschedule ? "↻ " : isRescheduledInto ? "↩ " : isTentative ? "◐ " : isCancel ? "✕ " : ""}{clientName(v.client_id)}
-            {isTentative && <span style={{ fontStyle: "italic", fontWeight: 400, fontSize: "0.85em", opacity: 0.75 }}> · tentative</span>}
+            {isTentative && <span style={{ background: "#FDE047", color: "#713F12", borderRadius: 3, padding: "0 4px", fontSize: "0.72em", fontWeight: 600, fontStyle: "italic", marginLeft: 4 }}>tentative</span>}
           </div>
         );
       })}
