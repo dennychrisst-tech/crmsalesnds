@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
-import { Share2, Download, User, Briefcase, FolderKanban } from "lucide-react";
+import { Share2, Download, FileText, User, Briefcase, FolderKanban } from "lucide-react";
 import { AppData } from "@/hooks/useData";
 import { Project, DateRange } from "@/types";
 import { fmtIDR, fmtDate, fmtDateStr, picMatches, STAGE_COLOR, isWonStage } from "@/lib/utils";
 import { exportWeeklyReport } from "@/lib/export";
+import { exportWeeklyReportPdf } from "@/lib/pdf";
 import { shareToWhatsApp } from "@/lib/share";
 import Modal, { ModalActions } from "./ui/Modal";
 import { PeriodDelta } from "./ui/PeriodDelta";
@@ -36,6 +37,7 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
   const team = profiles.filter(p => !["super_admin", "admin", "viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const [offset, setOffset] = useState(0);
   const [detailProject, setDetailProject] = useState<Project | null>(null);
+  const [pdfSaving, setPdfSaving] = useState(false);
   const { start, end, label } = getWeekRange(offset);
   // Previous week's same-shape figures, purely for the "vs minggu lalu" hint
   // under each KPI — not otherwise rendered.
@@ -131,6 +133,22 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
     return lines.join("\n");
   }
 
+  async function handleExportPdf() {
+    if (pdfSaving) return;
+    setPdfSaving(true);
+    try {
+      await exportWeeklyReportPdf(salesData, clientName, label, {
+        visitDone: weekVisits.length,
+        clientCount: new Set(weekVisits.map(v => v.client_id)).size,
+        pipelineUpdates: weekDealUpdates.length,
+        wonCount: weekWon.length,
+        wonValue: weekWon.reduce((s, d) => s + d.value, 0),
+      });
+    } finally {
+      setPdfSaving(false);
+    }
+  }
+
   return (
     <section>
       <div className="sum-header">
@@ -143,6 +161,9 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
         </div>
         <button className="btn btn-ghost btn-sm" onClick={() => shareToWhatsApp(buildShareText())}><Share2 size={13} /> Share WA</button>
         <button className="btn btn-ghost btn-sm" onClick={() => exportWeeklyReport(salesData, clientName, relatedDeal, label)}><Download size={13} /> Export Excel</button>
+        <button className="btn btn-ghost btn-sm" onClick={handleExportPdf} disabled={pdfSaving}>
+          {pdfSaving ? <span className="btn-spinner" /> : <FileText size={13} />} {pdfSaving ? "Membuat PDF…" : "Export PDF"}
+        </button>
       </div>
 
       <div className="kpis" style={{ marginBottom: 20 }}>

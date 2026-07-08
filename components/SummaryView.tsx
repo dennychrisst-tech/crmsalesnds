@@ -13,7 +13,7 @@ interface Props {
   onOpenPipelineWeek: (range: DateRange, stage?: string) => void;
 }
 
-type Period = "week" | "month";
+type Period = "week" | "month" | "quarter" | "custom";
 
 function toDate(s: string) { return new Date(s + "T00:00:00"); }
 function ymd(d: Date) { return fmtDateStr(d); }
@@ -35,6 +35,26 @@ function getMonthRange(offset: number) {
     start: ymd(first), end: ymd(last),
     label: first.toLocaleDateString("id-ID", { month: "long", year: "numeric" }),
   };
+}
+
+function getQuarterRange(offset: number) {
+  const now = new Date();
+  const totalQ = now.getFullYear() * 4 + Math.floor(now.getMonth() / 3) + offset;
+  const y = Math.floor(totalQ / 4);
+  const q = ((totalQ % 4) + 4) % 4;
+  const first = new Date(y, q * 3, 1);
+  const last = new Date(y, q * 3 + 3, 0);
+  return { start: ymd(first), end: ymd(last), label: `Q${q + 1} ${y}` };
+}
+
+// Custom range has no "previous period" concept the way week/month/quarter
+// offsets do — this just takes the immediately preceding range of the same
+// length, so the "vs periode lalu" hint still means something.
+function getPrecedingRange(start: string, end: string) {
+  const lengthMs = toDate(end).getTime() - toDate(start).getTime();
+  const prevEnd = new Date(toDate(start).getTime() - 86_400_000);
+  const prevStart = new Date(prevEnd.getTime() - lengthMs);
+  return { start: ymd(prevStart), end: ymd(prevEnd) };
 }
 
 function inRange(dateStr: string | null | undefined, start: string, end: string) {
@@ -68,11 +88,17 @@ export default function SummaryView({ data, onOpenVisit, onOpenCalendarWeek, onO
   const [period, setPeriod] = useState<Period>("week");
   const [offset, setOffset] = useState(0);
   const [salesFilter, setSalesFilter] = useState("all");
+  const [customStart, setCustomStart] = useState(() => getMonthRange(0).start);
+  const [customEnd, setCustomEnd] = useState(() => getMonthRange(0).end);
 
-  const range = period === "week" ? getWeekRange(offset) : getMonthRange(offset);
+  const range = period === "week" ? getWeekRange(offset)
+    : period === "month" ? getMonthRange(offset)
+    : period === "quarter" ? getQuarterRange(offset)
+    : { start: customStart, end: customEnd, label: `${fmtDate(customStart)} – ${fmtDate(customEnd)}` };
   const { start, end, label } = range;
 
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
+  const clientSector = (id: string) => clients.find(c => c.id === id)?.sector || "Lainnya";
 
   const matchSales = (name: string | null | undefined) => salesFilter === "all" || (name || "").split(",").map(s => s.trim()).includes(salesFilter);
 
@@ -90,7 +116,10 @@ export default function SummaryView({ data, onOpenVisit, onOpenCalendarWeek, onO
 
   // Previous period's same-shape figures — only used for the "vs periode
   // lalu" hint under each KPI and (in week mode) the trailing-weeks sparkline.
-  const prevRange = period === "week" ? getWeekRange(offset - 1) : getMonthRange(offset - 1);
+  const prevRange = period === "week" ? getWeekRange(offset - 1)
+    : period === "month" ? getMonthRange(offset - 1)
+    : period === "quarter" ? getQuarterRange(offset - 1)
+    : getPrecedingRange(customStart, customEnd);
   const prevDoneVisits = visits.filter(v => v.status === "Done" && inRange(v.date, prevRange.start, prevRange.end) && matchSales(v.pic));
   const prevDoneTasks  = tasks.filter(t => t.status === "Done" && inRange(t.due_date, prevRange.start, prevRange.end) && matchSales(t.assigned_to));
   const prevPeriodDeals = deals.filter(d => (d.created_at || "") > HISTORICAL_DATA_CUTOFF && inRange(d.created_at, prevRange.start, prevRange.end) && matchSales(d.owner));
@@ -174,6 +203,26 @@ export default function SummaryView({ data, onOpenVisit, onOpenCalendarWeek, onO
     pipeline: periodDeals.filter(d => d.owner === name).reduce((s, d) => s + d.value, 0),
   }));
 
+  // Per-sector breakdown — every other cut in this report slices by "who"
+  // (sales) or "when" (period); sector is the only "what kind of client"
+  // lens, and Client.sector was already sitting there unused for this.
+  const sectorStats = useMemo(() => {
+    const map: Record<string, { visits: number; visitsDone: number; wonValue: number; newPipeline: number; clientIds: Set<string> }> = {};
+    const ensure = (sector: string) => (map[sector] ||= { visits: 0, visitsDone: 0, wonValue: 0, newPipeline: 0, clientIds: new Set() });
+    periodVisits.forEach(v => {
+      const s = ensure(clientSector(v.client_id));
+      s.visits++;
+      if (v.status === "Done") s.visitsDone++;
+      s.clientIds.add(v.client_id);
+    });
+    wonDeals.forEach(d => { ensure(clientSector(d.client_id)).wonValue += d.value; });
+    periodDeals.forEach(d => { ensure(clientSector(d.client_id)).newPipeline += d.value; });
+    return Object.entries(map)
+      .map(([sector, v]) => ({ sector, ...v, clientCount: v.clientIds.size }))
+      .sort((a, b) => b.wonValue - a.wonValue || b.visits - a.visits);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [periodVisits, wonDeals, periodDeals, clients]);
+
   const typeCls: Record<string, string> = {
     visit: "feed-type-visit", task: "feed-type-task",
     activity: "feed-type-activity", event: "feed-type-event", deal: "feed-type-deal",
@@ -189,13 +238,27 @@ export default function SummaryView({ data, onOpenVisit, onOpenCalendarWeek, onO
         <div className="sum-period-toggle">
           <button className={period === "week" ? "sum-toggle-active" : "sum-toggle"} onClick={() => { setPeriod("week"); setOffset(0); }}>Per Minggu</button>
           <button className={period === "month" ? "sum-toggle-active" : "sum-toggle"} onClick={() => { setPeriod("month"); setOffset(0); }}>Per Bulan</button>
+          <button className={period === "quarter" ? "sum-toggle-active" : "sum-toggle"} onClick={() => { setPeriod("quarter"); setOffset(0); }}>Per Kuartal</button>
+          <button className={period === "custom" ? "sum-toggle-active" : "sum-toggle"} onClick={() => setPeriod("custom")}>Custom</button>
         </div>
-        <div className="sum-nav">
-          <button className="cal-nav-btn" onClick={() => setOffset(o => o - 1)}>‹</button>
-          <span className="sum-period-label">{label}</span>
-          <button className="cal-nav-btn" onClick={() => setOffset(o => o + 1)} disabled={offset >= 0}>›</button>
-          {offset !== 0 && <button className="btn btn-ghost btn-sm" onClick={() => setOffset(0)}>Sekarang</button>}
-        </div>
+        {period === "custom" ? (
+          <div className="sum-nav" style={{ gap: 6 }}>
+            <input type="date" value={customStart} max={customEnd}
+              onChange={e => setCustomStart(e.target.value)}
+              style={{ fontSize: 13, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)" }} />
+            <span className="muted">–</span>
+            <input type="date" value={customEnd} min={customStart}
+              onChange={e => setCustomEnd(e.target.value)}
+              style={{ fontSize: 13, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)" }} />
+          </div>
+        ) : (
+          <div className="sum-nav">
+            <button className="cal-nav-btn" onClick={() => setOffset(o => o - 1)}>‹</button>
+            <span className="sum-period-label">{label}</span>
+            <button className="cal-nav-btn" onClick={() => setOffset(o => o + 1)} disabled={offset >= 0}>›</button>
+            {offset !== 0 && <button className="btn btn-ghost btn-sm" onClick={() => setOffset(0)}>Sekarang</button>}
+          </div>
+        )}
         <select
           className="sum-sales-filter"
           value={salesFilter}
@@ -300,7 +363,9 @@ export default function SummaryView({ data, onOpenVisit, onOpenCalendarWeek, onO
                   </thead>
                   <tbody>
                     {teamStats.map(s => (
-                      <tr key={s.name}>
+                      <tr key={s.name} style={{ cursor: "pointer", background: salesFilter === s.name ? "var(--brand-soft)" : undefined }}
+                        onClick={() => setSalesFilter(f => f === s.name ? "all" : s.name)}
+                        title={salesFilter === s.name ? "Klik untuk kembali ke semua sales" : `Klik untuk fokus ke ${s.name} saja`}>
                         <td style={{ fontWeight: 600 }}>{s.name}</td>
                         <td style={{ textAlign: "right" }}>
                           {s.visitsDone}<span className="muted">/{s.visits}</span>
@@ -319,6 +384,39 @@ export default function SummaryView({ data, onOpenVisit, onOpenCalendarWeek, onO
               </div>
             )}
           </div>
+
+          {/* Per-sector breakdown */}
+          {sectorStats.length > 0 && (
+            <div className="panel">
+              <h2>Performa per Sektor</h2>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ minWidth: 380 }}>
+                  <thead>
+                    <tr>
+                      <th>Sektor</th>
+                      <th style={{ textAlign: "right" }}>Client</th>
+                      <th style={{ textAlign: "right" }}>Visit</th>
+                      <th style={{ textAlign: "right" }}>Won</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sectorStats.map(s => (
+                      <tr key={s.sector}>
+                        <td style={{ fontWeight: 600 }}>{s.sector}</td>
+                        <td style={{ textAlign: "right" }}>{s.clientCount}</td>
+                        <td style={{ textAlign: "right" }}>
+                          {s.visitsDone}<span className="muted">/{s.visits}</span>
+                        </td>
+                        <td style={{ textAlign: "right", color: s.wonValue ? "var(--brand)" : undefined, fontWeight: s.wonValue ? 700 : undefined }}>
+                          {s.wonValue ? fmtIDR(s.wonValue) : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Won deals detail */}
           {wonDeals.length > 0 && (
