@@ -34,6 +34,11 @@ interface Reminder {
 // regardless of what time it was dismissed.
 const SNOOZE_KEY = "crm_reminder_snoozed";
 
+// How long a newly-added client keeps showing up as its own reminder — after
+// this it just quietly stops appearing (like an overdue visit that got
+// resolved) instead of needing to be dismissed forever.
+const NEW_CLIENT_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 function loadSnoozed(): Record<string, number> {
   if (typeof window === "undefined") return {};
   try {
@@ -114,7 +119,21 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
   // — also reused server-side by the push-notification cron route. This
   // component just filters to "mine" and builds the display strings, which
   // need data.clients/data.tasks lookups the server side doesn't have.
-  const reminders: Reminder[] = computeReminders(data.visits, data.tasks, today)
+  // Not owner-scoped like the rest (no salesperson field on Client) — a new
+  // client is team-wide news, so everyone sees it, not just isAdmin/mine().
+  const newClientReminders: Reminder[] = data.clients
+    .filter(c => c.created_at && Date.now() - new Date(c.created_at).getTime() < NEW_CLIENT_WINDOW_MS)
+    .map(c => ({
+      id: `c-new-${c.id}`,
+      title: `Client baru: ${c.name}`,
+      sub: `${c.sector}${c.created_at ? ` · ${fmtDate(c.created_at.slice(0, 10))}` : ""}`,
+      severity: "today" as const,
+      href: `/clients?openClientId=${c.id}`,
+    }));
+
+  const reminders: Reminder[] = [
+    ...newClientReminders,
+    ...computeReminders(data.visits, data.tasks, today)
     .filter(r => mine(r.owner))
     .map((r): Reminder | null => {
       if (r.source === "visits") {
@@ -143,7 +162,8 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
       }
       return { id: r.id, title: `Task jatuh tempo hari ini: ${t.title}`, sub: `${t.assigned_to || "—"}`, severity: "today", href: "/tasks", taskId: t.id };
     })
-    .filter((r): r is Reminder => r !== null);
+    .filter((r): r is Reminder => r !== null),
+  ];
 
   reminders.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === "overdue" ? -1 : 1));
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { logAudit, recordLabel } from "@/lib/audit";
 
 type TableName = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles" | "revenue_targets" | "revenue_lines" | "revenue_opportunities" | "mandays_roles" | "mandays_client_rates";
 
@@ -51,7 +52,10 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   }
 
   try {
-    await getModel(table as TableName).delete({ where: { id } });
+    const model = getModel(table as TableName);
+    const existing = await model.findUnique({ where: { id } });
+    await model.delete({ where: { id } });
+    if (existing) await logAudit({ actor: session, action: `${table}.delete`, target: recordLabel(table, existing) });
     return NextResponse.json({ ok: true });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "DB error";
@@ -80,6 +84,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ta
 
   try {
     const result = await getModel(table as TableName).update({ where: { id }, data: body });
+    await logAudit({ actor: session, action: `${table}.update`, target: recordLabel(table, result) });
     return NextResponse.json(serializeDates(result));
   } catch (e) {
     const msg = e instanceof Error ? e.message : "DB error";

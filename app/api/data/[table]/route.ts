@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import webpush from "web-push";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, isPrivilegedRole, SessionUser } from "@/lib/auth";
+import { logAudit, recordLabel } from "@/lib/audit";
 
 type TableName = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles" | "revenue_targets" | "revenue_lines" | "revenue_opportunities" | "mandays_roles" | "mandays_client_rates";
 
@@ -38,6 +40,44 @@ function serializeDates(obj: unknown): unknown {
 function denyViewer(session: { role: string }) {
   if (session.role === "viewer") return NextResponse.json({ error: "Forbidden: akses view only" }, { status: 403 });
   return null;
+}
+
+// Fire-and-forget push to every admin/super_admin (other than whoever just
+// created the client) so the team notices new clients without polling the
+// list. Silently no-ops if VAPID isn't configured — same as the reminders
+// cron route, which owns the actual daily notification schedule.
+async function notifyAdminsNewClient(client: { id: string; name: string }, creator: SessionUser) {
+  const { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } = process.env;
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY || !VAPID_SUBJECT) return;
+
+  const admins = await prisma.user.findMany({ where: { id: { not: creator.id } }, select: { id: true, role: true } });
+  const adminIds = admins.filter(u => isPrivilegedRole(u.role)).map(u => u.id);
+  if (adminIds.length === 0) return;
+
+  const subscriptions = await prisma.pushSubscription.findMany({ where: { user_id: { in: adminIds } } });
+  if (subscriptions.length === 0) return;
+
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  const payload = JSON.stringify({
+    title: "Client baru ditambahkan",
+    body: `"${client.name}" ditambahkan oleh ${creator.name}`,
+    url: "/clients",
+    tag: "crm-new-client",
+  });
+
+  const staleEndpoints: string[] = [];
+  await Promise.all(subscriptions.map(async sub => {
+    try {
+      await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload);
+    } catch (e: unknown) {
+      const statusCode = (e as { statusCode?: number }).statusCode;
+      if (statusCode === 404 || statusCode === 410) staleEndpoints.push(sub.endpoint);
+    }
+  }));
+
+  if (staleEndpoints.length > 0) {
+    await prisma.pushSubscription.deleteMany({ where: { endpoint: { in: staleEndpoints } } });
+  }
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ table: string }> }) {
@@ -94,11 +134,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
   }
 
   try {
+    const existedBefore = !!(await model.findUnique({ where: { id: body.id }, select: { id: true } }));
+
     const result = await model.upsert({
       where: { id: body.id },
       create: body,
       update: { ...body, created_by_id: undefined }, // don't overwrite creator on update
     });
+
+    // Awaited (not fire-and-forget) — Vercel can freeze/kill the function the
+    // instant the response is sent, so an un-awaited write here would be a
+    // coin flip on whether it actually lands. Push failures are swallowed
+    // internally so they can't turn a successful save into a 500.
+    await Promise.all([
+      logAudit({ actor: session, action: `${table}.${existedBefore ? "update" : "create"}`, target: recordLabel(table, result) }),
+      table === "clients" && !existedBefore ? notifyAdminsNewClient(result, session).catch(() => {}) : Promise.resolve(),
+    ]);
+
     return NextResponse.json(serializeDates(result));
   } catch (e) {
     const msg = e instanceof Error ? e.message : "DB error";

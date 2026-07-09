@@ -8,6 +8,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { TABS, PRIMARY_HREFS, MORE_TABS, MORE_GROUPS, DESKTOP_PRIMARY_HREFS, DESKTOP_DROPDOWN_GROUPS } from "@/lib/nav";
 import GlobalSearch from "@/components/GlobalSearch";
 import RemindersBell from "@/components/RemindersBell";
+import LogbookBell from "@/components/LogbookBell";
 import InstallPrompt from "@/components/InstallPrompt";
 import ToastHost from "@/components/ui/Toast";
 import Logo from "@/components/ui/Logo";
@@ -67,6 +68,7 @@ export default function CrmShell({ children }: { children: ReactNode }) {
               {pendingSyncCount} tersimpan offline
             </span>
           )}
+          <LogbookBell />
           <button onClick={toggleTheme} className="btn-theme-toggle" title={theme === "dark" ? "Mode Terang" : "Mode Gelap"} aria-label="Ganti tema">
             {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
           </button>

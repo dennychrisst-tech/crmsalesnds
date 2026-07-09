@@ -17,12 +17,16 @@ interface Props {
 function formatPhone(value: string): string {
   const digits = value.replace(/\D/g, "");
   if (!digits) return "";
+  // Last group has no upper bound — numbers pasted with a country code (e.g.
+  // "+62 812-3456-7890" from WhatsApp/contacts) run longer than a locally-typed
+  // 08xx number, and a capped slice() here used to silently drop the trailing
+  // digits from the display, making paste look broken.
   if (digits.startsWith("0")) {
     const rest = digits.slice(1);
-    const parts = [rest.slice(0, 3), rest.slice(3, 7), rest.slice(7, 11)].filter(Boolean);
+    const parts = [rest.slice(0, 3), rest.slice(3, 7), rest.slice(7)].filter(Boolean);
     return "0" + parts.join("-");
   }
-  const parts = [digits.slice(0, 2), digits.slice(2, 6), digits.slice(6, 10)].filter(Boolean);
+  const parts = [digits.slice(0, 2), digits.slice(2, 6), digits.slice(6)].filter(Boolean);
   return parts.join("-");
 }
 

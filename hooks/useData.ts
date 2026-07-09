@@ -224,13 +224,13 @@ export function useData() {
   // re-fetching all tables — that used to happen after every single save/delete.
   // Each one reports success/failure via toast; patch stays silent on success
   // because its main caller (pipeline stage move) shows its own undo toast.
-  async function upsert(table: TableKey, record: Record<string, unknown>) {
+  async function upsert(table: TableKey, record: Record<string, unknown>, successMessage?: string) {
     if (!record.id) record.id = uuid();
     try {
       const result = await api(`/api/data/${table}`, "POST", record);
       const normalized = normalizeRow(table, result);
       commit(prev => ({ ...prev, [table]: mergeRecord(prev[table], normalized) }));
-      toast("Tersimpan");
+      toast(successMessage ?? "Tersimpan");
       return normalized;
     } catch (e) {
       // Only Visit/Task saves — the field-capture entry points — get queued
@@ -278,7 +278,10 @@ export function useData() {
     return (id: string) => remove(table, id);
   }
 
-  const upsertClient = makeUpsert<Client>("clients");
+  async function upsertClient(c: Client) {
+    const isNew = !dataRef.current.clients.some(x => x.id === c.id);
+    return upsert("clients", c as unknown as Record<string, unknown>, isNew ? `Client baru "${c.name}" berhasil ditambahkan` : undefined);
+  }
   const deleteClient = makeRemove("clients");
 
   const upsertContact = makeUpsert<Contact>("contacts");
