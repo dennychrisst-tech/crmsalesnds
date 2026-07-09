@@ -8,7 +8,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "NDS Sales CRM",
+  title: "PT. NDS | Sales CRM",
   description: "Sales Pipeline · Banking / Multifinance / Insurance",
   applicationName: "NDS Sales CRM",
   appleWebApp: {
