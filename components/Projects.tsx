@@ -136,7 +136,7 @@ export default function Projects({
         <div className="panel" style={{ marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
             <h3 style={{ margin: 0, fontSize: 15 }}>Aktivitas Terakhir per Client</h3>
-            <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <span className="muted" style={{ fontSize: 12 }}>maks. 10 aktivitas / client</span>
               <button className="btn btn-ghost btn-sm" onClick={() => setExpandedActivityClients(new Set(clientActivityGroups.map(g => g.key)))}>Tampilkan Semua</button>
               <button className="btn btn-ghost btn-sm" onClick={() => setExpandedActivityClients(new Set())}>Sembunyikan Semua</button>
@@ -150,11 +150,11 @@ export default function Projects({
                 <div key={g.key}>
                   <button
                     className="ccard-collapse-toggle"
-                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}
+                    style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}
                     onClick={() => toggleActivityClient(g.key)}
                   >
-                    <span>{isOpen ? "▾" : "▸"} <b style={{ color: "var(--ink)", fontSize: 15 }}>{g.label}</b> <span style={{ fontSize: 11 }}>({g.items.length} aktivitas)</span></span>
-                    <span className="muted">{fmtDate((g.items[0].date || g.items[0].created_at || "").slice(0, 10))}</span>
+                    <span style={{ minWidth: 0 }}>{isOpen ? "▾" : "▸"} <b style={{ color: "var(--ink)", fontSize: 15 }}>{g.label}</b> <span style={{ fontSize: 11 }}>({g.items.length} aktivitas)</span></span>
+                    <span className="muted" style={{ flexShrink: 0, whiteSpace: "nowrap" }}>{fmtDate((g.items[0].date || g.items[0].created_at || "").slice(0, 10))}</span>
                   </button>
                   {isOpen && (
                     <table className="table-zebra">
