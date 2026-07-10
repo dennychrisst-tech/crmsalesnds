@@ -183,7 +183,7 @@ export default function Opty({
                     onClick={() => setSearch(clientName(c.client_id))}
                     title="Klik untuk filter tabel ke client ini"
                   >
-                    <div style={{ width: 160, flexShrink: 0, fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div className="opty-progress-name">
                       {clientName(c.client_id)}
                     </div>
                     <div className="funnel-track" style={{ flex: 1, minWidth: 80 }}>
@@ -192,11 +192,11 @@ export default function Opty({
                         background: color,
                       }} />
                     </div>
-                    <span className="badge" style={{ width: 170, flexShrink: 0, textAlign: "center", background: `${color}22`, color }}>
+                    <span className="badge opty-progress-stage" style={{ background: `${color}22`, color }}>
                       {c.stage}
                     </span>
-                    <div style={{ width: 110, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700 }}>{fmtIDR(c.value)}</div>
-                    <div style={{ width: 60, flexShrink: 0, textAlign: "right", fontSize: 12, color: "var(--ink-soft)" }}>{c.count} oppty</div>
+                    <div className="opty-progress-value">{fmtIDR(c.value)}</div>
+                    <div className="opty-progress-count">{c.count} oppty</div>
                   </div>
                 );
               })}

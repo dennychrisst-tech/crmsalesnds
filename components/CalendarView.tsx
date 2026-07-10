@@ -600,8 +600,8 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
         </table>
       </div>
 
-      {/* Events table */}
-      <div className="panel">
+      {/* Events table — desktop only; mobile already sees this via the agenda list above */}
+      <div className="panel desktop-only">
         <h2>Event & Kegiatan <span className="count">({sortedEvents.length})</span></h2>
         <table>
           <thead>

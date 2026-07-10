@@ -50,30 +50,32 @@ export default function DocumentTracker({ dealId, documents, onAdd, onDelete }: 
         <div className="empty-state" style={{ padding: "20px 0" }}>Belum ada dokumen tercatat.</div>
       )}
       {documents.length > 0 && (
-        <table style={{ marginBottom: 12 }}>
-          <thead>
-            <tr>
-              <th>Nama Dokumen</th>
-              <th>Tipe</th>
-              <th>Status</th>
-              <th>Tanggal</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {documents.map(d => (
-              <tr key={d.id}>
-                <td style={{ fontWeight: 600 }}>{d.name}{d.notes && <div style={{ fontWeight: 400, fontSize: 11, color: "var(--ink-soft)" }}>{d.notes}</div>}</td>
-                <td>{d.type}</td>
-                <td><span className={docStatusClass(d.status)}>{d.status}</span></td>
-                <td>{d.date ? fmtDate(d.date) : "—"}</td>
-                <td>
-                  <button className="btn btn-danger btn-sm" onClick={() => { if (confirm("Hapus dokumen ini?")) onDelete(d.id); }}>×</button>
-                </td>
+        <div className="table-scroll" style={{ marginBottom: 12 }}>
+          <table style={{ minWidth: 480 }}>
+            <thead>
+              <tr>
+                <th>Nama Dokumen</th>
+                <th>Tipe</th>
+                <th>Status</th>
+                <th>Tanggal</th>
+                <th></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {documents.map(d => (
+                <tr key={d.id}>
+                  <td style={{ fontWeight: 600 }}>{d.name}{d.notes && <div style={{ fontWeight: 400, fontSize: 11, color: "var(--ink-soft)" }}>{d.notes}</div>}</td>
+                  <td>{d.type}</td>
+                  <td><span className={docStatusClass(d.status)}>{d.status}</span></td>
+                  <td>{d.date ? fmtDate(d.date) : "—"}</td>
+                  <td>
+                    <button className="btn btn-danger btn-sm" onClick={() => { if (confirm("Hapus dokumen ini?")) onDelete(d.id); }}>×</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {showForm ? (

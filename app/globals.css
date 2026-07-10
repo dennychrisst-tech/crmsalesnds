@@ -360,7 +360,7 @@ nav.tabs button.active::after, nav.tabs a.active::after {
   font-size: 9.5px; font-weight: 700; color: #991B1B; margin-top: 1px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2;
 }
-.cal-week-focus-banner { display: flex; align-items: center; gap: 8px; justify-content: space-between; background: var(--brand-soft); color: var(--brand); border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 14px; }
+.cal-week-focus-banner { display: flex; align-items: center; gap: 8px; justify-content: space-between; flex-wrap: wrap; background: var(--brand-soft); color: var(--brand); border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 14px; }
 .vpill { background: var(--brand-soft); color: var(--brand); border-radius: 6px; padding: 3px 5px; margin-top: 4px; cursor: pointer; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vpill.done { background: #E7E4DB; color: var(--ink-soft); }
 .vpill-event { background: #EDE9FE; color: #6D28D9; }
@@ -420,6 +420,10 @@ nav.tabs button.active::after, nav.tabs a.active::after {
 
 /* Tables */
 table { width: 100%; border-collapse: collapse; }
+/* Scrollable escape hatch for tables that aren't inside a .panel (which
+   already gets overflow-x on mobile) — e.g. DocumentTracker's table inside
+   a modal, where a wide table would otherwise just get crushed. */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 th, td { text-align: left; padding: 11px 10px; border-bottom: 1px solid var(--line); font-size: 13px; vertical-align: top; }
 th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); }
 /* Column headers stay visible while scrolling long lists (sticks to the
@@ -947,6 +951,14 @@ tr.task-soon td { background: #fffbeb; }
 .funnel-value { width: 110px; font-size: 12px; text-align: right; color: var(--ink); font-weight: 700; flex-shrink: 0; }
 .funnel-count { width: 50px; font-size: 12px; text-align: right; color: var(--ink-soft); flex-shrink: 0; }
 
+/* Oppty "Progress per Client" row — same funnel-row shape, but led by a
+   client name instead of a stage badge, so it needs its own width set
+   (reusing funnel-stage/value/count would put the wrong label first). */
+.opty-progress-name { width: 160px; flex-shrink: 0; font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.opty-progress-stage { width: 170px; flex-shrink: 0; text-align: center; }
+.opty-progress-value { width: 110px; flex-shrink: 0; text-align: right; font-size: 12px; font-weight: 700; }
+.opty-progress-count { width: 60px; flex-shrink: 0; text-align: right; font-size: 12px; color: var(--ink-soft); }
+
 /* ───────────────────── Mobile ───────────────────── */
 @media (max-width: 640px) {
   .app { padding: 10px 10px calc(74px + env(safe-area-inset-bottom)); }
@@ -1050,7 +1062,11 @@ tr.task-soon td { background: #fffbeb; }
   /* Calendar — compact cells */
   .cal-head { gap: 8px; margin-bottom: 10px; }
   .mtitle { font-size: 15px; }
-  .cal-nav-btn { width: 28px; height: 28px; font-size: 14px; }
+  .cal-nav-btn { width: 40px; height: 40px; font-size: 16px; }
+
+  /* Pagination — bigger tap targets; page window is capped at 5 numbers so
+     this still comfortably fits a narrow screen alongside prev/next. */
+  .pagination-btn { min-width: 38px; height: 38px; font-size: 13px; }
 
   /* Toolbar action buttons — horizontal scroll strip instead of wrapping/squashing */
   .cal-toolbar-actions {
@@ -1132,6 +1148,13 @@ tr.task-soon td { background: #fffbeb; }
   .funnel-track { flex: 1 1 100%; order: 4; height: 14px; }
   .funnel-value { width: auto; margin-left: auto; }
   .funnel-count { width: auto; }
+
+  /* Oppty "Progress per Client" — name gets its own full-width line, bar
+     below it, stage badge + value + count share a third line. */
+  .opty-progress-name { width: 100%; order: 1; }
+  .opty-progress-stage { width: auto; order: 5; }
+  .opty-progress-value { width: auto; order: 6; margin-left: auto; }
+  .opty-progress-count { width: auto; order: 7; }
 
   /* Summary view header */
   .sum-header { gap: 10px; }
