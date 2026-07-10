@@ -3,6 +3,7 @@ import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { TalentRole } from "@/types";
 import EmptyState from "./ui/EmptyState";
+import { onActivateKey } from "@/lib/utils";
 
 interface Props {
   data: AppData;
@@ -166,7 +167,8 @@ export default function TalentFillRateView({ data, onOpenClient }: Props) {
                   </thead>
                   <tbody>
                     {clientRows.map(row => (
-                      <tr key={row.clientId} style={{ cursor: "pointer" }} onClick={() => onOpenClient(row.clientId)}>
+                      <tr key={row.clientId} style={{ cursor: "pointer" }} onClick={() => onOpenClient(row.clientId)}
+                        onKeyDown={onActivateKey(() => onOpenClient(row.clientId))} role="button" tabIndex={0}>
                         <td><b>{row.name}</b></td>
                         <td>{row.count}</td>
                         <td>{row.req_cv}</td>
@@ -181,7 +183,8 @@ export default function TalentFillRateView({ data, onOpenClient }: Props) {
                 </table>
                 <div className="mobile-cards">
                   {clientRows.map(row => (
-                    <div key={row.clientId} className="mcard" onClick={() => onOpenClient(row.clientId)}>
+                    <div key={row.clientId} className="mcard" onClick={() => onOpenClient(row.clientId)}
+                      onKeyDown={onActivateKey(() => onOpenClient(row.clientId))} role="button" tabIndex={0}>
                       <div className="mcard-head">
                         <div className="mcard-title">{row.name}</div>
                         <FillRateBadge rate={row.fillRate} />

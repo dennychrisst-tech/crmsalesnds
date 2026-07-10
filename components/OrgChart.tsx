@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Client, Contact } from "@/types";
-import { DEFAULT_ORG_LEVELS } from "@/lib/utils";
+import { DEFAULT_ORG_LEVELS, onActivateKey } from "@/lib/utils";
 import { toast } from "./ui/Toast";
 
 interface Props {
@@ -184,6 +184,7 @@ function TreeNode({ contact, x, y, onOpenContact }: {
       style={{ position: "absolute", left: x, top: y, width: NODE_W, height: NODE_H }}
       className="orgchart-chip"
       onClick={() => onOpenContact(contact)}
+      onKeyDown={onActivateKey(() => onOpenContact(contact))} role="button" tabIndex={0}
     >
       <div className="orgchart-chip-name">{contact.name || "(tanpa nama)"}</div>
       {contact.title && <div className="orgchart-chip-title">{contact.title}</div>}
@@ -209,7 +210,8 @@ function StructureTable({ contacts, levels, isViewer, byId, onOpenContact, onSav
         <div className="vt-empty">Belum ada kontak untuk dipetakan.</div>
       ) : sorted.map(ct => (
         <div key={ct.id} className="orgchart-table-row" style={{ paddingLeft: 12 + depthOf(ct, byId) * 16 }}>
-          <div className="orgchart-table-name" onClick={() => onOpenContact(ct)}>
+          <div className="orgchart-table-name" onClick={() => onOpenContact(ct)}
+            onKeyDown={onActivateKey(() => onOpenContact(ct))} role="button" tabIndex={0}>
             <div className="orgchart-chip-name-plain">{ct.name || "(tanpa nama)"}</div>
             {ct.title && <div className="orgchart-chip-title-plain">{ct.title}</div>}
           </div>

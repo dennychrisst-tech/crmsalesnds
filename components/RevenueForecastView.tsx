@@ -4,7 +4,7 @@ import { AppData } from "@/hooks/useData";
 import { RevenueLine, RevenueTarget, Deal } from "@/types";
 import {
   fmtIDR, fmtDate, REVENUE_LINE_CATEGORIES,
-  REVENUE_OPP_CATEGORY_COLOR, REVENUE_MILESTONE_STATUS_COLOR, isWonStage,
+  REVENUE_OPP_CATEGORY_COLOR, REVENUE_MILESTONE_STATUS_COLOR, isWonStage, onActivateKey,
 } from "@/lib/utils";
 import RevenueLineModal from "./RevenueLineModal";
 import DealOpportunityModal from "./DealOpportunityModal";
@@ -207,7 +207,8 @@ export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSa
                     const lineTotal = l.milestones.reduce((s, m) => s + (m.amount || 0), 0);
                     const billedCount = l.milestones.filter(m => m.status === "Paid" || m.status === "Billed").length;
                     return (
-                      <div key={l.id} className="ccard hoverable" style={{ padding: "10px 14px", cursor: "pointer" }} onClick={() => openEditLine(l)}>
+                      <div key={l.id} className="ccard hoverable" style={{ padding: "10px 14px", cursor: "pointer" }} onClick={() => openEditLine(l)}
+                        onKeyDown={onActivateKey(() => openEditLine(l))} role="button" tabIndex={0}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                           <div>
                             <div style={{ fontWeight: 700, fontSize: 13.5 }}>{l.project_name}</div>
@@ -256,7 +257,8 @@ export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSa
               const catStyle = REVENUE_OPP_CATEGORY_COLOR[d.category || "L"] || { bg: "var(--paper)", fg: "var(--ink-soft)" };
               const statusStyle = OPP_STATUS_COLOR[oppFilter];
               return (
-                <div key={d.id} className="ccard hoverable" style={{ padding: "10px 14px", cursor: "pointer" }} onClick={() => openEditOpp(d)}>
+                <div key={d.id} className="ccard hoverable" style={{ padding: "10px 14px", cursor: "pointer" }} onClick={() => openEditOpp(d)}
+                  onKeyDown={onActivateKey(() => openEditOpp(d))} role="button" tabIndex={0}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

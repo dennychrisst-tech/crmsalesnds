@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { Share2, Download } from "lucide-react";
 import { AppData } from "@/hooks/useData";
-import { fmtDate, todayStr, picList, picMatches } from "@/lib/utils";
+import { fmtDate, todayStr, picList, picMatches, onActivateKey } from "@/lib/utils";
 import { exportVisitReport } from "@/lib/export";
 import { shareToWhatsApp } from "@/lib/share";
 
@@ -187,6 +187,7 @@ export default function VisitReport({ data }: Props) {
                     background: "var(--bg)", borderBottom: isCollapsed ? "none" : "1px solid var(--line)",
                   }}
                   onClick={() => toggleClient(clientId)}
+                  onKeyDown={onActivateKey(() => toggleClient(clientId))} role="button" tabIndex={0}
                 >
                   <div style={{
                     width: 36, height: 36, borderRadius: "50%", background: "var(--brand)",
@@ -230,6 +231,7 @@ export default function VisitReport({ data }: Props) {
                               background: expanded === v.id ? "var(--brand-soft)" : i % 2 === 0 ? "transparent" : "var(--paper)",
                             }}
                             onClick={() => toggleExpand(v.id)}
+                            onKeyDown={onActivateKey(() => toggleExpand(v.id))} role="button" tabIndex={0}
                           >
                             <td style={{ padding: "10px 14px", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}>
                               {fmtDate(v.date)}
@@ -310,7 +312,8 @@ export default function VisitReport({ data }: Props) {
                 {!isCollapsed && (
                   <div className="mobile-cards" style={{ padding: 10 }}>
                     {cvs.map(v => (
-                      <div key={v.id} className="mcard" style={{ cursor: "pointer" }} onClick={() => toggleExpand(v.id)}>
+                      <div key={v.id} className="mcard" style={{ cursor: "pointer" }} onClick={() => toggleExpand(v.id)}
+                        onKeyDown={onActivateKey(() => toggleExpand(v.id))} role="button" tabIndex={0}>
                         <div className="mcard-head">
                           <div className="mcard-title">{fmtDate(v.date)}</div>
                           <span style={{

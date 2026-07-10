@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { MandaysRole, MandaysClientRate } from "@/types";
-import { fmtIDR } from "@/lib/utils";
+import { fmtIDR, onActivateKey } from "@/lib/utils";
 import EmptyState from "./ui/EmptyState";
 import MandaysRoleModal from "./MandaysRoleModal";
 import MandaysClientRateModal from "./MandaysClientRateModal";
@@ -72,7 +72,8 @@ function RoleBars({ role, entries, isViewer, onEditRate }: {
             {sorted.map(e => {
               const zone = zoneFor(e.rate_value, role);
               return (
-                <div key={e.id} onClick={() => !isViewer && onEditRate(e)} style={{ cursor: isViewer ? "default" : "pointer" }}>
+                <div key={e.id} onClick={() => !isViewer && onEditRate(e)} style={{ cursor: isViewer ? "default" : "pointer" }}
+                  onKeyDown={onActivateKey(() => !isViewer && onEditRate(e))} role="button" tabIndex={0}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
                     <div style={{ minWidth: 0, lineHeight: 1.3 }}>
                       <span style={{ fontSize: 12.5, fontWeight: 700 }}>{e.client_label}</span>
@@ -164,7 +165,8 @@ export default function MandaysRateView({ data, isViewer, onSaveRole, onDeleteRo
               </thead>
               <tbody>
                 {roles.map(r => (
-                  <tr key={r.id} style={{ cursor: isViewer ? "default" : "pointer" }} onClick={() => openEditRole(r)}>
+                  <tr key={r.id} style={{ cursor: isViewer ? "default" : "pointer" }} onClick={() => openEditRole(r)}
+                    onKeyDown={onActivateKey(() => openEditRole(r))} role="button" tabIndex={0}>
                     <td><b>{r.role_name}</b></td>
                     <td>{fmtIDR(r.cogs)}</td>
                     <td>{fmtIDR(r.low_rate)}</td>
@@ -176,7 +178,8 @@ export default function MandaysRateView({ data, isViewer, onSaveRole, onDeleteRo
             </table>
             <div className="mobile-cards">
               {roles.map(r => (
-                <div key={r.id} className="mcard" onClick={() => openEditRole(r)}>
+                <div key={r.id} className="mcard" onClick={() => openEditRole(r)}
+                  onKeyDown={onActivateKey(() => openEditRole(r))} role="button" tabIndex={0}>
                   <div className="mcard-head"><div className="mcard-title">{r.role_name}</div></div>
                   <div className="mcard-row"><span>COGS</span><b>{fmtIDR(r.cogs)}</b></div>
                   <div className="mcard-row"><span>Low Rate</span><b>{fmtIDR(r.low_rate)}</b></div>

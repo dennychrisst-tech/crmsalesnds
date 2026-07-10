@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Client, Contact, Visit, Deal, PIC, Activity, ActiveView } from "@/types";
-import { fmtDate, fmtIDR, isoWeekLabel, CLIENT_STATUS_COLOR, SECTORS, isClosedStage } from "@/lib/utils";
+import { fmtDate, fmtIDR, isoWeekLabel, CLIENT_STATUS_COLOR, SECTORS, isClosedStage, onActivateKey } from "@/lib/utils";
 import EmptyState from "./ui/EmptyState";
 import { VisitBadge } from "./ui/Badge";
 import ClientModal from "./ClientModal";
@@ -285,8 +285,10 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
               {paged.map(({ client: c, lastContact, daysSince, dealValue, dealCount }) => {
                 const sc = c.status ? CLIENT_STATUS_COLOR[c.status] : null;
                 const pics = (Array.isArray(c.pic) ? c.pic : []) as PIC[];
+                const openClientRow = () => { if (!isViewer) { setEditClient(c); setClientModalOpen(true); } };
                 return (
-                  <tr key={c.id} style={{ cursor: isViewer ? "default" : "pointer" }} onClick={() => { if (!isViewer) { setEditClient(c); setClientModalOpen(true); } }}>
+                  <tr key={c.id} style={{ cursor: isViewer ? "default" : "pointer" }} onClick={openClientRow}
+                    onKeyDown={onActivateKey(openClientRow)} role="button" tabIndex={0}>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <ClientLogo name={c.name} website={c.website} logoUrl={c.logo_url} size={24} />
@@ -308,8 +310,9 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
             {paged.map(({ client: c, lastContact, daysSince, dealValue, dealCount }) => {
               const sc = c.status ? CLIENT_STATUS_COLOR[c.status] : null;
               const pics = (Array.isArray(c.pic) ? c.pic : []) as PIC[];
+              const openClient = () => { if (!isViewer) { setEditClient(c); setClientModalOpen(true); } };
               return (
-                <div key={c.id} className="mcard" onClick={() => { if (!isViewer) { setEditClient(c); setClientModalOpen(true); } }}>
+                <div key={c.id} className="mcard" onClick={openClient} onKeyDown={onActivateKey(openClient)} role="button" tabIndex={0}>
                   <div className="mcard-head">
                     <div className="mcard-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <ClientLogo name={c.name} website={c.website} logoUrl={c.logo_url} size={20} />
@@ -447,8 +450,11 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
                     <div className="vt-empty">👤 Belum ada kontak person.</div>
                   ) : (
                     <div className="contact-grid">
-                      {clientContacts.map(ct => (
-                        <div key={ct.id} className="contact-card" onClick={() => { if (!isViewer) openContactEdit(ct); }}>
+                      {clientContacts.map(ct => {
+                        const openContact = () => { if (!isViewer) openContactEdit(ct); };
+                        return (
+                        <div key={ct.id} className="contact-card" onClick={openContact}
+                          onKeyDown={onActivateKey(openContact)} role="button" tabIndex={0}>
                           <div className="contact-name">{ct.name}</div>
                           {ct.title && <div className="contact-title">{ct.title}</div>}
                           <div className="contact-meta">
@@ -467,7 +473,8 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
                             )}
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -511,13 +518,17 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
                   ) : groupKeys.map(k => (
                     <div key={k} className="week-group">
                       <div className="week-label">{groups[k].label}</div>
-                      {groups[k].items.map(v => (
-                        <div key={v.id} className="vt-row" onClick={() => { if (!isViewer) { setEditVisit(v); setPreClientId(undefined); setVisitModalOpen(true); } }}>
+                      {groups[k].items.map(v => {
+                        const openVisit = () => { if (!isViewer) { setEditVisit(v); setPreClientId(undefined); setVisitModalOpen(true); } };
+                        return (
+                        <div key={v.id} className="vt-row" onClick={openVisit}
+                          onKeyDown={onActivateKey(openVisit)} role="button" tabIndex={0}>
                           <span className="vt-date">{fmtDate(v.date)}</span>
                           <span className="vt-approach">{v.approach || "—"}{v.purpose ? ` · ${v.purpose}` : ""}</span>
                           <VisitBadge status={v.status} />
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ))}
                 </div>

@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Search } from "lucide-react";
 import { AppData } from "@/hooks/useData";
+import { onActivateKey } from "@/lib/utils";
 
 interface Props {
   data: AppData;
@@ -176,7 +177,8 @@ export default function GlobalSearch({ data, onNavigate, onOpenClient, onOpenDea
                       </div>
                     </div>
                     {more > 0 && (
-                      <div className="gs-more" onClick={() => seeMore(r.type)}>
+                      <div className="gs-more" onClick={() => seeMore(r.type)}
+                        onKeyDown={onActivateKey(() => seeMore(r.type))} role="button" tabIndex={0}>
                         +{more} {RESULT_LABEL[r.type]} lainnya →
                       </div>
                     )}

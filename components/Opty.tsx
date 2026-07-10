@@ -3,7 +3,7 @@ import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Deal, CRMDocument, Activity } from "@/types";
-import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, isClosedStage } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, isClosedStage, onActivateKey } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 import DealModal from "./DealModal";
 import EmptyState from "./ui/EmptyState";
@@ -181,6 +181,7 @@ export default function Opty({
                     className="funnel-row"
                     style={{ cursor: "pointer", flexWrap: "wrap" }}
                     onClick={() => setSearch(clientName(c.client_id))}
+                    onKeyDown={onActivateKey(() => setSearch(clientName(c.client_id)))} role="button" tabIndex={0}
                     title="Klik untuk filter tabel ke client ini"
                   >
                     <div className="opty-progress-name">
@@ -241,7 +242,8 @@ export default function Opty({
                           {g.items.map(a => {
                             const deal = dealById(a.deal_id);
                             return (
-                              <tr key={a.id} style={{ cursor: deal ? "pointer" : "default" }} onClick={() => deal && openEdit(deal, "detail")}>
+                              <tr key={a.id} style={{ cursor: deal ? "pointer" : "default" }} onClick={() => deal && openEdit(deal, "detail")}
+                                onKeyDown={onActivateKey(() => deal && openEdit(deal, "detail"))} role="button" tabIndex={0}>
                                 <td>{fmtDate((a.date || a.created_at || "").slice(0, 10))}</td>
                                 {isMerged && <td>{deal ? clientName(deal.client_id) : "—"}</td>}
                                 <td>{a.created_by || "—"}</td>
@@ -303,7 +305,7 @@ export default function Opty({
           </thead>
           <tbody>
             {sorted.length ? paged.map(d => (
-              <tr key={d.id} onClick={() => openEdit(d)} style={{ cursor: "pointer" }}>
+              <tr key={d.id} onClick={() => openEdit(d)} onKeyDown={onActivateKey(() => openEdit(d))} role="button" tabIndex={0} style={{ cursor: "pointer" }}>
                 <td><b>{d.name}</b>{d.product && <><br /><span className="muted" style={{ fontSize: 11 }}>{d.product}</span></>}</td>
                 <td>{clientName(d.client_id)}</td>
                 <td>
@@ -335,7 +337,7 @@ export default function Opty({
         {sorted.length > 0 && (
           <div className="mobile-cards">
             {paged.map(d => (
-              <div key={d.id} className="mcard" onClick={() => openEdit(d)}>
+              <div key={d.id} className="mcard" onClick={() => openEdit(d)} onKeyDown={onActivateKey(() => openEdit(d))} role="button" tabIndex={0}>
                 <div className="mcard-head">
                   <div className="mcard-title">{d.name}</div>
                   <span className="chip" style={{ background: `${STAGE_COLOR[d.stage] || "var(--brand)"}22`, color: STAGE_COLOR[d.stage] || "var(--brand)" }}>{d.stage}</span>

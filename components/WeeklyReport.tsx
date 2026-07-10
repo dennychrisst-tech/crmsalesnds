@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Share2, Download, FileText, User, Briefcase, FolderKanban } from "lucide-react";
 import { AppData } from "@/hooks/useData";
 import { Project, DateRange } from "@/types";
-import { fmtIDR, fmtDate, fmtDateStr, picMatches, STAGE_COLOR, isWonStage } from "@/lib/utils";
+import { fmtIDR, fmtDate, fmtDateStr, picMatches, STAGE_COLOR, isWonStage, onActivateKey } from "@/lib/utils";
 import { exportWeeklyReport } from "@/lib/export";
 import { exportWeeklyReportPdf } from "@/lib/pdf";
 import { shareToWhatsApp } from "@/lib/share";
@@ -167,19 +167,22 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
       </div>
 
       <div className="kpis" style={{ marginBottom: 20 }}>
-        <div className="kpi kpi-v2" style={{ cursor: "pointer" }} onClick={() => onOpenCalendarWeek({ start, end })} title="Buka Calendar Visit · minggu ini saja">
+        <div className="kpi kpi-v2" style={{ cursor: "pointer" }} onClick={() => onOpenCalendarWeek({ start, end })}
+          onKeyDown={onActivateKey(() => onOpenCalendarWeek({ start, end }))} role="button" tabIndex={0} title="Buka Calendar Visit · minggu ini saja">
           <div className="kpi-label">Visit Selesai</div>
           <div className="kpi-num">{weekVisits.length}</div>
           <div className="kpi-sub">{new Set(weekVisits.map(v => v.client_id)).size} client dikunjungi</div>
           <PeriodDelta current={weekVisits.length} previous={prevWeekVisits.length} label="minggu lalu" />
         </div>
-        <div className="kpi kpi-v2" style={{ cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end })} title="Buka Pipeline · deal update minggu ini saja">
+        <div className="kpi kpi-v2" style={{ cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end })}
+          onKeyDown={onActivateKey(() => onOpenPipelineWeek({ start, end }))} role="button" tabIndex={0} title="Buka Pipeline · deal update minggu ini saja">
           <div className="kpi-label">Update Pipeline</div>
           <div className="kpi-num">{weekDealUpdates.length}</div>
           <div className="kpi-sub">deal berpindah stage</div>
           <PeriodDelta current={weekDealUpdates.length} previous={prevWeekDealUpdates.length} label="minggu lalu" />
         </div>
-        <div className="kpi kpi-v2" style={{ borderColor: weekWon.length ? "var(--brand)" : "", cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end }, "Dealed")} title="Buka Pipeline · stage Dealed, minggu ini saja">
+        <div className="kpi kpi-v2" style={{ borderColor: weekWon.length ? "var(--brand)" : "", cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end }, "Dealed")}
+          onKeyDown={onActivateKey(() => onOpenPipelineWeek({ start, end }, "Dealed"))} role="button" tabIndex={0} title="Buka Pipeline · stage Dealed, minggu ini saja">
           <div className="kpi-label">Closed Won</div>
           <div className="kpi-num" style={{ color: weekWon.length ? "var(--brand)" : "" }}>{weekWon.length}</div>
           <div className="kpi-sub">{fmtIDR(weekWon.reduce((s, d) => s + d.value, 0))}</div>

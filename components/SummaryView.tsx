@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
 import { DateRange } from "@/types";
-import { fmtIDR, fmtDate, picMatches, fmtDateStr, isWonStage, weeklyCount } from "@/lib/utils";
+import { fmtIDR, fmtDate, picMatches, fmtDateStr, isWonStage, weeklyCount, onActivateKey } from "@/lib/utils";
 import { Sparkline } from "./ui/Sparkline";
 import { PeriodDelta } from "./ui/PeriodDelta";
 
@@ -272,7 +272,8 @@ export default function SummaryView({ data, onOpenVisit, onOpenCalendarWeek, onO
 
       {/* KPI Cards */}
       <div className="kpis" style={{ marginBottom: 20 }}>
-        <div className="kpi kpi-v2" style={{ cursor: "pointer" }} onClick={() => onOpenCalendarWeek({ start, end })} title="Buka Calendar Visit · periode ini saja">
+        <div className="kpi kpi-v2" style={{ cursor: "pointer" }} onClick={() => onOpenCalendarWeek({ start, end })}
+          onKeyDown={onActivateKey(() => onOpenCalendarWeek({ start, end }))} role="button" tabIndex={0} title="Buka Calendar Visit · periode ini saja">
           <div className="kpi-label">Visit dilakukan</div>
           <div className="kpi-num">{doneVisits.length}</div>
           <div className="kpi-sub">dari {periodVisits.length} terjadwal</div>
@@ -286,21 +287,24 @@ export default function SummaryView({ data, onOpenVisit, onOpenCalendarWeek, onO
           <PeriodDelta current={doneTasks.length} previous={prevDoneTasks.length} label="periode lalu" />
           {sparkTasksDone && <Sparkline data={sparkTasksDone} color="var(--gold)" />}
         </div>
-        <div className="kpi kpi-v2" style={{ cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end })} title="Buka Pipeline · project baru periode ini saja">
+        <div className="kpi kpi-v2" style={{ cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end })}
+          onKeyDown={onActivateKey(() => onOpenPipelineWeek({ start, end }))} role="button" tabIndex={0} title="Buka Pipeline · project baru periode ini saja">
           <div className="kpi-label">Project baru</div>
           <div className="kpi-num">{periodDeals.length}</div>
           <div className="kpi-sub">{fmtIDR(newPipeline)}</div>
           <PeriodDelta current={periodDeals.length} previous={prevPeriodDeals.length} label="periode lalu" />
           {sparkNewDeals && <Sparkline data={sparkNewDeals} color="var(--ink-soft)" />}
         </div>
-        <div className="kpi kpi-v2" style={{ borderColor: wonDeals.length ? "var(--brand)" : "", cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end }, "Dealed")} title="Buka Pipeline · stage Dealed, periode ini saja">
+        <div className="kpi kpi-v2" style={{ borderColor: wonDeals.length ? "var(--brand)" : "", cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end }, "Dealed")}
+          onKeyDown={onActivateKey(() => onOpenPipelineWeek({ start, end }, "Dealed"))} role="button" tabIndex={0} title="Buka Pipeline · stage Dealed, periode ini saja">
           <div className="kpi-label">Project Won</div>
           <div className="kpi-num" style={{ color: wonDeals.length ? "var(--brand)" : "" }}>{wonDeals.length}</div>
           <div className="kpi-sub">{fmtIDR(wonValue)}</div>
           <PeriodDelta current={wonDeals.length} previous={prevWonDeals.length} label="periode lalu" />
           {sparkWon && <Sparkline data={sparkWon} color="var(--brand)" />}
         </div>
-        <div className="kpi kpi-v2" style={{ borderColor: lostDeals.length ? "var(--danger)" : "", cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end }, "Dropped")} title="Buka Pipeline · stage Dropped, periode ini saja">
+        <div className="kpi kpi-v2" style={{ borderColor: lostDeals.length ? "var(--danger)" : "", cursor: "pointer" }} onClick={() => onOpenPipelineWeek({ start, end }, "Dropped")}
+          onKeyDown={onActivateKey(() => onOpenPipelineWeek({ start, end }, "Dropped"))} role="button" tabIndex={0} title="Buka Pipeline · stage Dropped, periode ini saja">
           <div className="kpi-label">Project Lost</div>
           <div className="kpi-num" style={{ color: lostDeals.length ? "var(--danger)" : "" }}>{lostDeals.length}</div>
           <div className="kpi-sub">{lostDeals.length ? lostDeals.map(d => d.name).join(", ").slice(0, 40) : "Tidak ada"}</div>

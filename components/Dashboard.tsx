@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
 import { ActiveView, Client, Deal, Visit, Project, Task, Contact, CRMDocument, Activity } from "@/types";
-import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches, picList, fmtDateStr, isWonStage, isClosedStage, isDealAtRisk, weeklyCount } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches, picList, fmtDateStr, isWonStage, isClosedStage, isDealAtRisk, weeklyCount, onActivateKey } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import { Sparkline } from "./ui/Sparkline";
 import EmptyState from "./ui/EmptyState";
@@ -332,7 +332,9 @@ export default function Dashboard({
 
       {/* ── KPI Strip ── */}
       <div className="kpis">
-        {kpis.map((k, i) => (
+        {kpis.map((k, i) => {
+          const openKpi = () => k.stage && onOpenStage ? onOpenStage(k.stage) : onNavigate(k.view);
+          return (
           <div key={i} className="kpi-v2"
             style={{
               cursor: "pointer", background: "var(--card)", border: "1px solid var(--line)",
@@ -340,23 +342,26 @@ export default function Dashboard({
               borderTop: `2px solid ${k.accent}`,
               display: "flex", flexDirection: "column", gap: 0,
             }}
-            onClick={() => k.stage && onOpenStage ? onOpenStage(k.stage) : onNavigate(k.view)}
+            onClick={openKpi} onKeyDown={onActivateKey(openKpi)} role="button" tabIndex={0}
           >
             <div className="kpi-label" style={{ margin: "0 0 8px" }}>{k.label}</div>
             <div className="kpi-num" style={{ color: k.accent, marginBottom: 2 }}>{k.num}</div>
             <div className="kpi-sub" style={{ marginBottom: 10 }}>{k.sub}</div>
             <Sparkline data={k.spark} color={k.accent} warn={k.warn} />
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* ── Pipeline Funnel ── */}
       <div className="panel" style={{ marginBottom: 16, ...panelStyle(PANEL_ACCENTS.pipeline) }}>
         <SectionHeader title="Pipeline per Stage" icon="📊" accent={PANEL_ACCENTS.pipeline} action="Buka Pipeline" onClick={() => onNavigate("pipeline")} />
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {stageData.map(s => (
+          {stageData.map(s => {
+            const openFunnelStage = () => onOpenStage ? onOpenStage(s.stage) : onNavigate("pipeline");
+            return (
             <div key={s.stage} className="funnel-row" style={{ cursor: "pointer" }}
-              onClick={() => onOpenStage ? onOpenStage(s.stage) : onNavigate("pipeline")}>
+              onClick={openFunnelStage} onKeyDown={onActivateKey(openFunnelStage)} role="button" tabIndex={0}>
               <div className="funnel-stage" style={{
                 color: STAGE_COLOR[s.stage] || "var(--brand)", background: `${STAGE_COLOR[s.stage] || "var(--brand)"}1A`,
               }}>{s.stage}</div>
@@ -370,7 +375,8 @@ export default function Dashboard({
               <div className="funnel-value">{fmtIDR(s.value)}</div>
               <div className="funnel-count">{s.count} project</div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -379,7 +385,8 @@ export default function Dashboard({
         <div className="panel" style={panelStyle(PANEL_ACCENTS.visit)}>
           <SectionHeader title={`Visit Mendatang (${upcoming.length})`} icon="🚗" accent={PANEL_ACCENTS.visit} action="Buka Calendar" onClick={() => onNavigate("calendar")} />
           {upcoming.length ? upcoming.map(v => (
-            <div key={v.id} className="timeline-item hoverable" style={{ cursor: "pointer" }} onClick={() => setPeekVisitId(v.id)}>
+            <div key={v.id} className="timeline-item hoverable" style={{ cursor: "pointer" }} onClick={() => setPeekVisitId(v.id)}
+              onKeyDown={onActivateKey(() => setPeekVisitId(v.id))} role="button" tabIndex={0}>
               <div className="ti-date">{fmtDate(v.date)} · <b>{clientName(v.client_id)}</b></div>
               <div className="ti-body">{v.purpose} <VisitBadge status={v.status} /></div>
               {v.pic && <div className="muted" style={{ fontSize: 11 }}>PIC: {v.pic}</div>}
@@ -390,7 +397,8 @@ export default function Dashboard({
         <div className="panel" style={panelStyle(followups.length > 0 ? PANEL_ACCENTS.reschedule : PANEL_ACCENTS.reschedule_ok)}>
           <SectionHeader title={`Reschedule Pending (${followups.length})`} icon="🔄" accent={followups.length > 0 ? PANEL_ACCENTS.reschedule : PANEL_ACCENTS.reschedule_ok} action="Buka Calendar" onClick={() => onNavigate("calendar")} />
           {followups.length ? followups.map(v => (
-            <div key={v.id} className="timeline-item hoverable" style={{ cursor: "pointer" }} onClick={() => setPeekVisitId(v.id)}>
+            <div key={v.id} className="timeline-item hoverable" style={{ cursor: "pointer" }} onClick={() => setPeekVisitId(v.id)}
+              onKeyDown={onActivateKey(() => setPeekVisitId(v.id))} role="button" tabIndex={0}>
               <div className="ti-date"><b>{clientName(v.client_id)}</b> · {fmtDate(v.date)}</div>
               <div className="ti-body">{v.summary || v.purpose}</div>
               {v.pic && <div className="muted" style={{ fontSize: 11 }}>PIC: {v.pic}</div>}
@@ -406,7 +414,8 @@ export default function Dashboard({
           {closingSoon.length ? closingSoon.map(d => {
             const daysLeft = Math.ceil((new Date(d.close_date).getTime() - new Date(today).getTime()) / 86400000);
             return (
-              <div key={d.id} className="timeline-item hoverable" style={{ cursor: "pointer" }} onClick={() => setPeekDealId(d.id)}>
+              <div key={d.id} className="timeline-item hoverable" style={{ cursor: "pointer" }} onClick={() => setPeekDealId(d.id)}
+                onKeyDown={onActivateKey(() => setPeekDealId(d.id))} role="button" tabIndex={0}>
                 <div className="ti-date" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   {fmtDate(d.close_date)}
                   <span style={{

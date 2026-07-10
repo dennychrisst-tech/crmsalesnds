@@ -6,7 +6,7 @@ import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Deal, CRMDocument, Attachment, Activity, Project, DateRange } from "@/types";
-import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, isClosedStage, isWonStage, colorForSales, dealAgingDays, isDealAtRisk } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, isClosedStage, isWonStage, colorForSales, dealAgingDays, isDealAtRisk, onActivateKey } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 import { toast } from "./ui/Toast";
 import Modal, { Field, ModalActions, inputCls, textareaCls } from "./ui/Modal";
@@ -67,10 +67,12 @@ function DealCard({ deal, clientName, onClick, onMoveStage, isViewer, draggable 
   const ownerColor = deal.owner ? colorForSales(deal.owner).bg : null;
   const [pickerOpen, setPickerOpen] = useState(false);
 
+  const activate = () => selectMode ? onToggleSelect?.() : onClick();
   return (
     <div ref={draggable && !selectMode ? setNodeRef : undefined} {...(draggable && !selectMode ? { ...listeners, ...attributes } : {})}
       style={{ ...style, borderLeft: `3px solid ${stageColor}`, borderRight: ownerColor ? `3px solid ${ownerColor}` : undefined }}
-      className={`deal${selected ? " deal-selected" : ""}`} onClick={() => selectMode ? onToggleSelect?.() : onClick()}>
+      className={`deal${selected ? " deal-selected" : ""}`} onClick={activate}
+      onKeyDown={onActivateKey(activate)} role="button" tabIndex={0}>
       {selectMode && (
         <input type="checkbox" className="deal-select-checkbox" checked={selected}
           onChange={() => onToggleSelect?.()} onClick={e => e.stopPropagation()} />
@@ -209,7 +211,7 @@ function PipelineFunnel({ deals, onStageClick }: { deals: Deal[]; onStageClick: 
         {funnelStages.map((stage, i) => (
           <div key={stage} className={`pl-funnel-label${hoverStage === stage ? " pl-funnel-label-active" : ""}`}
             onMouseEnter={() => setHoverStage(stage)} onMouseLeave={() => setHoverStage(null)}
-            onClick={() => onStageClick(stage)}>
+            onClick={() => onStageClick(stage)} onKeyDown={onActivateKey(() => onStageClick(stage))} role="button" tabIndex={0}>
             <div className="pl-funnel-label-stage stage-text" style={{ color: STAGE_COLOR[stage] }}>{stage}</div>
             <div className="pl-funnel-label-count">{ownCount[i]}</div>
             <div className="pl-funnel-label-value">{ownValue[i] > 0 ? fmtCompact(ownValue[i]) : "—"}</div>
@@ -220,12 +222,14 @@ function PipelineFunnel({ deals, onStageClick }: { deals: Deal[]; onStageClick: 
       {(onHold.length > 0 || dropped.length > 0) && (
         <div className="pl-funnel-side">
           {onHold.length > 0 && (
-            <span className="pl-funnel-chip pl-funnel-chip-hold" onClick={() => onStageClick("On Hold")}>
+            <span className="pl-funnel-chip pl-funnel-chip-hold" onClick={() => onStageClick("On Hold")}
+              onKeyDown={onActivateKey(() => onStageClick("On Hold"))} role="button" tabIndex={0}>
               ⏸ {onHold.length} On Hold · {fmtCompact(onHold.reduce((s, d) => s + d.value, 0))}
             </span>
           )}
           {dropped.length > 0 && (
-            <span className="pl-funnel-chip pl-funnel-chip-lost" onClick={() => onStageClick("Dropped")}>
+            <span className="pl-funnel-chip pl-funnel-chip-lost" onClick={() => onStageClick("Dropped")}
+              onKeyDown={onActivateKey(() => onStageClick("Dropped"))} role="button" tabIndex={0}>
               ✕ {dropped.length} Dropped · {fmtCompact(dropped.reduce((s, d) => s + d.value, 0))}
             </span>
           )}
@@ -651,9 +655,11 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
               </tr>
             </thead>
             <tbody>
-              {wonList.map(d => (
+              {wonList.map(d => {
+                const openWon = () => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } };
+                return (
                 <tr key={d.id} style={{ cursor: isViewer ? "default" : "pointer" }}
-                  onClick={() => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}>
+                  onClick={openWon} onKeyDown={onActivateKey(openWon)} role="button" tabIndex={0}>
                   <td><b>{d.name}</b>{d.product && <><br /><span className="muted" style={{ fontSize: 11 }}>{d.product}</span></>}</td>
                   <td>{clientName(d.client_id)}</td>
                   <td>
@@ -665,12 +671,15 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
                   <td>{fmtIDR(d.value)}</td>
                   <td>{fmtDate((d.stage_updated_at || d.created_at || "").slice(0, 10))}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
           <div className="mobile-cards">
-            {wonList.map(d => (
-              <div key={d.id} className="mcard" onClick={() => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}>
+            {wonList.map(d => {
+              const openWon = () => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } };
+              return (
+              <div key={d.id} className="mcard" onClick={openWon} onKeyDown={onActivateKey(openWon)} role="button" tabIndex={0}>
                 <div className="mcard-head">
                   <div className="mcard-title">{d.name}</div>
                   <span className="chip" style={{ background: `${STAGE_COLOR[d.stage] || "var(--brand)"}22`, color: STAGE_COLOR[d.stage] || "var(--brand)" }}>{d.stage}</span>
@@ -680,7 +689,8 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
                 <div className="mcard-row"><span>Nilai</span><b>{fmtIDR(d.value)}</b></div>
                 <div className="mcard-row"><span>Tanggal Won</span><b>{fmtDate((d.stage_updated_at || d.created_at || "").slice(0, 10))}</b></div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

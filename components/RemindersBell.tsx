@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Bell, BellRing, BellOff } from "lucide-react";
 import { AppData } from "@/hooks/useData";
-import { fmtDate, todayStr } from "@/lib/utils";
+import { fmtDate, todayStr, onActivateKey } from "@/lib/utils";
 import { computeReminders } from "@/lib/reminders";
 import { usePushSubscription } from "@/hooks/usePushSubscription";
 
@@ -207,7 +207,7 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
           {visibleReminders.length === 0 ? (
             <div className="rb-empty">Tidak ada reminder. Semua aman 🎉</div>
           ) : visibleReminders.map(r => (
-            <div key={r.id} className="rb-item" onClick={() => pick(r)}>
+            <div key={r.id} className="rb-item" onClick={() => pick(r)} onKeyDown={onActivateKey(() => pick(r))} role="button" tabIndex={0}>
               <span className={`rb-dot rb-dot-${r.severity}`} />
               <div className="rb-item-text">
                 <div className="rb-item-title">{r.title}</div>

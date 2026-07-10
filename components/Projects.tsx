@@ -3,7 +3,7 @@ import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Project, PIC, Activity } from "@/types";
-import { PROJECT_STATUS_COLOR, fmtIDR, fmtDate } from "@/lib/utils";
+import { PROJECT_STATUS_COLOR, fmtIDR, fmtDate, onActivateKey } from "@/lib/utils";
 import ProjectModal from "./ProjectModal";
 import EmptyState from "./ui/EmptyState";
 import FilterSheet, { FilterField } from "./ui/FilterSheet";
@@ -168,7 +168,8 @@ export default function Projects({
                           {g.items.map(a => {
                             const project = projectById(a.project_id);
                             return (
-                              <tr key={a.id} style={{ cursor: project ? "pointer" : "default" }} onClick={() => project && openEdit(project, "detail")}>
+                              <tr key={a.id} style={{ cursor: project ? "pointer" : "default" }} onClick={() => project && openEdit(project, "detail")}
+                                onKeyDown={onActivateKey(() => project && openEdit(project, "detail"))} role="button" tabIndex={0}>
                                 <td>{fmtDate((a.date || a.created_at || "").slice(0, 10))}</td>
                                 {isMerged && <td>{project ? clientName(project.client_id) : "—"}</td>}
                                 <td>{a.created_by || "—"}</td>
@@ -230,7 +231,7 @@ export default function Projects({
           </thead>
           <tbody>
             {sorted.length ? paged.map(p => (
-              <tr key={p.id} onClick={() => openEdit(p)} style={{ cursor: "pointer" }}>
+              <tr key={p.id} onClick={() => openEdit(p)} onKeyDown={onActivateKey(() => openEdit(p))} role="button" tabIndex={0} style={{ cursor: "pointer" }}>
                 <td>
                   <b>{p.name}</b><br /><span className="muted" style={{ fontSize: 11 }}>{p.notes}</span>
                 </td>
@@ -282,7 +283,7 @@ export default function Projects({
         {sorted.length > 0 && (
           <div className="mobile-cards">
             {paged.map(p => (
-              <div key={p.id} className="mcard" onClick={() => openEdit(p)}>
+              <div key={p.id} className="mcard" onClick={() => openEdit(p)} onKeyDown={onActivateKey(() => openEdit(p))} role="button" tabIndex={0}>
                 <div className="mcard-head">
                   <div className="mcard-title">{p.name}</div>
                   <span className="chip" style={{ background: `${PROJECT_STATUS_COLOR[p.status] || "var(--brand)"}22`, color: PROJECT_STATUS_COLOR[p.status] || "var(--brand)" }}>{p.status}</span>

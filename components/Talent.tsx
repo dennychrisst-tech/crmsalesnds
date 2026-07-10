@@ -3,7 +3,7 @@ import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Project, TalentRole, Deal, CRMDocument, Activity, PIC } from "@/types";
-import { fmtIDR, fmtDate, STAGE_COLOR, isClosedStage } from "@/lib/utils";
+import { fmtIDR, fmtDate, STAGE_COLOR, isClosedStage, onActivateKey } from "@/lib/utils";
 import ProjectModal from "./ProjectModal";
 import DealModal from "./DealModal";
 import TalentManageModal from "./TalentManageModal";
@@ -200,7 +200,7 @@ export default function Talent({
           </thead>
           <tbody>
             {sortedTalentDeals.length ? pagedTalentDeals.map(d => (
-              <tr key={d.id} onClick={() => openEditDeal(d)} style={{ cursor: "pointer" }}>
+              <tr key={d.id} onClick={() => openEditDeal(d)} onKeyDown={onActivateKey(() => openEditDeal(d))} role="button" tabIndex={0} style={{ cursor: "pointer" }}>
                 <td><b>{d.name}</b></td>
                 <td>{clientName(d.client_id)}</td>
                 <td>
@@ -222,7 +222,7 @@ export default function Talent({
         {sortedTalentDeals.length > 0 && (
           <div className="mobile-cards">
             {pagedTalentDeals.map(d => (
-              <div key={d.id} className="mcard" onClick={() => openEditDeal(d)}>
+              <div key={d.id} className="mcard" onClick={() => openEditDeal(d)} onKeyDown={onActivateKey(() => openEditDeal(d))} role="button" tabIndex={0}>
                 <div className="mcard-head">
                   <div className="mcard-title">{d.name}</div>
                   <span className="chip" style={{ background: `${STAGE_COLOR[d.stage] || "var(--brand)"}22`, color: STAGE_COLOR[d.stage] || "var(--brand)" }}>{d.stage}</span>

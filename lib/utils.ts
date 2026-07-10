@@ -1,3 +1,15 @@
+import type { KeyboardEvent } from "react";
+
+// Keyboard equivalent for elements that use onClick on a <div>/<span> instead
+// of a <button> — Enter/Space activates them the same way a click would, so
+// they're reachable via Tab for keyboard-only users. Usage:
+//   <div role="button" tabIndex={0} onClick={handler} onKeyDown={onActivateKey(handler)}>
+export function onActivateKey(handler: () => void) {
+  return (e: KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handler(); }
+  };
+}
+
 // Sequential pipeline funnel — mirrors the sales team's own Excel tracker.
 // "On Hold" and "Dropped" are deliberately NOT in this list: they're side
 // states a deal can be moved into from any point (see isClosedStage below),
