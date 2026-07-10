@@ -242,6 +242,10 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
   // there are enough people that the tree needs real room to breathe.
   const [tableCollapsed, setTableCollapsed] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  // Once the user dials in a zoom level by hand, the auto-fit effect below
+  // must stop overwriting it (e.g. on every table-collapse toggle) — reset
+  // only when the modal is freshly reopened.
+  const userZoomedRef = useRef(false);
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -262,11 +266,19 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
     setZoom(Math.max(0.2, +fit.toFixed(2)));
   }
 
+  // Forget any manual zoom from a previous visit each time the modal is
+  // freshly opened, so auto-fit below gets a clean slate.
+  useEffect(() => {
+    if (modalOpen) userZoomedRef.current = false;
+  }, [modalOpen]);
+
   // Opening straight at 100% zoom is fine on a wide desktop modal, but on a
   // phone-width viewport even a small tree overflows — auto-fit once the
   // diagram has room to measure itself, same as the manual "⤢ Fit" button.
+  // Skipped once the user has zoomed by hand (see userZoomedRef) so toggling
+  // "Perbesar diagram" doesn't silently undo a zoom they just set.
   useEffect(() => {
-    if (!modalOpen || layout.positions.size === 0) return;
+    if (!modalOpen || layout.positions.size === 0 || userZoomedRef.current) return;
     const raf = requestAnimationFrame(fitToScreen);
     return () => cancelAnimationFrame(raf);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -332,9 +344,9 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
       ))}
       {!isViewer && <button className="btn btn-ghost btn-sm" onClick={addLevel}>+ Tambah Level</button>}
       <span className="orgchart-zoom-controls">
-        <button onClick={() => setZoom(z => Math.max(0.2, +(z - 0.1).toFixed(2)))} title="Perkecil">−</button>
+        <button onClick={() => { userZoomedRef.current = true; setZoom(z => Math.max(0.2, +(z - 0.1).toFixed(2))); }} title="Perkecil">−</button>
         <span>{Math.round(zoom * 100)}%</span>
-        <button onClick={() => setZoom(z => Math.min(1.5, +(z + 0.1).toFixed(2)))} title="Perbesar">+</button>
+        <button onClick={() => { userZoomedRef.current = true; setZoom(z => Math.min(1.5, +(z + 0.1).toFixed(2))); }} title="Perbesar">+</button>
         <button className="orgchart-fit-btn" onClick={fitToScreen} title="Sesuaikan seluruh struktur ke layar">⤢ Fit</button>
       </span>
     </div>

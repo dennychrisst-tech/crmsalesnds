@@ -46,7 +46,7 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
     >
       <div
         ref={ref}
-        className="modal-card bg-[var(--card)] w-full max-w-xl max-h-[92dvh] sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        className="modal-card bg-[var(--card)] w-full max-w-2xl max-h-[92dvh] sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
         style={dragY > 0 ? { transform: `translateY(${dragY}px)` } : { transition: "transform .18s ease" }}
       >
         <div onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} className="flex-shrink-0">

@@ -288,13 +288,21 @@ nav.tabs button.active::after, nav.tabs a.active::after {
   border-radius: 8px; padding: 10px; margin-bottom: 8px; cursor: grab; font-size: 13px;
   touch-action: none; transition: box-shadow .12s, border-color .12s;
 }
+.deal:hover { box-shadow: 0 4px 12px rgba(11,27,43,.14); border-color: var(--brand); }
 .deal:active { cursor: grabbing; }
 .deal-selected { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-soft); }
+/* Generic hover affordance for elements that reuse a shared class in both
+   clickable and static contexts (e.g. .timeline-item, .ccard) — apply
+   alongside the base class only where the element actually has an onClick. */
+.hoverable { transition: border-color .12s, box-shadow .12s; }
+.hoverable:hover { border-color: var(--brand); }
 .deal-select-checkbox { position: absolute; top: 10px; right: 10px; width: 16px; height: 16px; cursor: pointer; z-index: 2; accent-color: var(--brand); }
 
 /* Pipeline bulk-select action bar */
 .pipeline-bulk-bar {
-  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 90;
+  /* Below .modal-backdrop's z-index:90 — a fixed bar shouldn't ever be
+     able to render on top of a modal, even if JSX order changes later. */
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 80;
   background: var(--surface-strong); color: #fff; border-radius: 14px; box-shadow: 0 8px 24px rgba(11,27,43,.3);
   padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   max-width: min(92vw, 640px); animation: toast-in .18s ease;
@@ -944,7 +952,8 @@ tr.task-soon td { background: #fffbeb; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* Dashboard pipeline funnel */
-.funnel-row { display: flex; align-items: center; gap: 10px; }
+.funnel-row { display: flex; align-items: center; gap: 10px; border-radius: 8px; transition: background .12s; }
+.funnel-row:hover { background: var(--paper); }
 .funnel-stage { width: 96px; font-size: 11px; font-weight: 700; flex-shrink: 0; border-radius: 999px; padding: 3px 10px; text-align: center; }
 .funnel-track { flex: 1; background: var(--line); border-radius: 999px; height: 20px; overflow: hidden; }
 .funnel-fill { height: 100%; border-radius: 999px; transition: width .4s ease; }
@@ -958,6 +967,14 @@ tr.task-soon td { background: #fffbeb; }
 .opty-progress-stage { width: 170px; flex-shrink: 0; text-align: center; }
 .opty-progress-value { width: 110px; flex-shrink: 0; text-align: right; font-size: 12px; font-weight: 700; }
 .opty-progress-count { width: 60px; flex-shrink: 0; text-align: right; font-size: 12px; color: var(--ink-soft); }
+
+/* ───────────────────── Narrow desktop / tablet landscape ─────────────────
+   1024-1200px is a common laptop width. nav.tabs already wraps as a
+   fallback (see its base rule), but trimming padding first buys more
+   headroom for the 8 primary tabs + 2 dropdowns to stay on one line. */
+@media (min-width: 641px) and (max-width: 1200px) {
+  nav.tabs button, nav.tabs a { padding: 8px 12px; font-size: 12.5px; gap: 4px; }
+}
 
 /* ───────────────────── Mobile ───────────────────── */
 @media (max-width: 640px) {

@@ -230,28 +230,30 @@ export default function Opty({
                     <span className="muted" style={{ flexShrink: 0, whiteSpace: "nowrap" }}>{fmtDate((g.items[0].date || g.items[0].created_at || "").slice(0, 10))}</span>
                   </button>
                   {isOpen && (
-                    <table className="table-zebra">
-                      <thead>
-                        <tr>
-                          <th>Tanggal</th>{isMerged && <th>Client</th>}<th>PIC Handle</th><th>PIC Client</th><th>Oppty</th><th>Aktivitas</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {g.items.map(a => {
-                          const deal = dealById(a.deal_id);
-                          return (
-                            <tr key={a.id} style={{ cursor: deal ? "pointer" : "default" }} onClick={() => deal && openEdit(deal, "detail")}>
-                              <td>{fmtDate((a.date || a.created_at || "").slice(0, 10))}</td>
-                              {isMerged && <td>{deal ? clientName(deal.client_id) : "—"}</td>}
-                              <td>{a.created_by || "—"}</td>
-                              <td>{deal ? contactName(deal.client_id) : "—"}</td>
-                              <td>{deal?.name || "—"}</td>
-                              <td>{a.description}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                    <div className="table-scroll">
+                      <table className="table-zebra">
+                        <thead>
+                          <tr>
+                            <th>Tanggal</th>{isMerged && <th>Client</th>}<th>PIC Handle</th><th>PIC Client</th><th>Oppty</th><th>Aktivitas</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {g.items.map(a => {
+                            const deal = dealById(a.deal_id);
+                            return (
+                              <tr key={a.id} style={{ cursor: deal ? "pointer" : "default" }} onClick={() => deal && openEdit(deal, "detail")}>
+                                <td>{fmtDate((a.date || a.created_at || "").slice(0, 10))}</td>
+                                {isMerged && <td>{deal ? clientName(deal.client_id) : "—"}</td>}
+                                <td>{a.created_by || "—"}</td>
+                                <td>{deal ? contactName(deal.client_id) : "—"}</td>
+                                <td>{deal?.name || "—"}</td>
+                                <td>{a.description}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
               );

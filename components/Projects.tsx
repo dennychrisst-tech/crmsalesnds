@@ -157,28 +157,30 @@ export default function Projects({
                     <span className="muted" style={{ flexShrink: 0, whiteSpace: "nowrap" }}>{fmtDate((g.items[0].date || g.items[0].created_at || "").slice(0, 10))}</span>
                   </button>
                   {isOpen && (
-                    <table className="table-zebra">
-                      <thead>
-                        <tr>
-                          <th>Tanggal</th>{isMerged && <th>Client</th>}<th>PIC Handle</th><th>PIC Client</th><th>Project</th><th>Aktivitas</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {g.items.map(a => {
-                          const project = projectById(a.project_id);
-                          return (
-                            <tr key={a.id} style={{ cursor: project ? "pointer" : "default" }} onClick={() => project && openEdit(project, "detail")}>
-                              <td>{fmtDate((a.date || a.created_at || "").slice(0, 10))}</td>
-                              {isMerged && <td>{project ? clientName(project.client_id) : "—"}</td>}
-                              <td>{a.created_by || "—"}</td>
-                              <td>{project ? contactName(project.client_id) : "—"}</td>
-                              <td>{project?.name || "—"}</td>
-                              <td>{a.description}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                    <div className="table-scroll">
+                      <table className="table-zebra">
+                        <thead>
+                          <tr>
+                            <th>Tanggal</th>{isMerged && <th>Client</th>}<th>PIC Handle</th><th>PIC Client</th><th>Project</th><th>Aktivitas</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {g.items.map(a => {
+                            const project = projectById(a.project_id);
+                            return (
+                              <tr key={a.id} style={{ cursor: project ? "pointer" : "default" }} onClick={() => project && openEdit(project, "detail")}>
+                                <td>{fmtDate((a.date || a.created_at || "").slice(0, 10))}</td>
+                                {isMerged && <td>{project ? clientName(project.client_id) : "—"}</td>}
+                                <td>{a.created_by || "—"}</td>
+                                <td>{project ? contactName(project.client_id) : "—"}</td>
+                                <td>{project?.name || "—"}</td>
+                                <td>{a.description}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
               );
