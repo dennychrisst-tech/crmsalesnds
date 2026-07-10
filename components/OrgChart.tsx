@@ -262,6 +262,16 @@ export default function OrgChart({ client, contacts, isViewer, onSaveClient, onS
     setZoom(Math.max(0.2, +fit.toFixed(2)));
   }
 
+  // Opening straight at 100% zoom is fine on a wide desktop modal, but on a
+  // phone-width viewport even a small tree overflows — auto-fit once the
+  // diagram has room to measure itself, same as the manual "⤢ Fit" button.
+  useEffect(() => {
+    if (!modalOpen || layout.positions.size === 0) return;
+    const raf = requestAnimationFrame(fitToScreen);
+    return () => cancelAnimationFrame(raf);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalOpen, tableCollapsed]);
+
   async function addLevel() {
     const name = prompt("Nama level baru:");
     if (!name || !name.trim()) return;

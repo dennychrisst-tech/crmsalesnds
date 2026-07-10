@@ -1068,6 +1068,13 @@ tr.task-soon td { background: #fffbeb; }
      this still comfortably fits a narrow screen alongside prev/next. */
   .pagination-btn { min-width: 38px; height: 38px; font-size: 13px; }
 
+  /* Org chart — zoom/level-edit buttons are the only way to make diagram
+     nodes reachable on a phone, so they need real tap targets; the
+     toolbar already wraps (see .orgchart-levels-toolbar base rule). */
+  .orgchart-zoom-controls button { width: 34px; height: 34px; font-size: 15px; }
+  .orgchart-level-tag button { padding: 4px 6px; font-size: 13px; }
+  .orgchart-scroll-area { -webkit-overflow-scrolling: touch; }
+
   /* Toolbar action buttons — horizontal scroll strip instead of wrapping/squashing */
   .cal-toolbar-actions {
     margin-left: 0; flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto;
@@ -1094,7 +1101,10 @@ tr.task-soon td { background: #fffbeb; }
 
   /* Data table → stacked card list on mobile (Tasks, Projects) */
   table.data-table { display: none; }
-  .mobile-cards { display: flex; flex-direction: column; gap: 10px; }
+  /* Extra bottom clearance so the last card's action row doesn't end up
+     hidden behind the fixed FAB (which sits ~84-136px from the bottom)
+     once the user has scrolled all the way down. */
+  .mobile-cards { display: flex; flex-direction: column; gap: 10px; padding-bottom: 64px; }
   .mcard {
     background: var(--card); border: 1px solid var(--line); border-radius: 12px;
     padding: 12px; display: flex; flex-direction: column; gap: 6px;

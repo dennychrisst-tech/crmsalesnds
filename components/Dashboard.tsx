@@ -43,15 +43,15 @@ type Period = "daily" | "weekly" | "monthly";
 
 function SectionHeader({ title, accent, action, onClick }: { title: string; icon?: string; accent?: string; action?: string; onClick?: () => void }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-      <h2 style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: "var(--ink)", display: "flex", alignItems: "center", gap: 8 }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+      <h2 style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: "var(--ink)", display: "flex", alignItems: "center", gap: 8, minWidth: 0, flex: "1 1 auto" }}>
         <span style={{ width: 3, height: 14, background: accent || "var(--brand)", borderRadius: 999, display: "inline-block", flexShrink: 0 }} />
         {title}
       </h2>
       {action && (
         <button onClick={onClick} style={{
           background: "none", border: "none", cursor: "pointer", fontSize: 12,
-          color: "var(--ink-soft)", fontWeight: 600, padding: "2px 6px",
+          color: "var(--ink-soft)", fontWeight: 600, padding: "2px 6px", flexShrink: 0,
         }}>{action} →</button>
       )}
     </div>

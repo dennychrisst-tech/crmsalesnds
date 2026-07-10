@@ -270,7 +270,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
         <div className="panel"><EmptyState icon="🏢" label="Belum ada client" sub="Coba ubah filter, atau tambah client pertama Anda" /></div>
       ) : viewMode === "compact" ? (
         <div className="panel">
-          <table>
+          <table className="data-table">
             <thead>
               <tr>
                 <SortableTh active={sortBy === "name"} dir="asc" onClick={() => setSortBy("name")}>Nama</SortableTh>
@@ -304,6 +304,32 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
               })}
             </tbody>
           </table>
+          <div className="mobile-cards">
+            {paged.map(({ client: c, lastContact, daysSince, dealValue, dealCount }) => {
+              const sc = c.status ? CLIENT_STATUS_COLOR[c.status] : null;
+              const pics = (Array.isArray(c.pic) ? c.pic : []) as PIC[];
+              return (
+                <div key={c.id} className="mcard" onClick={() => { if (!isViewer) { setEditClient(c); setClientModalOpen(true); } }}>
+                  <div className="mcard-head">
+                    <div className="mcard-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <ClientLogo name={c.name} website={c.website} logoUrl={c.logo_url} size={20} />
+                      {c.name}
+                    </div>
+                    <span className="chip" style={sc ? { background: sc.bg, color: sc.fg } : undefined}>{c.status || "—"}</span>
+                  </div>
+                  <div className="mcard-row"><span>Sektor</span><b>{c.sector || "—"}</b></div>
+                  <div className="mcard-row"><span>PIC</span><b>{pics[0]?.name || "—"}{pics.length > 1 ? ` +${pics.length - 1}` : ""}</b></div>
+                  <div className="mcard-row"><span>Kontak Terakhir</span><b>{lastContact ? `${relativeTime(lastContact)}${daysSince !== null && daysSince > 60 ? " ⚠" : ""}` : "belum pernah"}</b></div>
+                  <div className="mcard-row"><span>Project Aktif</span><b>{dealCount > 0 ? `${fmtIDR(dealValue)} (${dealCount})` : "—"}</b></div>
+                  {!isViewer && (
+                    <div className="mcard-actions">
+                      <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setEditClient(c); setClientModalOpen(true); }}>Edit</button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : paged.map(({ client: c, lastContact, daysSince, dealValue, dealCount }) => {
         const clientVisits = visits.filter(v => v.client_id === c.id).sort((a, b) => b.date.localeCompare(a.date));

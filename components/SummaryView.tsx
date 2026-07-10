@@ -350,7 +350,7 @@ export default function SummaryView({ data, onOpenVisit, onOpenCalendarWeek, onO
             {teamStats.every(t => t.visits + t.tasks + t.activities + t.wonValue === 0) ? (
               <div className="empty-state">Belum ada data aktivitas di periode ini.</div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
+              <div className="table-scroll">
                 <table style={{ minWidth: 400 }}>
                   <thead>
                     <tr>
@@ -389,7 +389,7 @@ export default function SummaryView({ data, onOpenVisit, onOpenCalendarWeek, onO
           {sectorStats.length > 0 && (
             <div className="panel">
               <h2>Performa per Sektor</h2>
-              <div style={{ overflowX: "auto" }}>
+              <div className="table-scroll">
                 <table style={{ minWidth: 380 }}>
                   <thead>
                     <tr>
