@@ -263,13 +263,13 @@ export default function Dashboard({
     },
     {
       label: "Closed Won", num: fmtIDR(wonValue), sub: `${wonDeals.length} project`,
-      accent: "var(--brand)", view: "pipeline" as ActiveView,
+      accent: "var(--brand)", view: "pipeline" as ActiveView, stage: "Won",
       spark: sparkWon, warn: false,
     },
     {
       label: "Win Rate", num: winRate !== null ? `${winRate}%` : "—",
       sub: closedTotal > 0 ? `dari ${closedTotal} closed` : "belum ada closed",
-      accent: "var(--brand)", view: "pipeline" as ActiveView,
+      accent: "var(--brand)", view: "pipeline" as ActiveView, stage: "Won",
       spark: sparkWon, warn: false,
     },
     {
@@ -340,7 +340,7 @@ export default function Dashboard({
               borderTop: `2px solid ${k.accent}`,
               display: "flex", flexDirection: "column", gap: 0,
             }}
-            onClick={() => onNavigate(k.view)}
+            onClick={() => k.stage && onOpenStage ? onOpenStage(k.stage) : onNavigate(k.view)}
           >
             <div className="kpi-label" style={{ margin: "0 0 8px" }}>{k.label}</div>
             <div className="kpi-num" style={{ color: k.accent, marginBottom: 2 }}>{k.num}</div>

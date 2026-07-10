@@ -6,7 +6,7 @@ import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Deal, CRMDocument, Attachment, Activity, Project, DateRange } from "@/types";
-import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, isClosedStage, colorForSales, dealAgingDays, isDealAtRisk } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, isClosedStage, isWonStage, colorForSales, dealAgingDays, isDealAtRisk } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 import { toast } from "./ui/Toast";
 import Modal, { Field, ModalActions, inputCls, textareaCls } from "./ui/Modal";
@@ -245,7 +245,10 @@ function Column({ stage, deals, clientName, onDealClick, onMoveStage, isViewer, 
   return (
     <div ref={setNodeRef} className={`col${isOver ? " over" : ""}${deals.length === 0 ? " col-empty" : ""}`} data-stage={stage} style={{ borderTop: `3px solid ${stageColor}` }}>
       <div className="col-head">
-        <h3 className="stage-text" style={{ color: stageColor }}>{stage}</h3>
+        <h3 className="stage-text" style={{ color: stageColor }}>
+          {stage}
+          {isWonStage(stage) && <span className="won-badge">🏆 WON</span>}
+        </h3>
         <div className="colval">{deals.length} · {fmtIDR(val)}</div>
       </div>
       <div className="col-list">
@@ -286,6 +289,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [showArchived, setShowArchived] = useState(false);
   const [atRiskOnly, setAtRiskOnly] = useState(false);
+  const [showWonList, setShowWonList] = useState(false);
   const [localWeekFocus, setLocalWeekFocus] = useState<DateRange | null>(null);
 
   useEffect(() => {
@@ -350,6 +354,12 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   // Deals stuck 30+ days in the same active stage — same threshold AgingBadge
   // already flags as "critical", just surfaced here as a filterable count too.
   const atRiskCount = ownedDeals.filter(isDealAtRisk).length;
+  // All won deals (Dealed/PO/Kontrak) in one flat list, most recent win first —
+  // the kanban spreads these across 3 columns, this is the "just show me
+  // everything that's won" view requested alongside it.
+  const wonList = ownedDeals.filter(d => isWonStage(d.stage))
+    .sort((a, b) => (b.stage_updated_at || b.created_at || "").localeCompare(a.stage_updated_at || a.created_at || ""));
+  const wonListValue = wonList.reduce((s, d) => s + d.value, 0);
   let visibleDeals = showArchived ? ownedDeals : ownedDeals.filter(d => !isArchived(d));
   if (atRiskOnly) visibleDeals = visibleDeals.filter(isDealAtRisk);
   // Deep-linked from Weekly Report's KPI cards — narrow to deals that actually
@@ -385,10 +395,14 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
 
   // Deep-link from Dashboard's "Pipeline per Stage" rows — jump straight to
   // that stage instead of just landing on the board's default scroll position.
+  // "Won" isn't a real stage value (won deals are Dealed/PO/Kontrak — see
+  // isWonStage), so it's aliased to Dealed, the first won column, so links
+  // like the Dashboard's "Closed Won" KPI land the user right at the group.
   useEffect(() => {
     if (!openStage) return;
-    setMobileStage(openStage);
-    goToStage(openStage);
+    const resolved = openStage === "Won" ? "Dealed" : openStage;
+    setMobileStage(resolved);
+    goToStage(resolved);
     onOpenStageHandled?.();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openStage]);
@@ -581,6 +595,16 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
             ⚠ Deal Macet ({atRiskCount})
           </button>
         )}
+        {wonList.length > 0 && (
+          <button
+            className={`btn btn-sm${showWonList ? "" : " btn-ghost"}`}
+            style={showWonList ? undefined : { color: "#15803D", borderColor: "#15803D" }}
+            onClick={() => setShowWonList(s => !s)}
+            title="Semua deal Dealed/PO/Kontrak dalam satu daftar"
+          >
+            🏆 Daftar Won ({wonList.length})
+          </button>
+        )}
         <button className="btn btn-ghost btn-sm" onClick={() => exportDeals(deals, clientName)}><Download size={13} /> Export Excel</button>
         {!isViewer && (
           <button className="btn btn-ghost btn-sm" onClick={toggleSelectMode}>
@@ -611,6 +635,53 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
               {name}
             </span>
           ))}
+        </div>
+      )}
+
+      {showWonList && (
+        <div className="panel" style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+            <h3 style={{ margin: 0, fontSize: 15 }}>🏆 Daftar Project Won</h3>
+            <span className="muted" style={{ fontSize: 12 }}>{wonList.length} project · {fmtIDR(wonListValue)}</span>
+          </div>
+          <table className="data-table table-zebra">
+            <thead>
+              <tr>
+                <th>Opportunity</th><th>Client</th><th>Stage</th><th>Owner</th><th>Nilai</th><th>Tanggal Won</th>
+              </tr>
+            </thead>
+            <tbody>
+              {wonList.map(d => (
+                <tr key={d.id} style={{ cursor: isViewer ? "default" : "pointer" }}
+                  onClick={() => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}>
+                  <td><b>{d.name}</b>{d.product && <><br /><span className="muted" style={{ fontSize: 11 }}>{d.product}</span></>}</td>
+                  <td>{clientName(d.client_id)}</td>
+                  <td>
+                    <span className="badge" style={{ background: `${STAGE_COLOR[d.stage] || "var(--brand)"}22`, color: STAGE_COLOR[d.stage] || "var(--brand)" }}>
+                      {d.stage}
+                    </span>
+                  </td>
+                  <td>{d.owner || "—"}</td>
+                  <td>{fmtIDR(d.value)}</td>
+                  <td>{fmtDate((d.stage_updated_at || d.created_at || "").slice(0, 10))}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="mobile-cards">
+            {wonList.map(d => (
+              <div key={d.id} className="mcard" onClick={() => { if (!isViewer) { setEditDeal(d); setModalOpen(true); } }}>
+                <div className="mcard-head">
+                  <div className="mcard-title">{d.name}</div>
+                  <span className="chip" style={{ background: `${STAGE_COLOR[d.stage] || "var(--brand)"}22`, color: STAGE_COLOR[d.stage] || "var(--brand)" }}>{d.stage}</span>
+                </div>
+                <div className="mcard-row"><span>Client</span><b>{clientName(d.client_id)}</b></div>
+                <div className="mcard-row"><span>Owner</span><b>{d.owner || "—"}</b></div>
+                <div className="mcard-row"><span>Nilai</span><b>{fmtIDR(d.value)}</b></div>
+                <div className="mcard-row"><span>Tanggal Won</span><b>{fmtDate((d.stage_updated_at || d.created_at || "").slice(0, 10))}</b></div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

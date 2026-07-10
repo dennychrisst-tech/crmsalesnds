@@ -157,7 +157,7 @@ export default function Projects({
                     <span className="muted">{fmtDate((g.items[0].date || g.items[0].created_at || "").slice(0, 10))}</span>
                   </button>
                   {isOpen && (
-                    <table className="data-table table-zebra">
+                    <table className="table-zebra">
                       <thead>
                         <tr>
                           <th>Tanggal</th>{isMerged && <th>Client</th>}<th>PIC Handle</th><th>PIC Client</th><th>Project</th><th>Aktivitas</th>
