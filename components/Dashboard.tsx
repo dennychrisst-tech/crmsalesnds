@@ -174,7 +174,9 @@ export default function Dashboard({
   // Deals
   const openDeals   = filteredDeals.filter(d => !isClosedStage(d.stage));
   const atRiskDeals = openDeals.filter(isDealAtRisk);
-  const wonDeals    = filteredDeals.filter(d => isWonStage(d.stage));
+  // Talent deals that reach Won are tracked as Project Talent revenue instead
+  // (see Talent.tsx), so counting them here too would double-count the value.
+  const wonDeals    = filteredDeals.filter(d => isWonStage(d.stage) && d.product !== "Talent");
   const lostDeals   = filteredDeals.filter(d => d.stage === "Dropped");
   const closedTotal = wonDeals.length + lostDeals.length;
   const winRate     = closedTotal > 0 ? Math.round((wonDeals.length / closedTotal) * 100) : null;

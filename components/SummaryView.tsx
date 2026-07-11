@@ -107,7 +107,9 @@ export default function SummaryView({ data, onOpenVisit, onOpenCalendarWeek, onO
   const periodActivities = activities.filter(a => inRange(a.date || a.created_at, start, end) && matchSales(a.created_by));
   const periodEvents   = events.filter(e => inRange(e.date, start, end) && matchSales(e.created_by));
   const periodDeals    = deals.filter(d => (d.created_at || "") > HISTORICAL_DATA_CUTOFF && inRange(d.created_at, start, end) && matchSales(d.owner));
-  const wonDeals       = deals.filter(d => isWonStage(d.stage) && inRange(d.stage_updated_at || d.created_at, start, end) && matchSales(d.owner));
+  // Talent deals that reach Won are tracked as Project Talent revenue instead
+  // (see Talent.tsx), so counting them here too would double-count the value.
+  const wonDeals       = deals.filter(d => isWonStage(d.stage) && d.product !== "Talent" && inRange(d.stage_updated_at || d.created_at, start, end) && matchSales(d.owner));
   const lostDeals      = deals.filter(d => d.stage === "Dropped" && inRange(d.stage_updated_at || d.created_at, start, end) && matchSales(d.owner));
   const doneTasks      = periodTasks.filter(t => t.status === "Done");
   const doneVisits     = periodVisits.filter(v => v.status === "Done");
@@ -123,7 +125,7 @@ export default function SummaryView({ data, onOpenVisit, onOpenCalendarWeek, onO
   const prevDoneVisits = visits.filter(v => v.status === "Done" && inRange(v.date, prevRange.start, prevRange.end) && matchSales(v.pic));
   const prevDoneTasks  = tasks.filter(t => t.status === "Done" && inRange(t.due_date, prevRange.start, prevRange.end) && matchSales(t.assigned_to));
   const prevPeriodDeals = deals.filter(d => (d.created_at || "") > HISTORICAL_DATA_CUTOFF && inRange(d.created_at, prevRange.start, prevRange.end) && matchSales(d.owner));
-  const prevWonDeals   = deals.filter(d => isWonStage(d.stage) && inRange(d.stage_updated_at || d.created_at, prevRange.start, prevRange.end) && matchSales(d.owner));
+  const prevWonDeals   = deals.filter(d => isWonStage(d.stage) && d.product !== "Talent" && inRange(d.stage_updated_at || d.created_at, prevRange.start, prevRange.end) && matchSales(d.owner));
   const prevLostDeals  = deals.filter(d => d.stage === "Dropped" && inRange(d.stage_updated_at || d.created_at, prevRange.start, prevRange.end) && matchSales(d.owner));
   const prevActivities = activities.filter(a => inRange(a.date || a.created_at, prevRange.start, prevRange.end) && matchSales(a.created_by));
 
@@ -134,7 +136,7 @@ export default function SummaryView({ data, onOpenVisit, onOpenCalendarWeek, onO
   const sparkVisitsDone = weekAnchor ? weeklyCount(visits.filter(v => v.status === "Done" && matchSales(v.pic)), v => v.date, 7, weekAnchor) : null;
   const sparkTasksDone  = weekAnchor ? weeklyCount(tasks.filter(t => t.status === "Done" && matchSales(t.assigned_to)), t => t.due_date || "", 7, weekAnchor) : null;
   const sparkNewDeals   = weekAnchor ? weeklyCount(deals.filter(d => (d.created_at || "") > HISTORICAL_DATA_CUTOFF && matchSales(d.owner)), d => (d.created_at || "").slice(0, 10), 7, weekAnchor) : null;
-  const sparkWon        = weekAnchor ? weeklyCount(deals.filter(d => isWonStage(d.stage) && matchSales(d.owner)), d => (d.stage_updated_at || d.created_at || "").slice(0, 10), 7, weekAnchor) : null;
+  const sparkWon        = weekAnchor ? weeklyCount(deals.filter(d => isWonStage(d.stage) && d.product !== "Talent" && matchSales(d.owner)), d => (d.stage_updated_at || d.created_at || "").slice(0, 10), 7, weekAnchor) : null;
   const sparkLost       = weekAnchor ? weeklyCount(deals.filter(d => d.stage === "Dropped" && matchSales(d.owner)), d => (d.stage_updated_at || d.created_at || "").slice(0, 10), 7, weekAnchor) : null;
   const sparkActivities = weekAnchor ? weeklyCount(activities.filter(a => matchSales(a.created_by)), a => (a.date || a.created_at || "").slice(0, 10), 7, weekAnchor) : null;
 

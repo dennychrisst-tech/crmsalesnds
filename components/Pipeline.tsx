@@ -361,7 +361,9 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   // All won deals (Dealed/PO/Kontrak) in one flat list, most recent win first —
   // the kanban spreads these across 3 columns, this is the "just show me
   // everything that's won" view requested alongside it.
-  const wonList = ownedDeals.filter(d => isWonStage(d.stage))
+  // Talent deals that reach Won are tracked as Project Talent revenue instead
+  // (see Talent.tsx), so counting them here too would double-count the value.
+  const wonList = ownedDeals.filter(d => isWonStage(d.stage) && d.product !== "Talent")
     .sort((a, b) => (b.stage_updated_at || b.created_at || "").localeCompare(a.stage_updated_at || a.created_at || ""));
   const wonListValue = wonList.reduce((s, d) => s + d.value, 0);
   let visibleDeals = showArchived ? ownedDeals : ownedDeals.filter(d => !isArchived(d));

@@ -50,11 +50,13 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
   const weekCancels = visits.filter(v => v.status === "Cancel" && inRange(v.date, start, end));
   const weekDealUpdates = deals.filter(d => d.stage_updated_at && inRange(d.stage_updated_at, start, end));
   const weekActivityLog = activities.filter(a => inRange(a.date, start, end));
-  const weekWon = weekDealUpdates.filter(d => isWonStage(d.stage));
+  // Talent deals that reach Won are tracked as Project Talent revenue instead
+  // (see Talent.tsx), so counting them here too would double-count the value.
+  const weekWon = weekDealUpdates.filter(d => isWonStage(d.stage) && d.product !== "Talent");
 
   const prevWeekVisits = visits.filter(v => v.status === "Done" && inRange(v.date, prevStart, prevEnd));
   const prevWeekDealUpdates = deals.filter(d => d.stage_updated_at && inRange(d.stage_updated_at, prevStart, prevEnd));
-  const prevWeekWon = prevWeekDealUpdates.filter(d => isWonStage(d.stage));
+  const prevWeekWon = prevWeekDealUpdates.filter(d => isWonStage(d.stage) && d.product !== "Talent");
   // Counts as "active" whether the update came from a visit or just a logged
   // activity (WA/phone follow-up with no visit) — both are real sales work.
   const activeSales = new Set([
