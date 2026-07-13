@@ -37,8 +37,10 @@ function addDays(dateStr: string, n: number): string {
 
 // Shared by RemindersBell (client, per-viewer) and the reminders cron route
 // (server, per-recipient) so the actual due-date/status rules only live in
-// one place.
-export function computeReminders(visits: VisitReminderInput[], tasks: TaskReminderInput[], today: string): RawReminder[] {
+// one place. `endOfDay` gates same-day "hasil visit belum diupdate" nudges —
+// the sales rep may still be on-site until close of business, so that nag
+// shouldn't fire until after 17:00 Jakarta time (see isEndOfDayJakarta).
+export function computeReminders(visits: VisitReminderInput[], tasks: TaskReminderInput[], today: string, endOfDay: boolean): RawReminder[] {
   const reminders: RawReminder[] = [];
   const tomorrow = addDays(today, 1);
 
@@ -61,7 +63,7 @@ export function computeReminders(visits: VisitReminderInput[], tasks: TaskRemind
       // not) needs to be recorded.
       if (v.date === tomorrow) {
         reminders.push({ id: `v-tentative-confirm-${v.id}`, source: "visits", recordId: v.id, severity: "today", owner: v.pic });
-      } else if (v.date <= today) {
+      } else if (v.date < today || (v.date === today && endOfDay)) {
         reminders.push({ id: `v-tentative-${v.id}`, source: "visits", recordId: v.id, severity: "overdue", owner: v.pic });
       }
     }
@@ -88,4 +90,16 @@ export function todayStrInJakarta(): string {
   }).formatToParts(new Date());
   const get = (t: string) => parts.find(p => p.type === t)?.value ?? "";
   return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+// "End of day" is pinned to Jakarta business hours (17:00) regardless of the
+// viewer's device timezone or the host's system timezone — used to hold back
+// same-day "hasil visit belum diupdate" nudges until close of business.
+export function isEndOfDayJakarta(): boolean {
+  const hourStr = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Jakarta",
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date());
+  return Number(hourStr) >= 17;
 }

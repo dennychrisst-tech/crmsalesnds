@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { Bell, BellRing, BellOff } from "lucide-react";
 import { AppData } from "@/hooks/useData";
 import { fmtDate, todayStr, onActivateKey } from "@/lib/utils";
-import { computeReminders } from "@/lib/reminders";
+import { computeReminders, isEndOfDayJakarta } from "@/lib/reminders";
 import { usePushSubscription } from "@/hooks/usePushSubscription";
 
 interface Props {
@@ -133,7 +133,7 @@ export default function RemindersBell({ data, currentUserName, isAdmin, onNaviga
 
   const reminders: Reminder[] = [
     ...newClientReminders,
-    ...computeReminders(data.visits, data.tasks, today)
+    ...computeReminders(data.visits, data.tasks, today, isEndOfDayJakarta())
     .filter(r => mine(r.owner))
     .map((r): Reminder | null => {
       if (r.source === "visits") {

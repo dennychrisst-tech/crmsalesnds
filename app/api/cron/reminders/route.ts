@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
 import { prisma } from "@/lib/prisma";
-import { computeReminders, todayStrInJakarta, VisitReminderInput, TaskReminderInput } from "@/lib/reminders";
+import { computeReminders, todayStrInJakarta, isEndOfDayJakarta, VisitReminderInput, TaskReminderInput } from "@/lib/reminders";
 import { isPrivilegedRole } from "@/lib/auth";
 
 function d10(d: Date | null): string | null {
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   const visits: VisitReminderInput[] = visitRows.map(v => ({ id: v.id, date: d10(v.date) ?? "", status: v.status, pic: v.pic, rescheduled_to_id: v.rescheduled_to_id }));
   const tasks: TaskReminderInput[] = taskRows.map(t => ({ id: t.id, due_date: d10(t.due_date), status: t.status, assigned_to: t.assigned_to }));
 
-  const reminders = computeReminders(visits, tasks, todayStrInJakarta());
+  const reminders = computeReminders(visits, tasks, todayStrInJakarta(), isEndOfDayJakarta());
   if (reminders.length === 0) return NextResponse.json({ sent: 0, reason: "no reminders" });
 
   const subsByUser = new Map<string, typeof subscriptions>();
