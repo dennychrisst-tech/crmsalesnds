@@ -26,19 +26,27 @@ export default function NavDropdown({ label, icon: Icon, hrefs, open, onToggle, 
   useEffect(() => {
     if (!open) return;
     window.addEventListener("click", onCloseRequest);
-    return () => window.removeEventListener("click", onCloseRequest);
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") onCloseRequest(); };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("click", onCloseRequest);
+      window.removeEventListener("keydown", onKeyDown);
+    };
   }, [open, onCloseRequest]);
 
   return (
     <div className="nav-dropdown-wrap" onClick={e => e.stopPropagation()}>
-      <button className={`nav-dropdown-trigger${isActive ? " active" : ""}`} onClick={onToggle}>
+      <button
+        className={`nav-dropdown-trigger${isActive ? " active" : ""}`} onClick={onToggle}
+        aria-haspopup="menu" aria-expanded={open}
+      >
         <span className="tab-icon"><Icon size={15} /></span>{label}
         <ChevronDown size={13} style={{ transform: open ? "rotate(180deg)" : undefined, transition: "transform .15s" }} />
       </button>
       {open && (
-        <div className="nav-dropdown-menu">
+        <div className="nav-dropdown-menu" role="menu">
           {items.map(i => (
-            <Link key={i.href} href={i.href} prefetch={false} className={`nav-dropdown-item${pathname === i.href ? " active" : ""}`}
+            <Link key={i.href} href={i.href} prefetch={false} role="menuitem" className={`nav-dropdown-item${pathname === i.href ? " active" : ""}`}
               onClick={() => { onCloseRequest(); (window as Window & { __startNavProgress?: () => void }).__startNavProgress?.(); }}>
               <span className="tab-icon"><i.icon size={14} /></span>{i.label}
             </Link>

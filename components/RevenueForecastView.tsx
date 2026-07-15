@@ -4,7 +4,7 @@ import { AppData } from "@/hooks/useData";
 import { RevenueLine, RevenueTarget, Deal } from "@/types";
 import {
   fmtIDR, fmtDate, REVENUE_LINE_CATEGORIES,
-  REVENUE_OPP_CATEGORY_COLOR, REVENUE_MILESTONE_STATUS_COLOR, isWonStage, onActivateKey,
+  REVENUE_OPP_CATEGORY_COLOR, REVENUE_MILESTONE_STATUS_COLOR, isWonStage, onActivateKey, dealYear,
 } from "@/lib/utils";
 import RevenueLineModal from "./RevenueLineModal";
 import DealOpportunityModal from "./DealOpportunityModal";
@@ -63,7 +63,7 @@ export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSa
     currentYear,
     ...revenue_targets.map(t => t.year),
     ...revenue_lines.map(l => l.year),
-    ...deals.filter(d => d.year).map(d => d.year as number),
+    ...deals.map(dealYear),
   ])).sort((a, b) => b - a);
 
   const [year, setYear] = useState(currentYear);
@@ -77,7 +77,7 @@ export default function RevenueForecastView({ data, isViewer, onSaveTarget, onSa
   const target = revenue_targets.find(t => t.year === year) || null;
   const yearLines = revenue_lines.filter(l => l.year === year);
   const yearOpps = deals
-    .filter(d => d.year === year)
+    .filter(d => !d.archived && dealYear(d) === year)
     .map(d => ({ deal: d, bucket: oppBucket(d.stage) }))
     .filter((x): x is { deal: Deal; bucket: OppBucket } => x.bucket !== null);
 

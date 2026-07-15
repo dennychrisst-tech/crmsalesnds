@@ -31,14 +31,18 @@ export const TABS: NavTab[] = [
   { href: "/mandays-rate",     label: "Mandays Rate",      icon: Calculator },
 ];
 
-// Bottom nav (mobile only) surfaces the 4 most-used views + a "Lainnya" sheet for the rest.
-export const PRIMARY_HREFS = ["/", "/clients", "/calendar", "/pipeline"];
+// Bottom nav (mobile only) surfaces the 5 most-used views + a "Lainnya" sheet
+// for the rest. Tasks is here alongside Dashboard/Client/Calendar/Pipeline
+// (not just in the "Lainnya" sheet's Kerja group) because "what do I need to
+// do today" is a natural one-tap check from a phone, unlike Project/Oppty/
+// Talent which are more back-office and fine two taps deep.
+export const PRIMARY_HREFS = ["/", "/clients", "/calendar", "/pipeline", "/tasks"];
 export const MORE_TABS = TABS.filter(t => !PRIMARY_HREFS.includes(t.href));
 // Groups the "Lainnya" sheet under short headers instead of one flat list.
 // Anything not listed here falls into "Lainnya" so new tabs never silently
 // disappear from the sheet.
 export const MORE_GROUPS: { label: string; hrefs: string[] }[] = [
-  { label: "Kerja", hrefs: ["/projects", "/opty", "/talent", "/tasks"] },
+  { label: "Kerja", hrefs: ["/projects", "/opty", "/talent"] },
   { label: "Laporan", hrefs: ["/summary", "/visit-report", "/weekly-report"] },
   { label: "Analitik", hrefs: ["/revenue-forecast", "/talent-fill-rate", "/mandays-rate"] },
 ];
@@ -59,7 +63,7 @@ export const DESKTOP_DROPDOWN_GROUPS: { label: string; icon: LucideIcon; hrefs: 
 export const VIEW_HREF: Record<ActiveView, string> = {
   dashboard: "/", clients: "/clients", calendar: "/calendar", projects: "/projects",
   opty: "/opty", talent: "/talent", pipeline: "/pipeline", tasks: "/tasks",
-  catalog: "/catalog", summary: "/summary", "visit-report": "/visit-report",
+  summary: "/summary", "visit-report": "/visit-report",
   "weekly-report": "/weekly-report", "revenue-forecast": "/revenue-forecast",
   "talent-fill-rate": "/talent-fill-rate", "mandays-rate": "/mandays-rate",
 };

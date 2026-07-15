@@ -1,8 +1,8 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
-import { Client, Contact, Visit, Deal, Project, Task, Product, CRMDocument, Attachment, Activity, CalendarEvent, Profile, TalentRole, RevenueTarget, RevenueLine, RevenueOpportunity, MandaysRole, MandaysClientRate } from "@/types";
-import { STAGES } from "@/lib/utils";
+import { Client, Contact, Visit, Deal, Project, Task, CRMDocument, Attachment, Activity, CalendarEvent, Profile, TalentRole, RevenueTarget, RevenueLine, RevenueOpportunity, MandaysRole, MandaysClientRate } from "@/types";
+import { STAGES, dealYear, isWonStage } from "@/lib/utils";
 import { toast } from "@/components/ui/Toast";
 import { enqueue, getQueue, removeFromQueue } from "@/lib/offlineQueue";
 
@@ -19,7 +19,6 @@ export interface AppData {
   deals: Deal[];
   projects: Project[];
   tasks: Task[];
-  products: Product[];
   documents: CRMDocument[];
   attachments: Attachment[];
   activities: Activity[];
@@ -35,14 +34,14 @@ export interface AppData {
   mandays_client_rates: MandaysClientRate[];
 }
 
-type TableKey = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "products" | "documents" | "attachments" | "activities" | "events" | "talent_roles" | "revenue_targets" | "revenue_lines" | "revenue_opportunities" | "mandays_roles" | "mandays_client_rates";
+type TableKey = "clients" | "contacts" | "visits" | "deals" | "projects" | "tasks" | "documents" | "attachments" | "activities" | "events" | "talent_roles" | "revenue_targets" | "revenue_lines" | "revenue_opportunities" | "mandays_roles" | "mandays_client_rates";
 
 // Fetched immediately on mount — needed by the header (search/reminders) and/or
 // most views, so the app can't usefully render without them.
 const CORE_TABLES: TableKey[] = ["clients", "contacts", "deals", "tasks", "visits", "projects"];
 // Fetched right after CORE resolves, in the background — mostly deal-detail-modal
-// and Calendar/catalog specific, not needed for the app's first paint.
-const LAZY_TABLES: TableKey[] = ["products", "documents", "attachments", "activities", "events", "talent_roles", "revenue_targets", "revenue_lines", "revenue_opportunities", "mandays_roles", "mandays_client_rates"];
+// and Calendar specific, not needed for the app's first paint.
+const LAZY_TABLES: TableKey[] = ["documents", "attachments", "activities", "events", "talent_roles", "revenue_targets", "revenue_lines", "revenue_opportunities", "mandays_roles", "mandays_client_rates"];
 const ALL_TABLES: TableKey[] = [...CORE_TABLES, ...LAZY_TABLES];
 
 // Prisma returns full ISO timestamps, but <input type="date"> and date logic
@@ -106,7 +105,7 @@ function mergeRecord(list: any[], record: any): any[] {
 
 const EMPTY_DATA: AppData = {
   clients: [], contacts: [], visits: [], deals: [], projects: [],
-  tasks: [], products: [], documents: [], attachments: [], activities: [], events: [],
+  tasks: [], documents: [], attachments: [], activities: [], events: [],
   profiles: [], talent_roles: [],
   revenue_targets: [], revenue_lines: [], revenue_opportunities: [],
   mandays_roles: [], mandays_client_rates: [],
@@ -330,34 +329,45 @@ export function useData() {
     }
   }
 
-  // Auto-hands a Deal off to Revenue Forecast the moment it reaches Kontrak —
-  // previously someone had to remember to separately create a RevenueLine for
-  // billing/invoicing at exactly the point the two systems should meet. Only
-  // fires on the transition into Kontrak (not every re-save while already
-  // there), and only once per deal (checked via RevenueLine.deal_id) so
-  // re-entering Kontrak later doesn't spawn a second draft.
-  async function handleKontrakHandOff(deal: Deal, prevStage: string | undefined) {
-    if (deal.stage !== "Kontrak" || prevStage === "Kontrak") return;
+  // Auto-hands a Deal off to Revenue Forecast the moment it first becomes Won
+  // (Dealed/PO/Kontrak are all "won" — see isWonStage) — previously someone
+  // had to remember to separately create a RevenueLine for billing/invoicing
+  // at exactly the point the two systems should meet. Firing on Dealed rather
+  // than waiting for Kontrak specifically matters: yearOpps (RevenueForecastView)
+  // drops a deal the moment it's Won, so without this it goes uncounted
+  // anywhere in the forecast for however long it sits in Dealed/PO before
+  // someone formalizes the contract. Only fires on the transition into Won
+  // (not every re-save while already Won, and not again when e.g. Dealed
+  // advances to PO), and only once per deal (checked via RevenueLine.deal_id)
+  // so re-entering a won stage later doesn't spawn a second draft.
+  // The single starter milestone carries the deal's full value over so it
+  // doesn't silently drop to Rp0 in "Contracted" until someone splits it into
+  // real billing milestones.
+  async function handleWonHandOff(deal: Deal, prevStage: string | undefined) {
+    if (!isWonStage(deal.stage) || isWonStage(prevStage || "")) return;
     if (dataRef.current.revenue_lines.some(l => l.deal_id === deal.id)) return;
     await upsert("revenue_lines", {
-      id: uuid(), year: deal.year || new Date().getFullYear(), category: "Project",
-      project_name: deal.name, pic: deal.owner || "", milestones: [],
-      notes: "Auto-dibuat dari Pipeline saat deal masuk stage Kontrak — lengkapi milestone invoicing.",
+      id: uuid(), year: dealYear(deal), category: "Project",
+      project_name: deal.name, pic: deal.owner || "",
+      milestones: deal.value
+        ? [{ id: uuid(), label: "Full Value (auto)", percent: 100, amount: deal.value, target_month: null, status: "To be billed" }]
+        : [],
+      notes: `Auto-dibuat dari Pipeline saat deal masuk stage ${deal.stage} — sesuaikan milestone invoicing.`,
       deal_id: deal.id,
     });
-    toast(`"${deal.name}" ditambahkan ke Revenue Forecast — lengkapi milestone invoicing`);
+    toast(`"${deal.name}" ditambahkan ke Revenue Forecast — sesuaikan milestone invoicing`);
   }
 
   async function upsertDeal(d: Deal) {
     const prevStage = dataRef.current.deals.find(x => x.id === d.id)?.stage;
     await upsert("deals", d as unknown as Record<string, unknown>);
-    await handleKontrakHandOff(d, prevStage);
+    await handleWonHandOff(d, prevStage);
   }
   const deleteDeal = makeRemove("deals");
   async function updateDealStage(id: string, stage: string) {
     const prev = dataRef.current.deals.find(d => d.id === id);
     const result = await patch("deals", id, { stage, stage_updated_at: new Date().toISOString() });
-    if (prev) await handleKontrakHandOff({ ...prev, stage: stage as Deal["stage"] }, prev.stage);
+    if (prev) await handleWonHandOff({ ...prev, stage: stage as Deal["stage"] }, prev.stage);
     return result;
   }
 
@@ -384,9 +394,6 @@ export function useData() {
 
   const upsertTask = makeUpsert<Task>("tasks");
   const deleteTask = makeRemove("tasks");
-
-  const upsertProduct = makeUpsert<Product>("products");
-  const deleteProduct = makeRemove("products");
 
   const upsertDocument = makeUpsert<CRMDocument>("documents");
   const deleteDocument = makeRemove("documents");
@@ -447,7 +454,6 @@ export function useData() {
     upsertMandaysRole, deleteMandaysRole,
     upsertMandaysClientRate, deleteMandaysClientRate,
     upsertTask, deleteTask,
-    upsertProduct, deleteProduct,
     upsertDocument, deleteDocument,
     uploadAttachment, deleteAttachment,
     uploadClientLogo, deleteClientLogo,

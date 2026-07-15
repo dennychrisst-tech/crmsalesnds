@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./ui/Modal";
-import { Deal, Client, Product, CRMDocument, Attachment, Activity } from "@/types";
+import { Deal, Client, CRMDocument, Attachment, Activity } from "@/types";
 import { STAGES, DEAL_TYPES, ACTIVITY_TYPES, STAGE_COLOR, fmtDate, fmtIDR, todayStr, isWonStage } from "@/lib/utils";
 import DocumentTracker from "./DocumentTracker";
 import AttachmentSection from "./AttachmentSection";
@@ -13,7 +13,6 @@ interface Props {
   open: boolean;
   deal: Deal | null;
   clients: Client[];
-  products: Product[];
   documents: CRMDocument[];
   attachments: Attachment[];
   activities: Activity[];
@@ -49,7 +48,7 @@ const emptyActivity = (dealId: string): Omit<Activity, "id" | "created_at"> => (
 });
 
 export default function DealModal({
-  open, deal, clients, products, documents, attachments, activities, team, defaultOwner = "", defaultProduct = "",
+  open, deal, clients, documents, attachments, activities, team, defaultOwner = "", defaultProduct = "",
   entityLabel = "Oppty", initialTab = "detail",
   onSave, onDelete, onAddDocument, onDeleteDocument,
   onUploadAttachment, onDeleteAttachment,
@@ -235,12 +234,8 @@ export default function DealModal({
                 className={inputCls}
                 value={form.product}
                 onChange={e => set("product", e.target.value)}
-                placeholder="Ketik atau pilih…"
-                list="deal-product-list"
+                placeholder="Ketik produk / solusi…"
               />
-              <datalist id="deal-product-list">
-                {products.map(p => <option key={p.id} value={p.name} />)}
-              </datalist>
             </Field>
           </div>
           <Field label="Kompetitor">

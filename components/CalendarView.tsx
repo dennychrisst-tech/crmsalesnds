@@ -4,7 +4,7 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, u
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { Visit, CalendarEvent, Task, Deal, Contact, DateRange } from "@/types";
-import { fmtDate, todayStr, picList, picMatches, colorForSales, holidayName } from "@/lib/utils";
+import { fmtDate, todayStr, picList, picMatches, colorForSales, holidayName, eventDuration } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import EmptyState from "./ui/EmptyState";
 import VisitModal from "./VisitModal";
@@ -175,7 +175,7 @@ function AgendaDayCard({
                 <div className="agenda-item-title" style={{ textDecoration: isCancel ? "line-through" : "none" }}>
                   {isWfo ? `🏢 WFO — ${ev.created_by || "—"}` : isLeave ? `✈️ Cuti — ${ev.created_by || "—"}` : ev.title}{isPending ? "…" : ""}
                 </div>
-                {!isSpecial && <div className="agenda-item-sub">{ev.type}{ev.created_by ? ` · ${ev.created_by}` : ""}{statusNote}</div>}
+                {!isSpecial && <div className="agenda-item-sub">{ev.start_time ? `${ev.start_time}${ev.end_time ? `–${ev.end_time}` : ""} · ` : ""}{ev.type}{ev.created_by ? ` · ${ev.created_by}` : ""}{statusNote}</div>}
               </span>
             </button>
           );
@@ -265,8 +265,8 @@ function DayCell({
               textDecoration: isCancel ? "line-through" : "none",
             }}
             onClick={isPending ? undefined : e => { e.stopPropagation(); if (!isViewer) onEditEvent(ev); }}
-            title={isPending ? "Menyimpan…" : isWfo ? `WFO: ${ev.created_by || "—"}` : isLeave ? `Cuti: ${ev.created_by || "—"}` : `${ev.title}${statusNote}`}>
-            {isWfo ? `🏢 ${ev.created_by || "WFO"}` : isLeave ? `✈️ ${ev.created_by || "Cuti"}` : `${isReschedule ? "↻ " : ""}${ev.title}`}{isPending ? "…" : ""}
+            title={isPending ? "Menyimpan…" : isWfo ? `WFO: ${ev.created_by || "—"}` : isLeave ? `Cuti: ${ev.created_by || "—"}` : `${ev.start_time ? `${ev.start_time}${ev.end_time ? `–${ev.end_time}` : ""} · ` : ""}${ev.title}${statusNote}`}>
+            {isWfo ? `🏢 ${ev.created_by || "WFO"}` : isLeave ? `✈️ ${ev.created_by || "Cuti"}` : `${isReschedule ? "↻ " : ""}${ev.start_time ? `${ev.start_time} ` : ""}${ev.title}`}{isPending ? "…" : ""}
           </div>
         );
       })}
@@ -605,19 +605,23 @@ export default function CalendarView({ data, currentUserName, isViewer, onSaveVi
         <h2>Event & Kegiatan <span className="count">({sortedEvents.length})</span></h2>
         <table>
           <thead>
-            <tr><th>Tanggal</th><th>Judul</th><th>Tipe</th><th>Peserta</th><th>Keterangan</th><th></th></tr>
+            <tr><th>Tanggal</th><th>Waktu</th><th>Judul</th><th>Tipe</th><th>Peserta</th><th>Keterangan</th><th></th></tr>
           </thead>
           <tbody>
             {sortedEvents.length ? sortedEvents.map(ev => (
               <tr key={ev.id}>
                 <td>{fmtDate(ev.date)}</td>
+                <td>
+                  {ev.start_time ? `${ev.start_time}${ev.end_time ? `–${ev.end_time}` : ""}` : <span className="muted">—</span>}
+                  {eventDuration(ev.start_time, ev.end_time) && <><br /><span className="muted" style={{ fontSize: 11 }}>{eventDuration(ev.start_time, ev.end_time)}</span></>}
+                </td>
                 <td style={{ fontWeight: 600 }}>{ev.title}</td>
                 <td><span className="chip">{ev.type}</span></td>
                 <td>{ev.created_by || <span className="muted">—</span>}</td>
                 <td className="muted" style={{ fontSize: 12 }}>{ev.description || "—"}</td>
                 <td>{!isViewer && <button className="btn btn-ghost btn-sm" onClick={() => openEditEvent(ev)}>Edit</button>}</td>
               </tr>
-            )) : <tr><td colSpan={6}><EmptyState icon="📅" label="Belum ada event" /></td></tr>}
+            )) : <tr><td colSpan={7}><EmptyState icon="📅" label="Belum ada event" /></td></tr>}
           </tbody>
         </table>
       </div>

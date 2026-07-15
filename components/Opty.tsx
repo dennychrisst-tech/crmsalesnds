@@ -3,7 +3,7 @@ import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Deal, CRMDocument, Activity } from "@/types";
-import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, isClosedStage, onActivateKey } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, isClosedStage, isTalentProduct, onActivateKey } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 import DealModal from "./DealModal";
 import EmptyState from "./ui/EmptyState";
@@ -40,9 +40,9 @@ export default function Opty({
   onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment,
   onAddActivity, onDeleteActivity,
 }: Props) {
-  const { clients, contacts, products, documents, attachments, activities, profiles } = data;
+  const { clients, contacts, documents, attachments, activities, profiles } = data;
   const { isPending, requestDelete } = useUndoableDelete(onDeleteDeal);
-  const deals = data.deals.filter(d => !isPending(d.id) && !isClosedStage(d.stage) && d.product !== "Talent");
+  const deals = data.deals.filter(d => !isPending(d.id) && !isClosedStage(d.stage) && !isTalentProduct(d.product));
   async function handleDeleteDeal(id: string) {
     const d = data.deals.find(x => x.id === id);
     requestDelete(id, d ? `Deal "${d.name}"` : "Deal");
@@ -360,7 +360,7 @@ export default function Opty({
       </div>
 
       <DealModal
-        open={modalOpen} deal={editDeal} clients={clients} products={products} team={team} defaultOwner={currentUserName}
+        open={modalOpen} deal={editDeal} clients={clients} team={team} defaultOwner={currentUserName}
         initialTab={modalTab}
         documents={dealDocuments} attachments={dealAttachments} activities={dealActivities}
         onSave={onSaveDeal} onDelete={handleDeleteDeal}

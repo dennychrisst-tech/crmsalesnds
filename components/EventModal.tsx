@@ -5,7 +5,7 @@ import Modal, { Field, inputCls, selectCls, textareaCls, ModalActions } from "./
 import SearchableSelect from "./ui/SearchableSelect";
 import { toast } from "./ui/Toast";
 import { CalendarEvent, Client } from "@/types";
-import { EVENT_TYPES, EVENT_STATUS, todayStr, fmtDate } from "@/lib/utils";
+import { EVENT_TYPES, EVENT_STATUS, todayStr, fmtDate, eventDuration } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -23,6 +23,7 @@ function emptyEvent(date?: string): CalendarEvent {
   return {
     id: uuid(), title: "", date: date || todayStr(), type: "Meeting Online", description: "",
     created_by: "", client_id: null, status: "Planned", followup_date: null,
+    start_time: null, end_time: null,
   };
 }
 
@@ -51,6 +52,7 @@ export default function EventModal({ open, event, preDate, team, clients, defaul
       ...base, client_id: base.client_id ?? null,
       // Events saved before the status column existed come back with status undefined
       status: base.status || "Planned", followup_date: base.followup_date ?? null,
+      start_time: base.start_time ?? null, end_time: base.end_time ?? null,
     });
     const members = parseMembers(base.created_by);
     // Auto-select current user when creating a new event
@@ -108,6 +110,15 @@ export default function EventModal({ open, event, preDate, team, clients, defaul
           </div>
           <div className="dd-grid">
             <div className="dd-item"><div className="dd-label">Tanggal</div><div className="dd-value">{fmtDate(form.date)}</div></div>
+            {(form.start_time || form.end_time) && (
+              <div className="dd-item">
+                <div className="dd-label">Waktu</div>
+                <div className="dd-value">
+                  {form.start_time || "?"}{" – "}{form.end_time || "?"}
+                  {eventDuration(form.start_time, form.end_time) && ` (${eventDuration(form.start_time, form.end_time)})`}
+                </div>
+              </div>
+            )}
             {form.status === "Reschedule" && (
               <div className="dd-item"><div className="dd-label">Tanggal Baru</div><div className="dd-value">{form.followup_date ? fmtDate(form.followup_date) : "—"}</div></div>
             )}
@@ -151,6 +162,20 @@ export default function EventModal({ open, event, preDate, team, clients, defaul
           </Field>
         )}
       </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Jam Mulai">
+          <input type="time" className={inputCls} value={form.start_time || ""} onChange={e => set("start_time", e.target.value || null)} />
+        </Field>
+        <Field label="Jam Selesai">
+          <input type="time" className={inputCls} value={form.end_time || ""} onChange={e => set("end_time", e.target.value || null)} />
+        </Field>
+      </div>
+      {eventDuration(form.start_time, form.end_time) && (
+        <div className="muted" style={{ fontSize: 12, marginTop: -8, marginBottom: 8 }}>
+          Durasi: {eventDuration(form.start_time, form.end_time)}
+        </div>
+      )}
 
       <Field label="Client (opsional)">
         <SearchableSelect

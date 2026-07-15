@@ -23,6 +23,16 @@ interface Props {
 // not here, so Kontrak is deliberately excluded from this stage picker.
 const OPP_STAGES = [...STAGES, "On Hold", "Dropped"];
 
+const PRODUCT_CATEGORIES = ["Solution", "Talent", "License", "Support", "IBM"] as const;
+const IBM_PRODUCTS = ["IBM Filenet", "IBM MQ", "IBM BAW", "IBM BOB", "IBM Cloud Pak for Integration"] as const;
+
+function parseProduct(product: string) {
+  const ibmMatch = IBM_PRODUCTS.find(p => product === p);
+  if (ibmMatch) return { category: "IBM", sub: ibmMatch };
+  const cat = PRODUCT_CATEGORIES.find(c => c !== "IBM" && c === product);
+  return { category: cat || "", sub: "" };
+}
+
 function emptyOpp(year: number, clientId: string): Deal {
   return {
     id: uuid(), name: "", client_id: clientId, value: 0, stage: "Approching",
@@ -38,6 +48,8 @@ export default function DealOpportunityModal({ open, deal, year, team, clients, 
   const [form, setForm] = useState<Deal>(emptyOpp(year, ""));
   const [valueDisplay, setValueDisplay] = useState("");
   const [billedDisplay, setBilledDisplay] = useState("");
+  const [productCat, setProductCat] = useState("");
+  const [ibmSub, setIbmSub] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -45,11 +57,25 @@ export default function DealOpportunityModal({ open, deal, year, team, clients, 
     setForm(base);
     setValueDisplay(base.value ? base.value.toLocaleString("id-ID") : "");
     setBilledDisplay(base.potentially_billed_amount ? base.potentially_billed_amount.toLocaleString("id-ID") : "");
+    const { category, sub } = parseProduct(base.product || "");
+    setProductCat(category);
+    setIbmSub(sub);
   // Re-init only when the modal opens or a different deal is opened.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deal?.id, open]);
 
   const set = <K extends keyof Deal>(k: K, v: Deal[K]) => setForm(f => ({ ...f, [k]: v }));
+
+  function handleProductCatChange(cat: string) {
+    setProductCat(cat);
+    setIbmSub("");
+    setForm(f => ({ ...f, product: cat === "IBM" ? "" : cat }));
+  }
+
+  function handleIbmSubChange(sub: string) {
+    setIbmSub(sub);
+    setForm(f => ({ ...f, product: sub }));
+  }
 
   async function handleSave() {
     if (!form.name.trim()) { toast("Nama project wajib diisi.", { type: "error" }); return; }
@@ -124,7 +150,16 @@ export default function DealOpportunityModal({ open, deal, year, team, clients, 
           </select>
         </Field>
         <Field label="Product">
-          <input className={inputCls} value={form.product} onChange={e => set("product", e.target.value)} placeholder="Mis. IBM, Custom" />
+          <select className={selectCls} value={productCat} onChange={e => handleProductCatChange(e.target.value)}>
+            <option value="">— Pilih —</option>
+            {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          {productCat === "IBM" && (
+            <select className={selectCls} style={{ marginTop: 6 }} value={ibmSub} onChange={e => handleIbmSubChange(e.target.value)}>
+              <option value="">— Pilih Produk IBM —</option>
+              {IBM_PRODUCTS.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          )}
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-3">

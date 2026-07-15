@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { AppData } from "@/hooks/useData";
 import { ActiveView, Client, Deal, Visit, Project, Task, Contact, CRMDocument, Activity } from "@/types";
-import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches, picList, fmtDateStr, isWonStage, isClosedStage, isDealAtRisk, weeklyCount, onActivateKey } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, todayStr, picMatches, picList, fmtDateStr, isWonStage, isClosedStage, isDealAtRisk, isTalentProduct, weeklyCount, onActivateKey } from "@/lib/utils";
 import { VisitBadge } from "./ui/Badge";
 import { Sparkline } from "./ui/Sparkline";
 import EmptyState from "./ui/EmptyState";
@@ -118,7 +118,7 @@ export default function Dashboard({
   onSaveVisit, onDeleteVisit, onCreateTask, onCreateDeal, onSaveContact,
   onSaveProject, onDeleteProject, onSaveTask, onDeleteTask,
 }: Props) {
-  const { clients, contacts, visits, deals, projects, tasks, products, documents, attachments, activities, profiles } = data;
+  const { clients, contacts, visits, deals, projects, tasks, documents, attachments, activities, profiles } = data;
   const today = todayStr();
 
   const [period, setPeriod] = useState<Period>("monthly");
@@ -176,7 +176,7 @@ export default function Dashboard({
   const atRiskDeals = openDeals.filter(isDealAtRisk);
   // Talent deals that reach Won are tracked as Project Talent revenue instead
   // (see Talent.tsx), so counting them here too would double-count the value.
-  const wonDeals    = filteredDeals.filter(d => isWonStage(d.stage) && d.product !== "Talent");
+  const wonDeals    = filteredDeals.filter(d => isWonStage(d.stage) && !isTalentProduct(d.product));
   const lostDeals   = filteredDeals.filter(d => d.stage === "Dropped");
   const closedTotal = wonDeals.length + lostDeals.length;
   const winRate     = closedTotal > 0 ? Math.round((wonDeals.length / closedTotal) * 100) : null;
@@ -301,9 +301,13 @@ export default function Dashboard({
       spark: sparkReschedule, warn: followups.length > 0,
     },
     {
+      // Links to Summary Activity (not Clients/Pipeline) — it's the one view
+      // that actually shows a chronological feed of these logged activities,
+      // instead of dropping the user on a generic list with no obvious link
+      // back to what they just clicked.
       label: `Aktivitas ${periodLabel}`, num: periodActivities.length,
-      sub: "log aktivitas",
-      accent: "var(--brand)", view: "clients" as ActiveView,
+      sub: "lihat log aktivitas",
+      accent: "var(--brand)", view: "summary" as ActiveView,
       spark: sparkActivities, warn: false,
     },
     {
@@ -556,7 +560,7 @@ export default function Dashboard({
       <ClientModal open={!!peekClientId} client={peekClient} team={salesList}
         onSave={onSaveClient} onDelete={onDeleteClient} onUploadLogo={onUploadLogo} onDeleteLogo={onDeleteLogo}
         onClose={() => setPeekClientId(null)} />
-      <DealModal open={!!peekDealId} deal={peekDeal} clients={clients} products={products} team={salesList}
+      <DealModal open={!!peekDealId} deal={peekDeal} clients={clients} team={salesList}
         documents={peekDealDocuments} attachments={peekDealAttachments} activities={peekDealActivities}
         onSave={onSaveDeal} onDelete={onDeleteDeal}
         onAddDocument={onAddDocument} onDeleteDocument={onDeleteDocument}

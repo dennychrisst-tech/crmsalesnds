@@ -47,6 +47,29 @@ export function dealAgingDays(deal: { stage_updated_at?: string | null; created_
 export function isDealAtRisk(deal: { stage: string; stage_updated_at?: string | null; created_at?: string }): boolean {
   return !isClosedStage(deal.stage) && deal.stage !== "On Hold" && dealAgingDays(deal) >= 30;
 }
+// Revenue Forecast's fiscal year for a deal. Only the Forecast page's own
+// "+ Tambah Opportunity" form (DealOpportunityModal) sets `year` explicitly —
+// deals created from Pipeline/Oppty/Talent (DealModal) never do, since that
+// form has no year field. Without this fallback those deals silently never
+// match any year filter and vanish from every Forecast total, even though
+// they're the same `deals` rows Pipeline shows as active.
+export function dealYear(deal: { year?: number | null; close_date?: string | null; created_at?: string }): number {
+  if (deal.year) return deal.year;
+  const fromClose = deal.close_date ? parseInt(deal.close_date.slice(0, 4), 10) : NaN;
+  if (!isNaN(fromClose)) return fromClose;
+  const fromCreated = deal.created_at ? parseInt(deal.created_at.slice(0, 4), 10) : NaN;
+  if (!isNaN(fromCreated)) return fromCreated;
+  return new Date().getFullYear();
+}
+// Case/whitespace-insensitive check for the Talent product bucket. Deal.product
+// is free text (DealModal's datalist, not a fixed enum), so exact `=== "Talent"`
+// comparisons silently break on a stray space or different casing — which
+// either double-counts a Talent deal into Closed Won totals, or makes it fall
+// out of the Talent tab entirely. Every "is this deal Talent?" check should
+// go through this instead of comparing the raw string.
+export function isTalentProduct(product: string | null | undefined): boolean {
+  return (product || "").trim().toLowerCase() === "talent";
+}
 export const TASK_STATUS_COLOR: Record<string, { bg: string; fg: string }> = {
   Open: { bg: "#FEF3C7", fg: "#B45309" },
   Done: { bg: "#DCFCE7", fg: "#15803D" },
@@ -130,7 +153,6 @@ export function colorForSales(name: string) {
 }
 export const DOC_TYPES = ["RFI", "RFP/BRD", "Proposal Teknis", "Offering Letter", "Kontrak", "PO", "NDA", "Lainnya"] as const;
 export const DOC_STATUSES = ["Draft", "Sent", "Received", "Approved", "Rejected"] as const;
-export const PRODUCT_CATEGORIES = ["ECM / BPM", "AI / Analytics", "Security", "Cloud", "Managed Service", "Outsourcing", "Lainnya"] as const;
 export const EVENT_TYPES = ["Training Internal", "Training Eksternal", "Meeting Online", "Internal Meeting", "Demo / Presentasi", "Webinar", "Pameran / Conference", "WFO", "Cuti", "Lainnya"] as const;
 export const DEAL_TYPES = ["New Business", "Renewal", "Upsell", "Cross-sell", "Lainnya"] as const;
 export const ACTIVITY_TYPES = ["Note", "Call", "Meeting", "Email", "Demo", "Follow-up", "Proposal Sent", "Visit", "Lainnya"] as const;
@@ -153,6 +175,20 @@ export function fmtDate(d: string): string {
   return new Date(d + "T00:00:00").toLocaleDateString("id-ID", {
     day: "2-digit", month: "short", year: "numeric",
   });
+}
+
+/** "09:00"–"10:30" -> "1 jam 30 menit". Returns "" if either time is missing/invalid. */
+export function eventDuration(start?: string | null, end?: string | null): string {
+  if (!start || !end) return "";
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  if ([sh, sm, eh, em].some(n => Number.isNaN(n))) return "";
+  let mins = (eh * 60 + em) - (sh * 60 + sm);
+  if (mins <= 0) mins += 24 * 60; // event crosses midnight
+  const h = Math.floor(mins / 60), m = mins % 60;
+  if (h && m) return `${h} jam ${m} menit`;
+  if (h) return `${h} jam`;
+  return `${m} menit`;
 }
 
 /** Formats a Date using its local (browser) calendar date — never UTC. */

@@ -6,7 +6,7 @@ import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Deal, CRMDocument, Attachment, Activity, Project, DateRange } from "@/types";
-import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, isClosedStage, isWonStage, colorForSales, dealAgingDays, isDealAtRisk, onActivateKey } from "@/lib/utils";
+import { STAGES, STAGE_COLOR, fmtIDR, fmtDate, isClosedStage, isWonStage, colorForSales, dealAgingDays, isDealAtRisk, isTalentProduct, onActivateKey } from "@/lib/utils";
 import { exportDeals } from "@/lib/export";
 import { toast } from "./ui/Toast";
 import Modal, { Field, ModalActions, inputCls, textareaCls } from "./ui/Modal";
@@ -267,7 +267,7 @@ function Column({ stage, deals, clientName, onDealClick, onMoveStage, isViewer, 
 }
 
 export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, onDeleteDeal, onUpdateStage, onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment, onAddActivity, onDeleteActivity, openDealId, onOpenDealHandled, openStage, onOpenStageHandled, weekFocus, onWeekFocusHandled }: Props) {
-  const { clients, products, documents, attachments, activities, profiles, projects } = data;
+  const { clients, documents, attachments, activities, profiles, projects } = data;
   // Soft-delete: a deal "Hapus" (from DealModal) hides it immediately, real
   // delete happens after the Undo window passes — see useUndoableDelete.
   // Bulk delete below is unaffected — it already has its own confirm() step.
@@ -363,7 +363,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
   // everything that's won" view requested alongside it.
   // Talent deals that reach Won are tracked as Project Talent revenue instead
   // (see Talent.tsx), so counting them here too would double-count the value.
-  const wonList = ownedDeals.filter(d => isWonStage(d.stage) && d.product !== "Talent")
+  const wonList = ownedDeals.filter(d => isWonStage(d.stage) && !isTalentProduct(d.product))
     .sort((a, b) => (b.stage_updated_at || b.created_at || "").localeCompare(a.stage_updated_at || a.created_at || ""));
   const wonListValue = wonList.reduce((s, d) => s + d.value, 0);
   let visibleDeals = showArchived ? ownedDeals : ownedDeals.filter(d => !isArchived(d));
@@ -800,7 +800,7 @@ export default function Pipeline({ data, currentUserName, isViewer, onSaveDeal, 
       </Modal>
 
       <DealModal
-        open={modalOpen} deal={editDeal} clients={clients} products={products} team={team} defaultOwner={currentUserName}
+        open={modalOpen} deal={editDeal} clients={clients} team={team} defaultOwner={currentUserName}
         documents={dealDocuments} attachments={dealAttachments} activities={dealActivities}
         onSave={onSaveDeal} onDelete={handleDeleteDeal}
         onAddDocument={onAddDocument} onDeleteDocument={onDeleteDocument}

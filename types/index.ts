@@ -165,15 +165,6 @@ export interface Task {
   created_at?: string;
 }
 
-export interface Product {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  created_by_id?: string;
-  created_at?: string;
-}
-
 export interface CRMDocument {
   id: string;
   deal_id: string;
@@ -209,9 +200,11 @@ export interface CalendarEvent {
   followup_date?: string | null;
   created_by_id?: string;
   created_at?: string;
+  start_time?: string | null;
+  end_time?: string | null;
 }
 
-export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects" | "opty" | "talent" | "tasks" | "catalog" | "summary" | "visit-report" | "weekly-report" | "revenue-forecast" | "talent-fill-rate" | "mandays-rate";
+export type ActiveView = "dashboard" | "calendar" | "clients" | "pipeline" | "projects" | "opty" | "talent" | "tasks" | "summary" | "visit-report" | "weekly-report" | "revenue-forecast" | "talent-fill-rate" | "mandays-rate";
 
 // Deep-link a specific week (e.g. from Weekly Report's KPI cards) into
 // Calendar/Pipeline so they can jump to and filter that exact range.

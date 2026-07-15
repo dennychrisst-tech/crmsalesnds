@@ -3,7 +3,7 @@ import { useState } from "react";
 import { AppData } from "@/hooks/useData";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import { Project, TalentRole, Deal, CRMDocument, Activity, PIC } from "@/types";
-import { fmtIDR, fmtDate, STAGE_COLOR, isClosedStage, onActivateKey } from "@/lib/utils";
+import { fmtIDR, fmtDate, STAGE_COLOR, isClosedStage, isTalentProduct, onActivateKey } from "@/lib/utils";
 import ProjectModal from "./ProjectModal";
 import DealModal from "./DealModal";
 import TalentManageModal from "./TalentManageModal";
@@ -72,13 +72,13 @@ export default function Talent({
   onAddDocument, onDeleteDocument, onUploadAttachment, onDeleteAttachment,
   onAddActivity, onDeleteActivity, onOpenClient,
 }: Props) {
-  const { clients, products, documents, attachments, activities, profiles, talent_roles } = data;
+  const { clients, documents, attachments, activities, profiles, talent_roles } = data;
   const team = profiles.filter(p => !["super_admin","admin","viewer"].includes(p.role)).map(p => p.name).filter(Boolean);
   const clientName = (id: string) => clients.find(c => c.id === id)?.name || "—";
 
   // --- Opportunity Talent (Deal, product === "Talent", not yet closed) ---
   const { isPending: isDealPending, requestDelete: requestDeleteDeal } = useUndoableDelete(onDeleteDeal);
-  const talentDeals = data.deals.filter(d => !isDealPending(d.id) && d.product === "Talent" && !isClosedStage(d.stage));
+  const talentDeals = data.deals.filter(d => !isDealPending(d.id) && isTalentProduct(d.product) && !isClosedStage(d.stage));
   async function handleDeleteDeal(id: string) {
     const d = data.deals.find(x => x.id === id);
     requestDeleteDeal(id, d ? `Deal "${d.name}"` : "Deal");
@@ -380,7 +380,7 @@ export default function Talent({
       />
 
       <DealModal
-        open={dealModalOpen} deal={editDeal} clients={clients} products={products} team={team}
+        open={dealModalOpen} deal={editDeal} clients={clients} team={team}
         defaultOwner={currentUserName} defaultProduct="Talent" entityLabel="Oppty Talent"
         documents={dealDocuments} attachments={dealAttachments} activities={dealActivities}
         onSave={onSaveDeal} onDelete={handleDeleteDeal}

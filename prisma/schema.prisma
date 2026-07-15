@@ -331,6 +331,8 @@ model Event {
   followup_date DateTime? @db.Date
   created_by_id String?   @db.Uuid
   created_at    DateTime  @default(now())
+  start_time    String?
+  end_time      String?
 
   @@index([client_id])
   @@index([date])

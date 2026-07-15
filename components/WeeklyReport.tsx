@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Share2, Download, FileText, User, Briefcase, FolderKanban } from "lucide-react";
 import { AppData } from "@/hooks/useData";
 import { Project, DateRange } from "@/types";
-import { fmtIDR, fmtDate, fmtDateStr, picMatches, STAGE_COLOR, isWonStage, onActivateKey } from "@/lib/utils";
+import { fmtIDR, fmtDate, fmtDateStr, picMatches, STAGE_COLOR, isWonStage, isTalentProduct, onActivateKey } from "@/lib/utils";
 import { exportWeeklyReport } from "@/lib/export";
 import { exportWeeklyReportPdf } from "@/lib/pdf";
 import { shareToWhatsApp } from "@/lib/share";
@@ -52,11 +52,11 @@ export default function WeeklyReport({ data, onOpenDeal, onOpenCalendarWeek, onO
   const weekActivityLog = activities.filter(a => inRange(a.date, start, end));
   // Talent deals that reach Won are tracked as Project Talent revenue instead
   // (see Talent.tsx), so counting them here too would double-count the value.
-  const weekWon = weekDealUpdates.filter(d => isWonStage(d.stage) && d.product !== "Talent");
+  const weekWon = weekDealUpdates.filter(d => isWonStage(d.stage) && !isTalentProduct(d.product));
 
   const prevWeekVisits = visits.filter(v => v.status === "Done" && inRange(v.date, prevStart, prevEnd));
   const prevWeekDealUpdates = deals.filter(d => d.stage_updated_at && inRange(d.stage_updated_at, prevStart, prevEnd));
-  const prevWeekWon = prevWeekDealUpdates.filter(d => isWonStage(d.stage) && d.product !== "Talent");
+  const prevWeekWon = prevWeekDealUpdates.filter(d => isWonStage(d.stage) && !isTalentProduct(d.product));
   // Counts as "active" whether the update came from a visit or just a logged
   // activity (WA/phone follow-up with no visit) — both are real sales work.
   const activeSales = new Set([
