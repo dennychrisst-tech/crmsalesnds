@@ -124,7 +124,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
     return () => mq.removeEventListener("change", apply);
   }, []);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const [collapsedWeeks, setCollapsedWeeks] = useState<Set<string>>(new Set());
+  const [hiddenTracking, setHiddenTracking] = useState<Set<string>>(new Set());
 
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [editClient, setEditClient] = useState<Client | null>(null);
@@ -156,10 +156,10 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
     });
   }
 
-  function toggleWeekCollapsed(key: string) {
-    setCollapsedWeeks(prev => {
+  function toggleTracking(id: string) {
+    setHiddenTracking(prev => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   }
@@ -350,6 +350,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
         const pics = (Array.isArray(c.pic) ? c.pic : []) as PIC[];
         const last = clientVisits[0];
         const isCollapsed = collapsed.has(c.id);
+        const trackingHidden = hiddenTracking.has(c.id);
 
         const groups: Record<string, { label: string; items: Visit[] }> = {};
         clientVisits.forEach(v => {
@@ -518,25 +519,23 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
 
                 {/* Visit tracking */}
                 <div className="visit-track">
-                  <div className="vt-title">
+                  <div className="vt-title vt-title-toggle" onClick={() => toggleTracking(c.id)}
+                    onKeyDown={onActivateKey(() => toggleTracking(c.id))} role="button" tabIndex={0}>
+                    <span className="week-label-chevron">{trackingHidden ? "▸" : "▾"}</span>
                     Tracking approach per minggu {last && <><span style={{ marginRight: 4 }}>· terakhir:</span><VisitBadge status={last.status} /></>}
-                    {!isViewer && <button className="btn btn-ghost btn-sm vt-add" style={{ marginLeft: "auto" }} onClick={() => { setEditVisit(null); setPreClientId(c.id); setVisitModalOpen(true); }}>+ Visit</button>}
+                    {!isViewer && (
+                      <button className="btn btn-ghost btn-sm vt-add" style={{ marginLeft: "auto" }}
+                        onClick={e => { e.stopPropagation(); setEditVisit(null); setPreClientId(c.id); setVisitModalOpen(true); }}>
+                        + Visit
+                      </button>
+                    )}
                   </div>
-                  {!clientVisits.length ? (
+                  {!trackingHidden && (!clientVisits.length ? (
                     <div className="vt-empty">🚗 Belum ada visit tercatat.</div>
-                  ) : groupKeys.map(k => {
-                    const weekKey = `${c.id}::${k}`;
-                    const weekCollapsed = collapsedWeeks.has(weekKey);
-                    const toggleWeek = () => toggleWeekCollapsed(weekKey);
-                    return (
+                  ) : groupKeys.map(k => (
                     <div key={k} className="week-group">
-                      <div className="week-label week-label-toggle" onClick={toggleWeek}
-                        onKeyDown={onActivateKey(toggleWeek)} role="button" tabIndex={0}>
-                        <span className="week-label-chevron">{weekCollapsed ? "▸" : "▾"}</span>
-                        {groups[k].label}
-                        <span className="week-label-count">{groups[k].items.length}</span>
-                      </div>
-                      {!weekCollapsed && groups[k].items.map(v => {
+                      <div className="week-label">{groups[k].label}</div>
+                      {groups[k].items.map(v => {
                         const openVisit = () => { if (!isViewer) { setEditVisit(v); setPreClientId(undefined); setVisitModalOpen(true); } };
                         return (
                         <div key={v.id} className="vt-row" onClick={openVisit}
@@ -548,8 +547,7 @@ export default function Clients({ data, currentUserName, isViewer, onNavigate, o
                         );
                       })}
                     </div>
-                    );
-                  })}
+                  )))}
                 </div>
               </>
             )}
