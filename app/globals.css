@@ -571,6 +571,10 @@ tr:hover td { background: var(--paper); }
 .vt-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
 .week-group { margin-bottom: 10px; }
 .week-label { font-size: 11px; font-weight: 700; color: var(--brand); margin-bottom: 5px; }
+.week-label-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+.week-label-toggle:hover { opacity: .8; }
+.week-label-chevron { display: inline-block; width: 10px; }
+.week-label-count { font-weight: 400; color: var(--ink-soft); margin-left: auto; }
 .vt-row { display: flex; align-items: center; gap: 10px; padding: 7px 10px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 5px; cursor: pointer; font-size: 13px; }
 .vt-row:hover { border-color: var(--brand); }
 .vt-date { font-weight: 700; min-width: 78px; }
